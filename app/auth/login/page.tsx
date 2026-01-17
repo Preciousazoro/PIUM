@@ -1,0 +1,161 @@
+"use client";
+
+import React, { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import Link from "next/link";
+import { Lock, CheckCircle2, Eye, EyeOff, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const result = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+        callbackUrl: "/user-dashboard/dashboard",
+      });
+
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+
+      // If we get here, login was successful
+      router.push("/user-dashboard/dashboard");
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to log in");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background text-foreground px-4 transition-colors duration-300">
+      <div className="w-full max-w-md space-y-6">
+        {/* Logo Section */}
+        <div className="text-center mb-6">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-r from-[#00ff9d] to-[#8a2be2] flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-[#00ff9d] to-[#8a2be2] bg-clip-text text-transparent">
+              Taskkash
+            </span>
+          </div>
+          <h1 className="text-2xl font-semibold mb-1">Welcome Back</h1>
+          <p className="text-gray-400 text-sm">
+            Login to access your account and continue earning rewards
+          </p>
+        </div>
+
+        {/* Login Form */}
+        <form
+          onSubmit={handleSubmit}
+          className="bg-card border border-border rounded-2xl p-6 space-y-5 shadow-[0_0_20px_rgba(0,255,157,0.05)] transition-colors duration-300"
+        >
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-muted-foreground">
+              Email
+            </label>
+            <Input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="bg-background border border-input text-foreground placeholder:text-muted-foreground rounded-lg focus-visible:ring-1 focus-visible:ring-primary transition-all"
+              required
+            />
+          </div>
+
+          {/* Password */}
+          <div className="relative">
+            <label className="block text-sm font-medium mb-2 text-muted-foreground">
+              Password
+            </label>
+            <Input
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="bg-background border border-input text-foreground placeholder:text-muted-foreground rounded-lg focus-visible:ring-1 focus-visible:ring-primary transition-all pr-10"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-[38px] text-gray-400 hover:text-[#00ff9d] transition"
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+
+            <div className="flex justify-end mt-2">
+              <Link
+                href="/auth/forgot-password"
+                className="text-sm text-gray-400 hover:text-[#00ff9d] transition"
+              >
+                Forgot password?
+              </Link>
+            </div>
+          </div>
+
+          {/* Sign In Button */}
+          <Link href="/user-dashboard/dashboard" passHref>
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-[#00ff9d] to-[#8a2be2] text-white font-medium hover:opacity-90 transition-all shadow-[0_0_15px_rgba(0,255,157,0.3)]"
+            >
+              Sign In
+            </Button>
+          </Link>
+
+          {/* Divider */}
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-700" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-card text-muted-foreground">
+                Or continue with
+              </span>
+            </div>
+          </div>
+
+          {/* Wallet Button */}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full bg-background text-foreground border border-input hover:bg-muted flex items-center justify-center gap-2 transition-colors"
+          >
+            <Lock className="w-4 h-4" /> Connect Wallet
+          </Button>
+        </form>
+
+        {/* Sign Up */}
+        <p className="text-center text-gray-400 text-sm">
+          Don’t have an account?{" "}
+          <Link
+            href="/auth/signup"
+            className="text-[#00ff9d] hover:text-[#66ffc2] transition"
+          >
+            Sign up
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
