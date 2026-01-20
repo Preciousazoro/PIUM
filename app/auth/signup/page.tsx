@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle2, Eye, EyeOff, Lock, Loader2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -20,8 +19,8 @@ export default function RegisterPage() {
     confirmPassword: "",
     terms: false,
   });
+  
   const router = useRouter();
-  const { toast } = useToast();
 
   const handleChange = (key: string, value: string | boolean) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -30,81 +29,33 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form
+    // Simple Validation without useToast
     if (form.password !== form.confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
+      alert("Passwords do not match");
       return;
     }
 
     if (!form.terms) {
-      toast({
-        title: "Error",
-        description: "You must accept the terms and conditions",
-        variant: "destructive",
-      });
+      alert("You must accept the terms and conditions");
       return;
     }
 
     setIsLoading(true);
 
-    try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          password: form.password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Something went wrong");
-      }
-
-      // Auto-login after successful registration
-      const signInResponse = await fetch("/api/auth/callback/credentials", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: form.email,
-          password: form.password,
-          redirect: false,
-        }),
-      });
-
-      if (!signInResponse.ok) {
-        throw new Error("Registration successful but login failed");
-      }
-
-      // Redirect to dashboard on successful registration and login
-      router.push("/user-dashboard/dashboard");
-      router.refresh();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to register",
-        variant: "destructive",
-      });
-    } finally {
+    // Simulate a successful registration delay
+    setTimeout(() => {
       setIsLoading(false);
-    }
+      console.log("Registration simulated for:", form.email);
+      // Direct navigation to dashboard
+      router.push("/user-dashboard/dashboard");
+    }, 1500);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center text-foreground px-4 relative overflow-hidden bg-background transition-colors duration-300">
       <div className="absolute inset-0 bg-gradient-to-tr from-[#00ff9d1a] via-transparent to-[#8a2be21a] blur-3xl opacity-50"></div>
       <div className="relative z-10 w-full max-w-md space-y-6">
+        
         {/* Header / Logo */}
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-2 mb-4">
@@ -126,7 +77,7 @@ export default function RegisterPage() {
           onSubmit={handleSubmit}
           className="bg-card border border-border rounded-2xl p-6 space-y-5 shadow-[0_0_20px_rgba(0,255,157,0.05)] transition-colors duration-300"
         >
-          {/* Username */}
+          {/* Full Name */}
           <div>
             <label className="block text-sm font-medium mb-2 text-muted-foreground">
               Full Name
@@ -233,8 +184,9 @@ export default function RegisterPage() {
           <Button
             type="submit"
             className="w-full bg-gradient-to-r from-[#00ff9d] to-[#8a2be2] text-white font-medium hover:opacity-90 transition-all shadow-[0_0_15px_rgba(0,255,157,0.3)]"
+            disabled={isLoading}
           >
-{isLoading ? (
+            {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Creating Account...

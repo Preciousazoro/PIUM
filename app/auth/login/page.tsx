@@ -1,13 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { Lock, CheckCircle2, Eye, EyeOff, Loader2 } from "lucide-react";
-import { toast } from "sonner";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -20,31 +18,22 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    try {
-      const result = await signIn("credentials", {
-        redirect: false,
-        email,
-        password,
-        callbackUrl: "/user-dashboard/dashboard",
-      });
-
-      if (result?.error) {
-        throw new Error(result.error);
-      }
-
-      // If we get here, login was successful
-      router.push("/user-dashboard/dashboard");
-      router.refresh();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to log in");
-    } finally {
+    // Simulate a brief network delay
+    setTimeout(() => {
       setIsLoading(false);
-    }
+      console.log("Login successful with:", email);
+      
+      // ✅ This is what triggers the move to the dashboard
+      router.push("/user-dashboard/dashboard");
+    }, 1000);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background text-foreground px-4 transition-colors duration-300">
-      <div className="w-full max-w-md space-y-6">
+      {/* Background Glow */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-[#00ff9d0a] via-transparent to-[#8a2be20a] pointer-events-none"></div>
+      
+      <div className="relative w-full max-w-md space-y-6">
         {/* Logo Section */}
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-2 mb-4">
@@ -56,7 +45,7 @@ export default function LoginPage() {
             </span>
           </div>
           <h1 className="text-2xl font-semibold mb-1">Welcome Back</h1>
-          <p className="text-gray-400 text-sm">
+          <p className="text-muted-foreground text-sm">
             Login to access your account and continue earning rewards
           </p>
         </div>
@@ -64,7 +53,7 @@ export default function LoginPage() {
         {/* Login Form */}
         <form
           onSubmit={handleSubmit}
-          className="bg-card border border-border rounded-2xl p-6 space-y-5 shadow-[0_0_20px_rgba(0,255,157,0.05)] transition-colors duration-300"
+          className="bg-card border border-border rounded-2xl p-6 space-y-5 shadow-xl transition-colors duration-300"
         >
           {/* Email */}
           <div>
@@ -76,7 +65,7 @@ export default function LoginPage() {
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="bg-background border border-input text-foreground placeholder:text-muted-foreground rounded-lg focus-visible:ring-1 focus-visible:ring-primary transition-all"
+              className="bg-background border-border text-foreground placeholder:text-muted-foreground rounded-lg focus-visible:ring-1 focus-visible:ring-primary transition-all"
               required
             />
           </div>
@@ -91,13 +80,13 @@ export default function LoginPage() {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="bg-background border border-input text-foreground placeholder:text-muted-foreground rounded-lg focus-visible:ring-1 focus-visible:ring-primary transition-all pr-10"
+              className="bg-background border-border text-foreground placeholder:text-muted-foreground rounded-lg focus-visible:ring-1 focus-visible:ring-primary transition-all pr-10"
               required
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-[38px] text-gray-400 hover:text-[#00ff9d] transition"
+              className="absolute right-3 top-[38px] text-muted-foreground hover:text-primary transition"
               tabIndex={-1}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -105,8 +94,8 @@ export default function LoginPage() {
 
             <div className="flex justify-end mt-2">
               <Link
-                href="/auth/forgot-password"
-                className="text-sm text-gray-400 hover:text-[#00ff9d] transition"
+                href="#"
+                className="text-sm text-muted-foreground hover:text-primary transition"
               >
                 Forgot password?
               </Link>
@@ -114,19 +103,22 @@ export default function LoginPage() {
           </div>
 
           {/* Sign In Button */}
-          <Link href="/user-dashboard/dashboard" passHref>
-            <Button
-              type="submit"
-              className="w-full bg-gradient-to-r from-[#00ff9d] to-[#8a2be2] text-white font-medium hover:opacity-90 transition-all shadow-[0_0_15px_rgba(0,255,157,0.3)]"
-            >
-              Sign In
-            </Button>
-          </Link>
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-gradient-to-r from-[#00ff9d] to-[#8a2be2] text-white font-bold hover:opacity-90 transition-all shadow-lg shadow-primary/20 h-11"
+          >
+            {isLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              "Sign In"
+            )}
+          </Button>
 
           {/* Divider */}
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-700" />
+              <div className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-2 bg-card text-muted-foreground">
@@ -139,18 +131,18 @@ export default function LoginPage() {
           <Button
             type="button"
             variant="outline"
-            className="w-full bg-background text-foreground border border-input hover:bg-muted flex items-center justify-center gap-2 transition-colors"
+            className="w-full bg-background text-foreground border border-border hover:bg-muted flex items-center justify-center gap-2 transition-colors h-11"
           >
             <Lock className="w-4 h-4" /> Connect Wallet
           </Button>
         </form>
 
         {/* Sign Up */}
-        <p className="text-center text-gray-400 text-sm">
+        <p className="text-center text-muted-foreground text-sm">
           Don’t have an account?{" "}
           <Link
             href="/auth/signup"
-            className="text-[#00ff9d] hover:text-[#66ffc2] transition"
+            className="text-primary font-semibold hover:underline transition"
           >
             Sign up
           </Link>
