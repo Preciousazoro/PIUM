@@ -45,12 +45,7 @@ const AdminSidebar = () => {
       {/* Desktop Sidebar */}
       <div className="w-64 bg-background border-r border-border hidden md:flex flex-col sticky top-0 h-screen">
         <div className="p-4 border-b border-border">
-          <div className="flex items-center space-x-2">
-            <img src="/taskkash-logo.png" alt="TaskKash Logo" className="w-12 h-12" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-green-500 to-purple-600 bg-clip-text text-transparent">
-              TASKKASH
-            </span>
-          </div>
+          
           <p className="text-sm font-bold text-center mt-4">Admin Dashboard</p>
         </div>
 

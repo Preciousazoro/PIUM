@@ -32,9 +32,11 @@ export default function UserHeader({ title }: { title?: string }) {
     <nav className="sticky top-0 z-40 py-4 px-6 flex justify-between items-center border-b bg-background text-foreground border-border transition-colors duration-300">
       {/* Logo Section */}
       <div className="flex items-center space-x-2">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-500 to-purple-600 flex items-center justify-center text-white font-bold">
-          TK
-        </div>
+        <img
+            src="/taskkash-logo.png"
+            alt="TaskKash Logo"
+            className="w-12 h-12 object-contain"
+          />
         <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-500 to-purple-600 ml-2 tracking-tight">
           TASKKASH
         </span>

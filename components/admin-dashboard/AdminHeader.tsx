@@ -39,19 +39,16 @@ const AdminHeader = () => {
 
   return (
     <header className="sticky top-0 z-40 p-4 flex items-center justify-between border-b bg-background text-foreground border-border">
-      {/* Left */}
-      <div className="flex items-center">
-        <div className="flex items-center space-x-2 md:hidden">
-          <img
+      {/* Logo Section */}
+      <div className="flex items-center space-x-2">
+        <img
             src="/taskkash-logo.png"
             alt="TaskKash Logo"
             className="w-12 h-12 object-contain"
           />
-          <span className="text-2xl font-bold bg-gradient-to-r from-green-500 to-purple-600 bg-clip-text text-transparent">
-            TASKKASH
-          </span>
-        </div>
-        <div className="hidden md:block min-w-[48px]" />
+        <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-500 to-purple-600 ml-2 tracking-tight">
+          TASKKASH
+        </span>
       </div>
 
       {/* Spacer */}
