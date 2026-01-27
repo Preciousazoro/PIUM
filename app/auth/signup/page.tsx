@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle2, Eye, EyeOff, Lock, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -29,26 +30,53 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Simple Validation without useToast
+    // Validation
     if (form.password !== form.confirmPassword) {
-      alert("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
 
     if (!form.terms) {
-      alert("You must accept the terms and conditions");
+      toast.error("You must accept the terms and conditions");
+      return;
+    }
+
+    if (form.password.length < 6) {
+      toast.error("Password should be at least 6 characters long");
       return;
     }
 
     setIsLoading(true);
 
-    // Simulate a successful registration delay
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success('Account created successfully!');
+        setTimeout(() => {
+          router.push('/auth/login');
+        }, 1500);
+      } else {
+        toast.error(data.error || 'Registration failed');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error('Something went wrong. Please try again.');
+    } finally {
       setIsLoading(false);
-      console.log("Registration simulated for:", form.email);
-      // Direct navigation to dashboard
-      router.push("/user-dashboard/dashboard");
-    }, 1500);
+    }
   };
 
   return (

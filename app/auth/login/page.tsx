@@ -2,10 +2,12 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { Lock, CheckCircle2, Eye, EyeOff, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -16,16 +18,37 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
     setIsLoading(true);
 
-    // Simulate a brief network delay
-    setTimeout(() => {
+    try {
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        toast.error('Invalid email or password');
+      } else if (result?.ok) {
+        toast.success('Login successful!');
+        setTimeout(() => {
+          router.push('/user-dashboard/dashboard');
+        }, 1000);
+      } else {
+        toast.error('Login failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('Something went wrong. Please try again.');
+    } finally {
       setIsLoading(false);
-      console.log("Login successful with:", email);
-      
-      // ✅ This is what triggers the move to the dashboard
-      router.push("/user-dashboard/dashboard");
-    }, 1000);
+    }
   };
 
   return (
