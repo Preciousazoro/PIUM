@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import { Link as LinkIcon, ExternalLink, Trophy, CheckCircle2, Flame, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { RecentActivity } from "@/components/user-dashboard/RecentActivity";
-
+import { TaskCard } from "@/components/tasks/TaskCard";
+import { TaskPreviewModal } from "@/components/tasks/TaskPreviewModal";
+import { Task } from "@/lib/taskState";
 
 // Directly import the Sidebar and Header here
 import UserSidebar from "@/components/user-dashboard/UserSidebar";
@@ -12,12 +14,94 @@ import UserHeader from "@/components/user-dashboard/UserHeader";
 
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 500);
     return () => clearTimeout(timer);
   }, []);
+
+  // Sample task data - in real app, this would come from API
+  const sampleTasks: Task[] = [
+    {
+      id: "task-1",
+      title: "Follow TaskKash on X",
+      description: "Follow our official handle to stay updated with the latest rewards and announcements. Make sure to follow and stay engaged for future opportunities.",
+      reward: 50,
+      category: "Social",
+      url: "https://twitter.com/taskkash",
+      proofRequired: true
+    },
+    {
+      id: "task-2", 
+      title: "Join our Discord Community",
+      description: "Become part of our growing community on Discord. Participate in discussions, get support, and be the first to know about new features and rewards.",
+      reward: 75,
+      category: "Social",
+      url: "https://discord.gg/taskkash",
+      proofRequired: true
+    },
+    {
+      id: "task-3",
+      title: "Create Content About TaskKash",
+      description: "Create a short video or post about TaskKash and share it on your social media. Show your creativity and earn rewards!",
+      reward: 150,
+      category: "Content", 
+      url: "https://taskkash.com/content-creator",
+      proofRequired: true
+    },
+    {
+      id: "task-4",
+      title: "Refer a Friend",
+      description: "Invite your friends to join TaskKash and earn rewards when they complete their first task. Share your unique referral link and track your referrals.",
+      reward: 100,
+      category: "Referral", 
+      url: "https://taskkash.com/referrals",
+      proofRequired: true
+    },
+    {
+      id: "task-5",
+      title: "Complete a Purchase",
+      description: "Make a purchase from one of our partner stores and earn cashback in TP. The more you shop, the more you earn!",
+      reward: 200,
+      category: "Commerce", 
+      url: "https://taskkash.com/partners",
+      proofRequired: true
+    },
+    {
+      id: "task-6",
+      title: "Complete Your Profile",
+      description: "Fill out your complete profile information including avatar, bio, and preferences. This helps us match you with better tasks.",
+      reward: 25,
+      category: "Other", 
+      url: "https://taskkash.com/profile",
+      proofRequired: false
+    }
+  ];
+
+  const handleTaskClick = (task: Task) => {
+    setSelectedTask(task);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedTask(null);
+  };
+
+  const handleStartTask = (task: Task) => {
+    // This will be handled by the TaskCard component
+    // The modal will also handle starting tasks
+    handleTaskClick(task);
+  };
+
+  const handleSubmitProof = (task: Task) => {
+    // This will be handled by the TaskCard component
+    // The modal will also handle proof submission
+    handleTaskClick(task);
+  };
 
   if (isLoading) {
     return (
@@ -82,25 +166,15 @@ export default function DashboardPage() {
               <h2 className="text-xl font-bold tracking-tight">Available Tasks</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-card rounded-3xl p-6 border border-border hover:border-primary/50 transition-all flex flex-col h-full group">
-                  <div className="flex justify-between items-start mb-6">
-                    <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
-                      Social
-                    </span>
-                    <div className="text-[10px] font-medium bg-muted px-2 py-1 rounded text-foreground">
-                      50 TP
-                    </div>
-                  </div>
-                  <h3 className="text-lg font-bold mb-3 group-hover:text-primary transition-colors">Follow TaskKash on X</h3>
-                  <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-                    Follow our official handle to stay updated with the latest rewards.
-                  </p>
-                  <button className="mt-auto w-full py-3 rounded-xl text-white bg-gradient-to-r from-green-500 to-purple-600 font-bold text-sm shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
-                    Submit Proof
-                  </button>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sampleTasks.map((task) => (
+                <TaskCard 
+                  key={task.id} 
+                  task={task} 
+                  onClick={handleTaskClick}
+                  onStartTask={handleStartTask}
+                  onSubmitProof={handleSubmitProof}
+                />
               ))}
             </div>
 
@@ -109,6 +183,13 @@ export default function DashboardPage() {
           </div>
         </main>
       </div>
+
+      {/* Task Preview Modal */}
+      <TaskPreviewModal
+        task={selectedTask}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 }

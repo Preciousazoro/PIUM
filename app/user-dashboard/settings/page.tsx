@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
+import { signOut } from "next-auth/react";
+import { toast } from "sonner";
 import ModeToggle from "@/components/ui/ModeToggle";
 
 // Navigation
@@ -15,44 +17,97 @@ export default function SettingsPage() {
   // Hydration safety
   const [mounted, setMounted] = useState(false);
 
-  // Password form state (UI only)
+  // Password form state
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
-  const [passwordMsg, setPasswordMsg] = useState<string | null>(null);
-  const [passwordErr, setPasswordErr] = useState<string | null>(null);
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const handlePasswordUpdate = () => {
-    setPasswordErr(null);
-    setPasswordMsg(null);
+  // Password validation (only length and number required)
+  const validatePassword = (password: string): string[] => {
+    const errors: string[] = [];
+    
+    if (password.length < 8) {
+      errors.push('Password must be at least 8 characters long');
+    }
+    
+    if (!/\d/.test(password)) {
+      errors.push('Password must contain at least one number');
+    }
+    
+    return errors;
+  };
 
+  const handlePasswordUpdate = async () => {
+    setPasswordErrors([]);
+
+    // Frontend validation
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setPasswordErr("Please fill all fields");
+      setPasswordErrors(['Please fill all fields']);
       return;
     }
+    
     if (newPassword !== confirmPassword) {
-      setPasswordErr("New password and confirmation do not match");
+      setPasswordErrors(['New password and confirmation do not match']);
       return;
     }
-    if (newPassword.length < 8) {
-      setPasswordErr("New password must be at least 8 characters");
+
+    const passwordValidationErrors = validatePassword(newPassword);
+    if (passwordValidationErrors.length > 0) {
+      setPasswordErrors(passwordValidationErrors);
       return;
     }
 
     setSavingPassword(true);
 
-    setTimeout(() => {
-      setSavingPassword(false);
-      setPasswordMsg("Password updated (demo only)");
+    try {
+      const response = await fetch('/api/user/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+          confirmNewPassword: confirmPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.error) {
+          setPasswordErrors([data.error]);
+        } else {
+          setPasswordErrors(['Failed to update password']);
+        }
+        return;
+      }
+
+      // Success
+      toast.success('Password updated successfully');
+      
+      // Clear form
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-    }, 800);
+      
+      // Log user out for security
+      setTimeout(() => {
+        signOut({ callbackUrl: '/auth/login' });
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Password change error:', error);
+      setPasswordErrors(['Network error. Please try again.']);
+    } finally {
+      setSavingPassword(false);
+    }
   };
 
   if (!mounted) return null;
@@ -125,7 +180,7 @@ export default function SettingsPage() {
               </div>
             </section>
 
-            {/* Change Password (UI only) */}
+            {/* Change Password */}
             <section className="bg-card rounded-2xl border border-border p-8">
               <h2 className="text-2xl font-semibold mb-2">Change Password</h2>
               <p className="text-muted-foreground mb-6">
@@ -142,8 +197,7 @@ export default function SettingsPage() {
                     value={currentPassword}
                     onChange={(e) => {
                       setCurrentPassword(e.target.value);
-                      setPasswordErr(null);
-                      setPasswordMsg(null);
+                      setPasswordErrors([]);
                     }}
                     className="mt-1 w-full rounded-lg border border-border bg-background p-3 text-sm"
                   />
@@ -160,8 +214,7 @@ export default function SettingsPage() {
                     value={newPassword}
                     onChange={(e) => {
                       setNewPassword(e.target.value);
-                      setPasswordErr(null);
-                      setPasswordMsg(null);
+                      setPasswordErrors([]);
                     }}
                     className="mt-1 w-full rounded-lg border border-border bg-background p-3 text-sm"
                   />
@@ -176,8 +229,7 @@ export default function SettingsPage() {
                     value={confirmPassword}
                     onChange={(e) => {
                       setConfirmPassword(e.target.value);
-                      setPasswordErr(null);
-                      setPasswordMsg(null);
+                      setPasswordErrors([]);
                     }}
                     className="mt-1 w-full rounded-lg border border-border bg-background p-3 text-sm"
                   />
@@ -193,8 +245,25 @@ export default function SettingsPage() {
                   {savingPassword ? "Updating..." : "Update Password"}
                 </button>
 
-                {passwordErr && <span className="text-sm text-red-500">{passwordErr}</span>}
-                {passwordMsg && <span className="text-sm text-green-500">{passwordMsg}</span>}
+                {passwordErrors.length > 0 && (
+                  <div className="w-full">
+                    {passwordErrors.map((error, index) => (
+                      <div key={index} className="text-sm text-red-500">
+                        • {error}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              {/* Password Requirements */}
+              <div className="mt-6 p-4 rounded-lg border border-border bg-muted/30">
+                <h4 className="text-sm font-medium mb-2">Password Requirements:</h4>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  <li>• At least 8 characters long</li>
+                  <li>• Contains at least one number (0-9)</li>
+                  <li>• Uppercase letters, lowercase letters, and special characters are optional but recommended</li>
+                </ul>
               </div>
             </section>
 

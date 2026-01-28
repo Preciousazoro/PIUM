@@ -11,14 +11,17 @@ import UserSidebar from "@/components/user-dashboard/UserSidebar";
 import UserHeader from "@/components/user-dashboard/UserHeader";
 
 type Entry = { 
-  id?: string; 
   rank: number; 
   username: string; 
-  handle?: string; 
   tasks: number; 
   tp: number; 
   level: string; 
-  avatar?: string | number 
+  avatar?: string | null 
+};
+
+type LeaderboardResponse = {
+  topThree: Entry[];
+  topTen: Entry[];
 };
 
 export default function LeaderboardPage() {
@@ -27,34 +30,82 @@ export default function LeaderboardPage() {
   const [level, setLevel] = useState<"All" | "Beginner" | "Advanced" | "Intermediate" | "Expert">("All");
   const [levelOpen, setLevelOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock Data
-  const top: Entry[] = [
-    { rank: 1, username: "CryptoKing", handle: "@ck_wealth", tasks: 142, tp: 15400, level: "Expert", avatar: "https://i.pravatar.cc/150?u=1" },
-    { rank: 2, username: "TaskMaster", handle: "@tm_pro", tasks: 120, tp: 12850, level: "Expert", avatar: "https://i.pravatar.cc/150?u=2" },
-    { rank: 3, username: "Zelda_99", handle: "@zelda_tasks", tasks: 98, tp: 10200, level: "Advanced", avatar: "https://i.pravatar.cc/150?u=3" },
-  ];
-
-  const items: Entry[] = [
-    ...top,
-    { rank: 4, username: "DevGamer", tasks: 85, tp: 9400, level: "Advanced" },
-    { rank: 5, username: "Sarah_S", tasks: 72, tp: 8200, level: "Intermediate" },
-    { rank: 6, username: "KashFlow", tasks: 60, tp: 7500, level: "Intermediate" },
-    { rank: 7, username: "Web3Whale", tasks: 45, tp: 5200, level: "Beginner" },
-  ];
-
+  // Fetch leaderboard data from API
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
+    const fetchLeaderboardData = async () => {
+      try {
+        const response = await fetch('/api/leaderboard');
+        const result = await response.json();
+        
+        if (result.success) {
+          // Transform API data to match existing Entry format
+          const transformData = (data: any[]): Entry[] => 
+            data.map(item => ({
+              rank: item.rank,
+              username: item.username,
+              tasks: item.tasksCompleted,
+              tp: item.taskPoints,
+              level: item.level,
+              avatar: item.avatar
+            }));
+          
+          setLeaderboardData({
+            topThree: transformData(result.data.topThree),
+            topTen: transformData(result.data.topTen)
+          });
+        } else {
+          setError('Failed to load leaderboard data');
+        }
+      } catch (err) {
+        console.error('Error fetching leaderboard:', err);
+        setError('Failed to load leaderboard data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLeaderboardData();
   }, []);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading leaderboard...</p>
+        </div>
       </div>
     );
   }
+
+  if (error || !leaderboardData) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center">
+          <p className="text-destructive mb-4">{error || 'No data available'}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const top = leaderboardData.topThree;
+  const items = leaderboardData.topTen;
+
+  // Filter and search logic
+  const filteredItems = items.filter(user => {
+    const matchesSearch = user.username.toLowerCase().includes(q.toLowerCase());
+    const matchesLevel = level === "All" || user.level === level;
+    return matchesSearch && matchesLevel;
+  });
 
   return (
     <div className="flex min-h-screen bg-background text-foreground transition-colors duration-300">
@@ -167,40 +218,53 @@ export default function LeaderboardPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {items.map((user, index) => (
-                      <tr key={index} className="hover:bg-muted/30 transition-colors">
-                        <td className="py-4">
-                          <span className={`font-black ${index < 3 ? 'text-primary text-lg' : 'text-muted-foreground'}`}>
-                            #{user.rank}
-                          </span>
-                        </td>
-                        <td className="py-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-muted rounded-full overflow-hidden border border-border">
-                              {user.avatar ? (
-                                <img src={user.avatar as string} alt="" className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-bold">
-                                  {user.username.charAt(0)}
-                                </div>
-                              )}
+                    {filteredItems.length > 0 ? (
+                      filteredItems.map((user, index) => (
+                        <tr key={`${user.rank}-${user.username}`} className="hover:bg-muted/30 transition-colors">
+                          <td className="py-4">
+                            <span className={`font-black ${user.rank <= 3 ? 'text-primary text-lg' : 'text-muted-foreground'}`}>
+                              #{user.rank}
+                            </span>
+                          </td>
+                          <td className="py-4">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 bg-muted rounded-full overflow-hidden border border-border">
+                                {user.avatar ? (
+                                  <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-bold">
+                                    {user.username.charAt(0).toUpperCase()}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="font-bold">{user.username}</div>
                             </div>
-                            <div className="font-bold">{user.username}</div>
-                          </div>
-                        </td>
-                        <td className="py-4 text-right hidden sm:table-cell font-medium">
-                          {user.tasks}
-                        </td>
-                        <td className="py-4 text-right">
-                          <span className="font-bold text-primary">{user.tp.toLocaleString()} TP</span>
-                        </td>
-                        <td className="py-4 text-right hidden sm:table-cell">
-                          <span className="px-2 py-1 rounded-md bg-muted text-[10px] font-bold uppercase">
-                            {user.level}
-                          </span>
+                          </td>
+                          <td className="py-4 text-right hidden sm:table-cell font-medium">
+                            {user.tasks}
+                          </td>
+                          <td className="py-4 text-right">
+                            <span className="font-bold text-primary">{user.tp.toLocaleString()} TP</span>
+                          </td>
+                          <td className="py-4 text-right hidden sm:table-cell">
+                            <span className={`px-2 py-1 rounded-md bg-muted text-[10px] font-bold uppercase ${
+                              user.level === 'Expert' ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border border-yellow-500/30' :
+                              user.level === 'Advanced' ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-400 border border-purple-500/30' :
+                              user.level === 'Intermediate' ? 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-400 border border-blue-500/30' :
+                              'bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-400 border border-green-500/30'
+                            }`}>
+                              {user.level}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                          No users found matching your criteria.
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>

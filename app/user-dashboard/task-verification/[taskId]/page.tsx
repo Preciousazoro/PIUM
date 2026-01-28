@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Upload, CheckCircle2, Loader2, Info } from "lucide-react";
+import { Upload, CheckCircle2, Loader2, Info, ArrowLeft } from "lucide-react";
+import { TaskStateManager } from "@/lib/taskState";
+import { toast } from "sonner";
 
 // Navigation Imports
 import UserSidebar from "@/components/user-dashboard/UserSidebar";
@@ -12,18 +14,32 @@ import UserHeader from "@/components/user-dashboard/UserHeader";
 export default function TaskVerificationPage() {
   const { taskId } = useParams<{ taskId: string }>();
   const searchParams = useSearchParams();
+  const router = useRouter();
+  
   const taskTitle = searchParams.get("title") || "Task";
   const reward = searchParams.get("reward") || "0";
+  const category = searchParams.get("category") || "Other";
+  const taskDescription = searchParams.get("description") || "";
+  const taskUrl = searchParams.get("url") || "";
 
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 500);
     return () => clearTimeout(timer);
   }, []);
+
+  // Check if task is started
+  useEffect(() => {
+    if (taskId && !TaskStateManager.isTaskStarted(taskId as string)) {
+      toast.error("You must start the task first before submitting proof.");
+      router.push("/user-dashboard/dashboard");
+    }
+  }, [taskId, router]);
 
   const onChooseFile = () => fileInputRef.current?.click();
 
@@ -32,10 +48,45 @@ export default function TaskVerificationPage() {
     setFile(f);
   };
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ taskId, taskTitle, reward, description, fileName: file?.name });
-    alert("Proof submitted successfully!");
+    
+    if (!taskId) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Update task state to submitted
+      TaskStateManager.updateTaskState(taskId as string, 'submitted');
+      
+      // Log submission data (in real app, this would be sent to backend)
+      console.log({ 
+        taskId: taskId as string, 
+        taskTitle, 
+        reward, 
+        description, 
+        fileName: file?.name,
+        category,
+        taskUrl
+      });
+      
+      toast.success("Proof submitted successfully! You'll receive your reward after verification.");
+      
+      // Redirect back to dashboard after a short delay
+      setTimeout(() => {
+        router.push("/user-dashboard/dashboard");
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error submitting proof:', error);
+      toast.error("Failed to submit proof. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const goBack = () => {
+    router.back();
   };
 
   if (isLoading) {
@@ -60,17 +111,33 @@ export default function TaskVerificationPage() {
           <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-500">
             
             {/* Breadcrumb/Navigation Info */}
-            <header className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tight">
-                Submit Proof
-              </h1>
+            <header className="space-y-4">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={goBack}
+                  className="p-2 rounded-full hover:bg-muted transition-colors"
+                >
+                  <ArrowLeft className="w-5 h-5 text-muted-foreground" />
+                </button>
+                <h1 className="text-3xl font-bold tracking-tight">
+                  Submit Proof
+                </h1>
+              </div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
                 <span className="px-3 py-1 rounded-full bg-primary/10 text-primary font-bold border border-primary/20">
                    {taskTitle}
                 </span>
                 <span className="text-muted-foreground font-mono">ID: {String(taskId)}</span>
                 <span className="text-green-500 font-bold">+{reward} TP Reward</span>
+                <span className="px-2 py-1 rounded-full bg-muted text-muted-foreground text-xs">
+                  {category}
+                </span>
               </div>
+              {taskDescription && (
+                <div className="p-4 bg-muted/30 rounded-2xl border border-border">
+                  <p className="text-sm text-muted-foreground">{taskDescription}</p>
+                </div>
+              )}
             </header>
 
             {/* Submission Form */}
@@ -140,9 +207,17 @@ export default function TaskVerificationPage() {
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-green-500 to-purple-600 text-white font-black text-lg shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus:ring-2 ring-primary/40 ring-offset-2 ring-offset-background"
+                disabled={isSubmitting}
+                className="w-full py-4 rounded-2xl bg-linear-to-r from-green-500 to-purple-600 text-white font-black text-lg shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all focus:outline-none focus:ring-2 ring-primary/40 ring-offset-2 ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
               >
-                Submit for Verification
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit for Verification'
+                )}
               </button>
             </form>
 
@@ -155,107 +230,3 @@ export default function TaskVerificationPage() {
     </div>
   );
 }
-
-
-
-
-// "use client";
-
-// import { useState, useRef } from "react";
-// import { useParams, useSearchParams } from "next/navigation";
-// import { motion } from "framer-motion";
-
-// export default function TaskVerificationPage() {
-//   const { taskId } = useParams<{ taskId: string }>();
-//   const searchParams = useSearchParams();
-//   const taskTitle = searchParams.get("title") || "Task";
-//   const reward = searchParams.get("reward") || "0";
-
-//   const [description, setDescription] = useState("");
-//   const [file, setFile] = useState<File | null>(null);
-//   const fileInputRef = useRef<HTMLInputElement>(null);
-
-//   const onChooseFile = () => fileInputRef.current?.click();
-
-//   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     const f = e.target.files?.[0] ?? null;
-//     setFile(f);
-//   };
-
-//   const onSubmit = (e: React.FormEvent) => {
-//     e.preventDefault();
-//     // For now, log to console as requested
-//     // eslint-disable-next-line no-console
-//     console.log({ taskId, taskTitle, reward, description, fileName: file?.name });
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white">
-//       <div className="max-w-3xl mx-auto px-4 py-10">
-//         <motion.div
-//           initial={{ opacity: 0, y: 16 }}
-//           animate={{ opacity: 1, y: 0 }}
-//           transition={{ duration: 0.4, ease: "easeOut" }}
-//           className="space-y-6"
-//         >
-//           <header>
-//             <h1 className="text-2xl sm:text-3xl font-bold">
-//               Submit Proof for {taskTitle}
-//             </h1>
-//             <p className="text-gray-300 mt-1">Task ID: {String(taskId)}</p>
-//             <p className="text-green-400 mt-1">Reward: {reward} TP</p>
-//           </header>
-
-//           <form onSubmit={onSubmit} className="bg-gray-900/60 border border-gray-800 rounded-2xl p-6 space-y-5">
-//             <div>
-//               <label className="block text-sm font-medium text-gray-300 mb-2">
-//                 Proof Description
-//               </label>
-//               <textarea
-//                 value={description}
-//                 onChange={(e) => setDescription(e.target.value)}
-//                 placeholder="Describe your proof, add links or context..."
-//                 className="w-full h-32 resize-y bg-gray-950 border border-gray-800 rounded-lg p-3 text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600"
-//               />
-//             </div>
-
-//             <div>
-//               <label className="block text-sm font-medium text-gray-300 mb-2">
-//                 Image Proof (optional)
-//               </label>
-//               <div
-//                 className="rounded-lg border border-dashed border-gray-700 bg-gray-950 p-5 text-center cursor-pointer hover:border-purple-600 transition"
-//                 onClick={onChooseFile}
-//               >
-//                 {file ? (
-//                   <div>
-//                     <div className="text-sm text-gray-300">{file.name}</div>
-//                     <div className="text-xs text-gray-500 mt-1">Click to change file</div>
-//                   </div>
-//                 ) : (
-//                   <div>
-//                     <div className="text-gray-400">Click to upload an image (PNG, JPG)</div>
-//                   </div>
-//                 )}
-//                 <input
-//                   ref={fileInputRef}
-//                   type="file"
-//                   accept="image/png,image/jpeg,image/jpg"
-//                   className="hidden"
-//                   onChange={onFileChange}
-//                 />
-//               </div>
-//             </div>
-
-//             <button
-//               type="submit"
-//               className="w-full py-3 rounded-lg bg-gradient-to-r from-green-500 to-purple-600 text-white font-semibold shadow transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 focus:ring-offset-gray-900"
-//             >
-//               Submit Proof
-//             </button>
-//           </form>
-//         </motion.div>
-//       </div>
-//     </div>
-//   );
-// }

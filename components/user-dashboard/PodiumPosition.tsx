@@ -4,9 +4,12 @@ import { Crown, Medal } from "lucide-react";
 import Image from "next/image";
 
 type Entry = {
+  rank: number;
   username: string;
+  tasks: number;
   tp: number;
-  avatar?: string | number;
+  level: string;
+  avatar?: string | null;
 };
 
 interface PodiumProps {
@@ -27,7 +30,7 @@ export function PodiumPosition({ user, rank, isFirst }: PodiumProps) {
         }`}>
           <div className="w-full h-full rounded-full overflow-hidden bg-card border-4 border-background">
             {user.avatar ? (
-              <img src={user.avatar as string} alt={user.username} className="w-full h-full object-cover" />
+              <img src={user.avatar} alt={user.username} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-muted text-xl font-bold">
                 {user.username.charAt(0)}
