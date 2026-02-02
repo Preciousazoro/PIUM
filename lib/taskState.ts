@@ -3,7 +3,7 @@ export interface Task {
   title: string;
   description: string;
   reward: number;
-  category: 'Social' | 'Content' | 'Referral' | 'Commerce' | 'Other';
+  category: 'social' | 'content' | 'commerce';
   url: string;
   proofRequired?: boolean;
 }

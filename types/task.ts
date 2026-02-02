@@ -1,33 +1,35 @@
 export interface Task {
   _id: string;
   title: string;
+  description: string;
   category: TaskCategory;
-  reward: number;
+  rewardPoints: number;
+  validationType: string;
+  instructions: string;
+  taskLink?: string;
+  alternateUrl?: string;
+  deadline: Date | undefined;
   status: TaskStatus;
-  participants: number;
-  description?: string;
-  instructions?: string;
-  proofType?: ProofType;
-  deadline?: Date;
+  createdBy: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export type TaskCategory = 'Social' | 'Community' | 'Referral' | 'Content' | 'Commerce' | 'Other';
+export type TaskCategory = 'social' | 'content' | 'commerce';
 
-export type TaskStatus = 'Active' | 'Draft' | 'Paused';
-
-export type ProofType = 'Screenshot' | 'Username' | 'Text' | 'Link';
+export type TaskStatus = 'active' | 'expired' | 'disabled';
 
 export interface CreateTaskRequest {
   title: string;
+  description: string;
   category: TaskCategory;
-  reward: number;
-  status: TaskStatus;
-  description?: string;
-  instructions?: string;
-  proofType?: ProofType;
-  deadline?: Date;
+  rewardPoints: number;
+  validationType: string;
+  instructions: string;
+  taskLink?: string;
+  alternateUrl?: string;
+  deadline?: Date | undefined;
+  status?: TaskStatus;
 }
 
 export interface TaskResponse {

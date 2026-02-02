@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import { Link as LinkIcon, ExternalLink, Trophy, CheckCircle2, Flame, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { RecentActivity } from "@/components/user-dashboard/RecentActivity";
-import { TaskCard } from "@/components/tasks/TaskCard";
-import { TaskPreviewModal } from "@/components/tasks/TaskPreviewModal";
+import { TaskDocument, TaskCard, transformTaskToCard } from "@/types/shared-task";
 import { Task } from "@/lib/taskState";
+import { TaskCard as TaskCardComponent } from "@/components/tasks/TaskCard";
+import { TaskPreviewModal } from "@/components/tasks/TaskPreviewModal";
+import { RecentActivity } from "@/components/user-dashboard/RecentActivity";
 
 // Directly import the Sidebar and Header here
 import UserSidebar from "@/components/user-dashboard/UserSidebar";
@@ -17,7 +18,7 @@ export default function DashboardPage() {
   const [tasksLoading, setTasksLoading] = useState(true);
   const [taskPoints, setTaskPoints] = useState<number>(50); // Start with welcome bonus
   const [tasksCompleted, setTasksCompleted] = useState<number>(0);
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<TaskDocument[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
@@ -99,7 +100,7 @@ export default function DashboardPage() {
       title: "Follow TaskKash on X",
       description: "Follow our official handle to stay updated with the latest rewards and announcements. Make sure to follow and stay engaged for future opportunities.",
       reward: 50,
-      category: "Social",
+      category: "social",
       url: "https://twitter.com/taskkash",
       proofRequired: true
     },
@@ -108,7 +109,7 @@ export default function DashboardPage() {
       title: "Join our Discord Community",
       description: "Become part of our growing community on Discord. Participate in discussions, get support, and be the first to know about new features and rewards.",
       reward: 75,
-      category: "Social",
+      category: "social",
       url: "https://discord.gg/taskkash",
       proofRequired: true
     },
@@ -117,7 +118,7 @@ export default function DashboardPage() {
       title: "Create Content About TaskKash",
       description: "Create a short video or post about TaskKash and share it on your social media. Show your creativity and earn rewards!",
       reward: 150,
-      category: "Content", 
+      category: "content", 
       url: "https://taskkash.com/content-creator",
       proofRequired: true
     },
@@ -126,7 +127,7 @@ export default function DashboardPage() {
       title: "Refer a Friend",
       description: "Invite your friends to join TaskKash and earn rewards when they complete their first task. Share your unique referral link and track your referrals.",
       reward: 100,
-      category: "Referral", 
+      category: "social", 
       url: "https://taskkash.com/referrals",
       proofRequired: true
     },
@@ -135,7 +136,7 @@ export default function DashboardPage() {
       title: "Complete a Purchase",
       description: "Make a purchase from one of our partner stores and earn cashback in TP. The more you shop, the more you earn!",
       reward: 200,
-      category: "Commerce", 
+      category: "commerce", 
       url: "https://taskkash.com/partners",
       proofRequired: true
     },
@@ -144,22 +145,16 @@ export default function DashboardPage() {
       title: "Complete Your Profile",
       description: "Fill out your complete profile information including avatar, bio, and preferences. This helps us match you with better tasks.",
       reward: 25,
-      category: "Other", 
+      category: "social", 
       url: "https://taskkash.com/profile",
       proofRequired: false
     }
   ];
 
   // Use real tasks if available, otherwise fallback to sample tasks
-  const displayTasks = tasks.length > 0 ? tasks.map(task => ({
-    id: task._id,
-    title: task.title,
-    description: task.description || `Complete this ${task.category} task and earn ${task.reward} TP!`,
-    reward: task.reward,
-    category: task.category,
-    url: `/tasks/${task._id}`,
-    proofRequired: true
-  })) : sampleTasks;
+  const displayTasks: Task[] = tasks.length > 0 
+    ? tasks.map(transformTaskToCard) 
+    : sampleTasks;
 
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
@@ -254,7 +249,7 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {displayTasks.map((task) => (
-                <TaskCard 
+                <TaskCardComponent 
                   key={task.id} 
                   task={task} 
                   onClick={handleTaskClick}

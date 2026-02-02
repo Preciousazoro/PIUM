@@ -3,6 +3,8 @@ import connectDB from '@/lib/mongodb';
 import Task from '@/models/Task';
 
 // GET /api/tasks - Return only active tasks for users
+export const runtime = "nodejs";
+
 export async function GET() {
   try {
     // Connect to database
@@ -10,21 +12,31 @@ export async function GET() {
 
     // Fetch only active tasks sorted by creation date
     const tasks = await Task.find({ 
-      status: 'Active',
-      // Optionally filter out tasks with expired deadlines
+      status: 'active',
+      // Filter out tasks with expired deadlines
       $or: [
-        { deadline: { $exists: false } },
+        { deadline: null },
         { deadline: { $gt: new Date() } }
       ]
     })
-    .select('title category reward status participants description instructions proofType deadline createdAt')
+    .select('title description category rewardPoints validationType instructions taskLink alternateUrl deadline status createdAt updatedAt')
     .sort({ createdAt: -1 });
 
     return NextResponse.json({ tasks }, { status: 200 });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error fetching active tasks:', error);
+    
+    // Handle generic Error objects
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: 'Failed to fetch tasks', details: error.message },
+        { status: 500 }
+      );
+    }
+    
+    // Handle unknown error types
     return NextResponse.json(
-      { error: 'Failed to fetch tasks' },
+      { error: 'Failed to fetch tasks', details: 'An unknown error occurred' },
       { status: 500 }
     );
   }

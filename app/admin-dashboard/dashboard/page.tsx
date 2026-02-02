@@ -11,6 +11,7 @@ import {
   CheckCircle,
   Plus,
   Search,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -21,6 +22,14 @@ type Task = {
   category: string;
   rewardPoints: number;
   createdAt: string;
+};
+
+type DashboardMetrics = {
+  totalUsers: number;
+  tasksCompleted: number;
+  pendingReviews: number;
+  rewardsIssued: number;
+  lastUpdated: string;
 };
 
 /* ---------------- COMPONENT ---------------- */
@@ -37,11 +46,55 @@ const Dashboard = () => {
   /* ---------- LOCAL DATA ---------- */
   const [tasks, setTasks] = useState<Task[]>([]);
   const [recent, setRecent] = useState<any[]>([]);
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [metricsLoading, setMetricsLoading] = useState(true);
+  const [metricsError, setMetricsError] = useState<string | null>(null);
+
+  /* ---------- FETCH METRICS ---------- */
+  const fetchMetrics = async () => {
+    try {
+      setMetricsLoading(true);
+      setMetricsError(null);
+      
+      const response = await fetch('/api/admin/metrics');
+      const data = await response.json();
+      
+      if (data.success) {
+        setMetrics(data.data);
+      } else {
+        throw new Error(data.error || 'Failed to fetch metrics');
+      }
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+      setMetricsError(error instanceof Error ? error.message : 'Unknown error');
+      toast.error('Failed to load dashboard metrics');
+    } finally {
+      setMetricsLoading(false);
+    }
+  };
+
+  /* ---------- EFFECTS ---------- */
+  useEffect(() => {
+    fetchMetrics();
+    // Refresh metrics every 30 seconds
+    const interval = setInterval(fetchMetrics, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   /* ---------- STATS ---------- */
   const stats = useMemo(() => {
+    if (metrics) {
+      return {
+        totalUsers: metrics.totalUsers,
+        tasksCompleted: metrics.tasksCompleted,
+        pendingReviews: metrics.pendingReviews,
+        rewardsIssued: metrics.rewardsIssued,
+      };
+    }
+    
+    // Fallback to calculated values if metrics not loaded
     return {
-      totalUsers: 1280,
+      totalUsers: 0,
       tasksCompleted: tasks.length * 5,
       pendingReviews: tasks.length,
       rewardsIssued: tasks.reduce(
@@ -49,7 +102,7 @@ const Dashboard = () => {
         0
       ),
     };
-  }, [tasks]);
+  }, [metrics, tasks]);
 
   /* ---------- CHARTS ---------- */
   useEffect(() => {
@@ -194,10 +247,33 @@ const Dashboard = () => {
 
           {/* STATS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Stat icon={<Users />} label="Total Users" value={stats.totalUsers} />
-            <Stat icon={<CheckCircle />} label="Tasks Completed" value={stats.tasksCompleted} />
-            <Stat icon={<FileText />} label="Pending Reviews" value={stats.pendingReviews} />
-            <Stat icon={<Award />} label="Rewards Issued" value={stats.rewardsIssued} />
+            {metricsLoading ? (
+              <>
+                <StatSkeleton label="Total Users" />
+                <StatSkeleton label="Tasks Completed" />
+                <StatSkeleton label="Pending Reviews" />
+                <StatSkeleton label="Rewards Issued" />
+              </>
+            ) : metricsError ? (
+              <div className="col-span-full">
+                <div className="bg-card border rounded-2xl p-5 text-center">
+                  <p className="text-red-500 text-sm">Failed to load metrics</p>
+                  <button 
+                    onClick={fetchMetrics}
+                    className="mt-2 text-xs text-blue-500 hover:underline"
+                  >
+                    Retry
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <Stat icon={<Users />} label="Total Users" value={stats.totalUsers} />
+                <Stat icon={<CheckCircle />} label="Tasks Completed" value={stats.tasksCompleted} />
+                <Stat icon={<FileText />} label="Pending Reviews" value={stats.pendingReviews} />
+                <Stat icon={<Award />} label="Rewards Issued" value={stats.rewardsIssued} />
+              </>
+            )}
           </div>
 
           {/* CHARTS */}
@@ -344,8 +420,22 @@ const Stat = ({ icon, label, value }: any) => (
         {label}
       </p>
       <h3 className="text-xl font-semibold">
-        {value}
+        {value.toLocaleString()}
       </h3>
+    </div>
+  </div>
+);
+
+const StatSkeleton = ({ label }: { label: string }) => (
+  <div className="bg-card border rounded-2xl p-5 flex items-center gap-4">
+    <div className="p-3 rounded-full bg-primary/20 animate-pulse">
+      <Loader2 className="animate-spin" size={20} />
+    </div>
+    <div className="flex-1">
+      <p className="text-sm text-muted-foreground mb-1">
+        {label}
+      </p>
+      <div className="h-6 bg-muted rounded animate-pulse w-16" />
     </div>
   </div>
 );

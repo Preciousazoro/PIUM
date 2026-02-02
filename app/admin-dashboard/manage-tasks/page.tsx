@@ -10,14 +10,16 @@ import AdminSidebar from "../../../components/admin-dashboard/AdminSidebar";
 interface Task {
   _id: string;
   title: string;
-  category: string;
-  reward: number;
-  status: 'Active' | 'Draft' | 'Paused';
-  participants: number;
-  description?: string;
-  instructions?: string;
-  proofType?: string;
-  deadline?: string;
+  description: string;
+  category: 'social' | 'content' | 'commerce';
+  rewardPoints: number;
+  validationType: string;
+  instructions: string;
+  taskLink: string;
+  alternateUrl: string;
+  deadline: string | null;
+  status: 'active' | 'expired' | 'disabled';
+  createdBy: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -58,12 +60,15 @@ const ManageTasks = () => {
   const [editTask, setEditTask] = useState<any>(null);
 
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("");
-  const [reward, setReward] = useState<number | "">("");
-  const [status, setStatus] = useState<'Active' | 'Draft' | 'Paused'>('Draft');
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState<'social' | 'content' | 'commerce'>('social');
+  const [rewardPoints, setRewardPoints] = useState<number | "">("");
+  const [validationType, setValidationType] = useState("");
   const [instructions, setInstructions] = useState("");
-  const [proofType, setProofType] = useState('Screenshot');
+  const [taskLink, setTaskLink] = useState("");
+  const [alternateUrl, setAlternateUrl] = useState("");
+  const [deadline, setDeadline] = useState("");
+  const [status, setStatus] = useState<'active' | 'expired' | 'disabled'>('active');
 
   /* ------------------ HANDLERS ------------------ */
   const openViewModal = (task: any) => {
@@ -73,46 +78,148 @@ const ManageTasks = () => {
 
   const openEditModal = (task: any) => {
     setEditTask(task);
+    setTitle(task.title);
+    setDescription(task.description);
+    setCategory(task.category);
+    setRewardPoints(task.rewardPoints);
+    setValidationType(task.validationType);
+    setInstructions(task.instructions);
+    setTaskLink(task.taskLink);
+    setAlternateUrl(task.alternateUrl || '');
+    setDeadline(task.deadline ? new Date(task.deadline).toISOString().slice(0, 16) : '');
+    setStatus(task.status);
     setShowEditModal(true);
+  };
+
+  const handleEditTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editTask) return;
+    
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(`/api/admin/tasks/${editTask._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title,
+          description,
+          category,
+          rewardPoints: Number(rewardPoints),
+          validationType,
+          instructions,
+          taskLink,
+          alternateUrl,
+          deadline: deadline || null,
+          status
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update task');
+      }
+
+      const data = await response.json();
+      toast.success('Task updated successfully!');
+      
+      // Reset form
+      setTitle("");
+      setDescription("");
+      setCategory('social');
+      setRewardPoints("");
+      setValidationType("");
+      setInstructions("");
+      setTaskLink("");
+      setAlternateUrl("");
+      setDeadline("");
+      setStatus('active');
+      setEditTask(null);
+      setShowEditModal(false);
+      
+      // Refresh tasks list
+      fetchTasks();
+    } catch (error: any) {
+      console.error('Error updating task:', error);
+      toast.error(error.message || 'Failed to update task');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
+    // Basic client-side validation before sending
+    if (!title.trim()) {
+      toast.error('Title is required');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!description.trim()) {
+      toast.error('Description is required');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!taskLink.trim() && !alternateUrl.trim()) {
+      toast.error('At least one link is required (Task Link or Alternate URL)');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
+      const requestData = {
+        title: title.trim(),
+        description: description.trim(),
+        category,
+        rewardPoints: Number(rewardPoints),
+        validationType: validationType.trim(),
+        instructions: instructions.trim(),
+        taskLink: taskLink.trim(),
+        alternateUrl: alternateUrl.trim() || '',
+        deadline: deadline || null,
+        status: status || 'active'
+      };
+
+      console.log('Creating task with data:', requestData);
+
       const response = await fetch('/api/admin/tasks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          title,
-          category,
-          reward: Number(reward),
-          status,
-          description,
-          instructions,
-          proofType
-        }),
+        body: JSON.stringify(requestData),
       });
+
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create task');
+        console.error('Error response:', errorData);
+        throw new Error(errorData.error || errorData.details?.join(', ') || 'Failed to create task');
       }
 
       const data = await response.json();
+      console.log('Success response:', data);
       toast.success('Task created successfully!');
       
       // Reset form
       setTitle("");
-      setCategory("");
-      setReward("");
-      setStatus('Draft');
       setDescription("");
+      setCategory('social');
+      setRewardPoints("");
+      setValidationType("");
       setInstructions("");
-      setProofType('Screenshot');
+      setTaskLink("");
+      setAlternateUrl("");
+      setDeadline("");
+      setStatus('active');
       setShowCreateModal(false);
       
       // Refresh tasks list
@@ -182,7 +289,6 @@ const ManageTasks = () => {
                         "Category",
                         "Reward",
                         "Status",
-                        "Participants",
                         "Actions",
                       ].map((h) => (
                         <th
@@ -200,17 +306,16 @@ const ManageTasks = () => {
                       <tr key={task._id} className="border-t hover:bg-muted/40">
                         <td className="px-6 py-4 font-medium">{task.title}</td>
                         <td className="px-6 py-4">{task.category}</td>
-                        <td className="px-6 py-4">{task.reward} TP</td>
+                        <td className="px-6 py-4">{task.rewardPoints} TP</td>
                         <td className="px-6 py-4">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            task.status === 'Active' ? 'bg-green-100 text-green-800' :
-                            task.status === 'Draft' ? 'bg-gray-100 text-gray-800' :
-                            'bg-yellow-100 text-yellow-800'
+                            task.status === 'active' ? 'bg-green-100 text-green-800' :
+                            task.status === 'expired' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
                           }`}>
                             {task.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4">{task.participants}</td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-3">
                             <button onClick={() => openViewModal(task)}>
@@ -233,12 +338,179 @@ const ManageTasks = () => {
 
             {/* CREATE MODAL */}
             {showCreateModal && (
-              <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
                 <form
                   onSubmit={handleCreateTask}
-                  className="bg-card p-6 rounded-2xl w-full max-w-lg space-y-4"
+                  className="bg-gray-900 p-8 rounded-2xl w-full max-w-2xl max-h-[90vh] space-y-6 text-white overflow-y-auto"
                 >
-                  <h3 className="text-xl font-bold">Create Task</h3>
+                  <h3 className="text-2xl font-bold text-center sticky top-0 bg-gray-900 pb-4 border-b border-gray-700">Create Task</h3>
+
+                  {/* Title */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-200">Title</label>
+                    <input
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      placeholder="Enter task title"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  {/* Category */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-200">Category</label>
+                    <select
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value as 'social' | 'content' | 'commerce')}
+                      required
+                    >
+                      <option value="" className="bg-gray-800">Select category</option>
+                      <option value="social" className="bg-gray-800">Social</option>
+                      <option value="content" className="bg-gray-800">Content</option>
+                      <option value="commerce" className="bg-gray-800">Commerce</option>
+                    </select>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-200">Description</label>
+                    <textarea
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-none"
+                      placeholder="Enter task description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={4}
+                      required
+                    />
+                  </div>
+
+                  {/* Reward Points */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-200">Reward Points</label>
+                    <input
+                      type="number"
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      placeholder="Enter reward points"
+                      value={rewardPoints}
+                      onChange={(e) =>
+                        setRewardPoints(e.target.value === "" ? "" : Number(e.target.value))
+                      }
+                      required
+                    />
+                  </div>
+
+                  {/* Validation Type */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-200">Validation Type</label>
+                    <select
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      value={validationType}
+                      onChange={(e) => setValidationType(e.target.value)}
+                      required
+                    >
+                      <option value="" className="bg-gray-800">Select validation type</option>
+                      <option value="screenshot" className="bg-gray-800">Screenshot</option>
+                      <option value="username" className="bg-gray-800">Username</option>
+                      <option value="text" className="bg-gray-800">Text</option>
+                      <option value="link" className="bg-gray-800">Link</option>
+                    </select>
+                  </div>
+
+                  {/* Instructions */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-200">Instructions</label>
+                    <textarea
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-none"
+                      placeholder="Enter task instructions"
+                      value={instructions}
+                      onChange={(e) => setInstructions(e.target.value)}
+                      rows={4}
+                      required
+                    />
+                  </div>
+
+                  {/* Task Links */}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-200">Task Link (preferred)</label>
+                      <input
+                        type="url"
+                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                        placeholder="https://example.com/task"
+                        value={taskLink}
+                        onChange={(e) => setTaskLink(e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-200">Alternate URL</label>
+                      <input
+                        type="url"
+                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                        placeholder="https://example.com/alternate"
+                        value={alternateUrl}
+                        onChange={(e) => setAlternateUrl(e.target.value)}
+                      />
+                    </div>
+
+                    <p className="text-xs text-gray-400 bg-gray-800 p-3 rounded-lg border border-gray-700">
+                      ⚠️ At least one link is required (Task Link or Alternate URL)
+                    </p>
+                  </div>
+
+                  {/* Deadline */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-200">Deadline</label>
+                    <input
+                      type="datetime-local"
+                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                      value={deadline}
+                      onChange={(e) => setDeadline(e.target.value)}
+                      min={new Date().toISOString().slice(0, 16)}
+                    />
+                  </div>
+
+                  {/* Form Actions - Sticky at bottom */}
+                  <div className="sticky bottom-0 bg-gray-900 pt-6 border-t border-gray-700">
+                    <div className="flex justify-end gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowCreateModal(false)}
+                        className="px-6 py-3 border border-gray-600 rounded-lg text-white hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500/20"
+                        disabled={isSubmitting}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Creating...
+                          </div>
+                        ) : (
+                          'Create Task'
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* EDIT MODAL */}
+            {showEditModal && editTask && (
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
+                <form
+                  onSubmit={handleEditTask}
+                  className="bg-card p-6 rounded-2xl w-full max-w-lg space-y-4 max-h-[80vh] overflow-y-auto"
+                >
+                  <h3 className="text-xl font-bold">Edit Task</h3>
 
                   <input
                     className="w-full border rounded px-3 py-2"
@@ -248,71 +520,106 @@ const ManageTasks = () => {
                     required
                   />
 
+                  <textarea
+                    className="w-full border rounded px-3 py-2"
+                    placeholder="Task Description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={3}
+                    required
+                  />
+
                   <select
                     className="w-full border rounded px-3 py-2"
                     value={category}
-                    onChange={(e) => setCategory(e.target.value)}
+                    onChange={(e) => setCategory(e.target.value as 'social' | 'content' | 'commerce')}
                     required
                   >
-                    <option value="">Select category</option>
-                    <option>Social</option>
-                    <option>Community</option>
-                    <option>Referral</option>
+                    <option value="social">Social</option>
+                    <option value="content">Content</option>
+                    <option value="commerce">Commerce</option>
                   </select>
 
                   <input
                     type="number"
                     className="w-full border rounded px-3 py-2"
                     placeholder="Reward Points"
-                    value={reward}
+                    value={rewardPoints}
                     onChange={(e) =>
-                      setReward(e.target.value === "" ? "" : Number(e.target.value))
+                      setRewardPoints(e.target.value === "" ? "" : Number(e.target.value))
                     }
                     required
+                  />
+
+                  <input
+                    className="w-full border rounded px-3 py-2"
+                    placeholder="Validation Type"
+                    value={validationType}
+                    onChange={(e) => setValidationType(e.target.value)}
+                    required
+                  />
+
+                  <textarea
+                    className="w-full border rounded px-3 py-2"
+                    placeholder="Task Instructions"
+                    value={instructions}
+                    onChange={(e) => setInstructions(e.target.value)}
+                    rows={3}
+                    required
+                  />
+
+                  <input
+                    className="w-full border rounded px-3 py-2"
+                    placeholder="Task Link"
+                    value={taskLink}
+                    onChange={(e) => setTaskLink(e.target.value)}
+                    required
+                  />
+
+                  <input
+                    className="w-full border rounded px-3 py-2"
+                    placeholder="Alternate URL (optional)"
+                    value={alternateUrl}
+                    onChange={(e) => setAlternateUrl(e.target.value)}
+                  />
+
+                  <input
+                    type="datetime-local"
+                    className="w-full border rounded px-3 py-2"
+                    placeholder="Deadline (optional)"
+                    value={deadline}
+                    onChange={(e) => setDeadline(e.target.value)}
                   />
 
                   <select
                     className="w-full border rounded px-3 py-2"
                     value={status}
-                    onChange={(e) => setStatus(e.target.value as 'Active' | 'Draft' | 'Paused')}
+                    onChange={(e) => setStatus(e.target.value as 'active' | 'expired' | 'disabled')}
                     required
                   >
-                    <option value="Draft">Draft</option>
-                    <option value="Active">Active</option>
-                    <option value="Paused">Paused</option>
-                  </select>
-
-                  <textarea
-                    className="w-full border rounded px-3 py-2"
-                    placeholder="Description (optional)"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={3}
-                  />
-
-                  <textarea
-                    className="w-full border rounded px-3 py-2"
-                    placeholder="Instructions (optional)"
-                    value={instructions}
-                    onChange={(e) => setInstructions(e.target.value)}
-                    rows={3}
-                  />
-
-                  <select
-                    className="w-full border rounded px-3 py-2"
-                    value={proofType}
-                    onChange={(e) => setProofType(e.target.value)}
-                  >
-                    <option value="Screenshot">Screenshot</option>
-                    <option value="Username">Username</option>
-                    <option value="Text">Text</option>
-                    <option value="Link">Link</option>
+                    <option value="active">Active</option>
+                    <option value="expired">Expired</option>
+                    <option value="disabled">Disabled</option>
                   </select>
 
                   <div className="flex justify-end gap-3">
                     <button
                       type="button"
-                      onClick={() => setShowCreateModal(false)}
+                      onClick={() => {
+                        setShowEditModal(false);
+                        setEditTask(null);
+                        // Reset form
+                        setTitle("");
+                        setDescription("");
+                        setCategory('social');
+                        setRewardPoints("");
+                        setValidationType("");
+                        setInstructions("");
+                        setTaskLink("");
+                        setAlternateUrl("");
+                        setDeadline("");
+                        setStatus('active');
+                      }}
                       className="px-4 py-2 border rounded"
                       disabled={isSubmitting}
                     >
@@ -326,10 +633,10 @@ const ManageTasks = () => {
                       {isSubmitting ? (
                         <div className="flex items-center gap-2">
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Creating...
+                          Updating...
                         </div>
                       ) : (
-                        'Create'
+                        'Update'
                       )}
                     </button>
                   </div>
@@ -340,16 +647,27 @@ const ManageTasks = () => {
             {/* VIEW MODAL */}
             {showViewModal && viewTask && (
               <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
-                <div className="bg-card p-6 rounded-2xl w-full max-w-lg space-y-3">
+                <div className="bg-card p-6 rounded-2xl w-full max-w-lg space-y-3 max-h-[80vh] overflow-y-auto">
                   <h3 className="text-xl font-bold">Task Details</h3>
                   <p><b>Title:</b> {viewTask.title}</p>
+                  <p><b>Description:</b> {viewTask.description}</p>
                   <p><b>Category:</b> {viewTask.category}</p>
-                  <p><b>Reward:</b> {viewTask.reward} TP</p>
-                  <p><b>Status:</b> {viewTask.status}</p>
-                  <p><b>Participants:</b> {viewTask.participants}</p>
-                  {viewTask.description && <p><b>Description:</b> {viewTask.description}</p>}
-                  {viewTask.instructions && <p><b>Instructions:</b> {viewTask.instructions}</p>}
-                  {viewTask.proofType && <p><b>Proof Type:</b> {viewTask.proofType}</p>}
+                  <p><b>Reward Points:</b> {viewTask.rewardPoints} TP</p>
+                  <p><b>Validation Type:</b> {viewTask.validationType}</p>
+                  <p><b>Instructions:</b> {viewTask.instructions}</p>
+                  <p><b>Task Link:</b> <a href={viewTask.taskLink} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{viewTask.taskLink}</a></p>
+                  {viewTask.alternateUrl && <p><b>Alternate URL:</b> <a href={viewTask.alternateUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{viewTask.alternateUrl}</a></p>}
+                  {viewTask.deadline && <p><b>Deadline:</b> {new Date(viewTask.deadline).toLocaleString()}</p>}
+                  <p><b>Status:</b> 
+                    <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                      viewTask.status === 'active' ? 'bg-green-100 text-green-800' :
+                      viewTask.status === 'expired' ? 'bg-red-100 text-red-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {viewTask.status}
+                    </span>
+                  </p>
+                  <p><b>Created:</b> {new Date(viewTask.createdAt).toLocaleString()}</p>
                   <button
                     onClick={() => setShowViewModal(false)}
                     className="mt-4 px-4 py-2 border rounded"

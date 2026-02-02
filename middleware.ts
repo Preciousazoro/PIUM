@@ -6,14 +6,19 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   /**
-   * 🚨 ABSOLUTE BYPASS - Never interfere with NextAuth
+   * 🚨 ABSOLUTE BYPASS
+   * Never intercept API or NextAuth
    */
-  if (pathname.startsWith("/api/auth")) {
+  if (
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon.ico")
+  ) {
     return NextResponse.next();
   }
 
   /**
-   * 🔒 PROTECT DASHBOARD ROUTES ONLY
+   * 🔒 Protect dashboard pages only
    */
   if (
     pathname.startsWith("/user-dashboard") ||
@@ -22,26 +27,72 @@ export async function middleware(request: NextRequest) {
     const token = await getToken({
       req: request,
       secret: process.env.NEXTAUTH_SECRET,
-      secureCookie: process.env.NODE_ENV === "production",
     });
 
     if (!token) {
-      return NextResponse.redirect(new URL("/auth/login", request.url));
+      return NextResponse.redirect(
+        new URL("/auth/login", request.url)
+      );
     }
   }
 
   return NextResponse.next();
 }
 
-/**
- * ✅ MATCH ONLY PROTECTED ROUTES
- */
 export const config = {
   matcher: [
     "/user-dashboard/:path*",
     "/admin-dashboard/:path*",
   ],
 };
+
+
+
+
+// import { NextResponse } from "next/server";
+// import type { NextRequest } from "next/server";
+// import { getToken } from "next-auth/jwt";
+
+// export async function middleware(request: NextRequest) {
+//   const { pathname } = request.nextUrl;
+
+//   /**
+//    * 🚨 ABSOLUTE BYPASS - Never interfere with NextAuth
+//    */
+//   if (pathname.startsWith("/api/auth")) {
+//     return NextResponse.next();
+//   }
+
+//   /**
+//    * 🔒 PROTECT DASHBOARD ROUTES ONLY
+//    */
+//   if (
+//     pathname.startsWith("/user-dashboard") ||
+//     pathname.startsWith("/admin-dashboard")
+//   ) {
+//     const token = await getToken({
+//       req: request,
+//       secret: process.env.NEXTAUTH_SECRET,
+//       secureCookie: process.env.NODE_ENV === "production",
+//     });
+
+//     if (!token) {
+//       return NextResponse.redirect(new URL("/auth/login", request.url));
+//     }
+//   }
+
+//   return NextResponse.next();
+// }
+
+// /**
+//  * ✅ MATCH ONLY PROTECTED ROUTES
+//  */
+// export const config = {
+//   matcher: [
+//     "/user-dashboard/:path*",
+//     "/admin-dashboard/:path*",
+//   ],
+// };
 
 
 

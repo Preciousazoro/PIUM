@@ -1,45 +1,101 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import feather from "feather-icons";
 import AdminHeader from "../../../components/admin-dashboard/AdminHeader";
 import AdminSidebar from "../../../components/admin-dashboard/AdminSidebar";
 import { toast } from "sonner";
 import { Pagination } from "@/components/ui/Pagination";
 
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  username?: string | null;
+  avatarUrl?: string | null;
+  role: string;
+  status: string;
+  points: number;
+  tasksCompleted: number;
+  createdAt: string;
+  updatedAt: string;
+  socialLinks?: any;
+}
+
+interface PaginationData {
+  currentPage: number;
+  totalPages: number;
+  totalUsers: number;
+  limit: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
 /* ---------------- COMPONENT ---------------- */
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<any[]>([]);
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [detailUser, setDetailUser] = useState<any | null>(null);
-  const [editingPoints, setEditingPoints] = useState<{ [k: string]: number }>({});
-
-  /* -------- CLIENT-SIDE MOCK USERS -------- */
-  useEffect(() => {
-    const mockUsers = Array.from({ length: 42 }).map((_, i) => ({
-      _id: `user-${i + 1}`,
-      name: `User ${i + 1}`,
-      email: `user${i + 1}@example.com`,
-      role: i % 10 === 0 ? "admin" : "user",
-      status: i % 7 === 0 ? "suspended" : "active",
-      points: Math.floor(Math.random() * 500),
-      createdAt: new Date(Date.now() - i * 86400000).toISOString(),
-    }));
-    setUsers(mockUsers);
-  }, []);
-
-  /* -------- PAGINATION (CLIENT SIDE) -------- */
-  const [pagination, setPagination] = useState({
-    page: 1,
+  const [users, setUsers] = useState<User[]>([]);
+  const [pagination, setPagination] = useState<PaginationData>({
+    currentPage: 1,
+    totalPages: 0,
+    totalUsers: 0,
     limit: 10,
+    hasNextPage: false,
+    hasPrevPage: false
   });
+  const [loading, setLoading] = useState(true);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailUser, setDetailUser] = useState<User | null>(null);
+  const [editingPoints, setEditingPoints] = useState<{ [k: string]: number }>({});
+  
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const totalPages = Math.ceil(users.length / pagination.limit);
+  /* -------- FETCH USERS FROM DATABASE -------- */
+  const fetchUsers = async (page: number, limit: number) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/admin/users?page=${page}&limit=${limit}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+      
+      const data = await response.json();
+      setUsers(data.users);
+      setPagination(data.pagination);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast.error('Failed to load users');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const paginatedUsers = useMemo(() => {
-    const start = (pagination.page - 1) * pagination.limit;
-    return users.slice(start, start + pagination.limit);
-  }, [users, pagination]);
+  /* -------- INITIAL LOAD AND URL SYNC -------- */
+  useEffect(() => {
+    const pageParam = searchParams.get('page');
+    const limitParam = searchParams.get('limit');
+    const page = pageParam ? parseInt(pageParam) : 1;
+    const limit = limitParam ? parseInt(limitParam) : 10;
+    
+    fetchUsers(page, limit);
+  }, [searchParams]);
+
+  /* -------- PAGINATION HANDLERS -------- */
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', newPage.toString());
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handleItemsPerPageChange = (newLimit: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', '1');
+    params.set('limit', newLimit.toString());
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   /* -------- ICONS -------- */
   useEffect(() => {
@@ -52,7 +108,7 @@ export default function AdminUsersPage() {
   const showToast = (msg: string, type: "success" | "error" | "info" = "info") =>
     type === "success" ? toast.success(msg) : type === "error" ? toast.error(msg) : toast(msg);
 
-  const onViewDetails = (u: any) => {
+  const onViewDetails = (u: User) => {
     setDetailUser(u);
     setDetailOpen(true);
   };
@@ -69,7 +125,7 @@ export default function AdminUsersPage() {
     showToast("Points updated", "success");
   };
 
-  const toggleSuspend = (u: any) => {
+  const toggleSuspend = (u: User) => {
     setUsers(prev =>
       prev.map(x =>
         x._id === u._id
@@ -80,14 +136,14 @@ export default function AdminUsersPage() {
     showToast("User status updated", "success");
   };
 
-  const makeAdmin = (u: any) => {
+  const makeAdmin = (u: User) => {
     setUsers(prev =>
       prev.map(x => (x._id === u._id ? { ...x, role: "admin" } : x))
     );
     showToast("User is now an admin", "success");
   };
 
-  const deleteUser = (u: any) => {
+  const deleteUser = (u: User) => {
     setUsers(prev => prev.filter(x => x._id !== u._id));
     setDetailOpen(false);
     showToast("User deleted", "success");
@@ -105,7 +161,7 @@ export default function AdminUsersPage() {
           <div className="flex justify-between mb-6">
             <h2 className="text-2xl font-bold">Users</h2>
             <span className="text-muted-foreground text-sm">
-              Total: {users.length}
+              Total: {pagination.totalUsers}
             </span>
           </div>
 
@@ -122,82 +178,94 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {paginatedUsers.map(u => (
-                  <tr key={u._id} className="hover:bg-muted/50">
-                    <td className="px-6 py-4">
-                      <div className="font-medium">{u.name}</div>
-                      <div className="text-xs text-muted-foreground">{u.email}</div>
-                    </td>
-                    <td className="px-6 py-4 capitalize">{u.role}</td>
-                    <td className="px-6 py-4 capitalize">{u.status}</td>
-                    <td className="px-6 py-4">
-                      {editingPoints[u._id] !== undefined ? (
-                        <div className="flex gap-2">
-                          <input
-                            type="number"
-                            value={editingPoints[u._id]}
-                            onChange={e =>
-                              setEditingPoints(p => ({
-                                ...p,
-                                [u._id]: Number(e.target.value),
-                              }))
-                            }
-                            className="w-20 border rounded px-2 py-1"
-                          />
-                          <button
-                            onClick={() => updatePoints(u._id, editingPoints[u._id])}
-                            className="px-2 py-1 text-xs bg-primary text-white rounded"
-                          >
-                            Save
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          {u.points}
-                          <button
-                            onClick={() =>
-                              setEditingPoints(p => ({ ...p, [u._id]: u.points }))
-                            }
-                          >
-                            <i data-feather="edit-2"></i>
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">
-                      {new Date(u.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 flex gap-3 justify-end">
-                      <button onClick={() => onViewDetails(u)}>
-                        <i data-feather="eye"></i>
-                      </button>
-                      {u.role !== "admin" && (
-                        <button onClick={() => makeAdmin(u)}>
-                          <i data-feather="shield"></i>
-                        </button>
-                      )}
-                      <button onClick={() => toggleSuspend(u)}>
-                        <i data-feather="slash"></i>
-                      </button>
-                      <button onClick={() => deleteUser(u)}>
-                        <i data-feather="trash-2"></i>
-                      </button>
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
+                      Loading users...
                     </td>
                   </tr>
-                ))}
+                ) : users.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
+                      No users found
+                    </td>
+                  </tr>
+                ) : (
+                  users.map(u => (
+                    <tr key={u._id} className="hover:bg-muted/50">
+                      <td className="px-6 py-4">
+                        <div className="font-medium">{u.name}</div>
+                        <div className="text-xs text-muted-foreground">{u.email}</div>
+                      </td>
+                      <td className="px-6 py-4 capitalize">{u.role}</td>
+                      <td className="px-6 py-4 capitalize">{u.status}</td>
+                      <td className="px-6 py-4">
+                        {editingPoints[u._id] !== undefined ? (
+                          <div className="flex gap-2">
+                            <input
+                              type="number"
+                              value={editingPoints[u._id]}
+                              onChange={e =>
+                                setEditingPoints(p => ({
+                                  ...p,
+                                  [u._id]: Number(e.target.value),
+                                }))
+                              }
+                              className="w-20 border rounded px-2 py-1"
+                            />
+                            <button
+                              onClick={() => updatePoints(u._id, editingPoints[u._id])}
+                              className="px-2 py-1 text-xs bg-primary text-white rounded"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            {u.points}
+                            <button
+                              onClick={() =>
+                                setEditingPoints(p => ({ ...p, [u._id]: u.points }))
+                              }
+                            >
+                              <i data-feather="edit-2"></i>
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-muted-foreground">
+                        {new Date(u.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 flex gap-3 justify-end">
+                        <button onClick={() => onViewDetails(u)}>
+                          <i data-feather="eye"></i>
+                        </button>
+                        {u.role !== "admin" && (
+                          <button onClick={() => makeAdmin(u)}>
+                            <i data-feather="shield"></i>
+                          </button>
+                        )}
+                        <button onClick={() => toggleSuspend(u)}>
+                          <i data-feather="slash"></i>
+                        </button>
+                        <button onClick={() => deleteUser(u)}>
+                          <i data-feather="trash-2"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
 
             {/* PAGINATION */}
             <div className="p-4 border-t">
               <Pagination
-                currentPage={pagination.page}
-                totalItems={users.length}
+                currentPage={pagination.currentPage}
+                totalItems={pagination.totalUsers}
                 itemsPerPage={pagination.limit}
-                onPageChange={p => setPagination(s => ({ ...s, page: p }))}
-                onItemsPerPageChange={l =>
-                  setPagination({ page: 1, limit: l })
-                }
+                onPageChange={handlePageChange}
+                onItemsPerPageChange={handleItemsPerPageChange}
               />
             </div>
           </div>
