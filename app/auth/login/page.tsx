@@ -31,6 +31,7 @@ export default function LoginPage() {
         email,
         password,
         redirect: false,
+        callbackUrl: '/user-dashboard/dashboard'
       });
 
       if (result?.error) {

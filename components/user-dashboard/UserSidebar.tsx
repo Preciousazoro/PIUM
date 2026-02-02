@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSession } from "next-auth/react";
 
 export default function UserSidebar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -159,10 +160,37 @@ function SidebarContent({
 /* Admin + Logout Links Component */
 function AdminAndLogoutLinks() {
   const router = useRouter();
+  const { data: session } = useSession();
+  const [userData, setUserData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!session?.user?.id) return;
+      
+      try {
+        const response = await fetch('/api/user/profile');
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [session]);
 
   const handleLogout = () => {
     router.push("/auth/login");
   };
+
+  const displayName = userData?.username || userData?.name || 'Loading...';
+  const avatarUrl = userData?.avatarUrl;
 
   return (
     <div className="flex flex-col space-y-2">
@@ -184,11 +212,21 @@ function AdminAndLogoutLinks() {
 
        {/* Profile Footer */}
       <div className="border-t pt-4 mt-4 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-          <User className="w-5 h-5" />
-        </div>
+        {avatarUrl ? (
+          <img 
+            src={avatarUrl} 
+            alt={displayName}
+            className="w-10 h-10 rounded-full object-cover border-2 border-border"
+          />
+        ) : (
+          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+            <User className="w-5 h-5" />
+          </div>
+        )}
         <div>
-          <div className="font-medium">John Doe</div>
+          <div className="font-medium truncate max-w-[120px]">
+            {isLoading ? 'Loading...' : displayName}
+          </div>
           <div className="text-xs text-muted-foreground">Contributor</div>
         </div>
       </div>

@@ -64,10 +64,10 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success('Account created successfully!');
+        toast.success('Account created successfully! Welcome bonus: +50 TP');
         setTimeout(() => {
           router.push('/auth/login');
-        }, 1500);
+        }, 2000);
       } else {
         toast.error(data.error || 'Registration failed');
       }

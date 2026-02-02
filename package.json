@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed:leaderboard": "npx tsx scripts/seed-leaderboard.ts"
+    "seed:leaderboard": "npx tsx scripts/seed-leaderboard.ts",
+    "migrate:taskpoints": "npx tsx scripts/migrate-taskpoints.ts"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.3",
@@ -33,6 +34,7 @@
     "react-dom": "19.2.3",
     "shadcn-ui": "^0.9.5",
     "sonner": "^2.0.7",
+    "styled-jsx": "^5.1.7",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {

@@ -18,23 +18,195 @@ export default function EnhancedRewardsPage() {
   const [loading, setLoading] = useState(true);
   const [claimingId, setClaimingId] = useState<string | null>(null);
 
-  // Mock data for initial design preview
+  // Fetch user data and set up rewards
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setPerf({
-        tp: 12450,
-        level: "Intermediate",
-        nextLevel: "Advanced",
-        progress: 65,
-        tasksCompleted: 42
-      });
-      setRewards([
-        { id: "1", title: "Early Access Badge", desc: "Get priority access to high-paying premium tasks.", minTP: 5000, type: "Badge", tier: "Common", locked: false, claimed: true },
-        { id: "2", title: "1.5x Multiplier", desc: "Boost all TaskPoints earned by 50% for 24 hours.", minTP: 10000, type: "Boost", tier: "Rare", locked: false, claimed: false, claimable: true },
-        { id: "3", title: "Exclusive NFT Avatar", desc: "A unique digital collectible for Expert level users.", minTP: 25000, type: "NFT", tier: "Legendary", locked: true, claimed: false },
-      ]);
-      setLoading(false);
-    }, 800);
+    const fetchUserData = async () => {
+      try {
+        // Fetch user's actual taskPoints and tasksCompleted
+        let response = await fetch('/api/user/balance');
+        let userData;
+        
+        if (!response.ok) {
+          // If new API fails, fall back to the original approve API
+          response = await fetch('/api/tasks/approve');
+        }
+        
+        if (response.ok) {
+          userData = await response.json();
+          const taskPoints = userData.taskPoints || 50; // Fallback to 50
+          const tasksCompleted = userData.tasksCompleted || 0;
+          
+          // Calculate user level based on taskPoints
+          let level = "Beginner";
+          let nextLevel = "Intermediate";
+          let nextLevelPoints = 3000;
+          let progress = 0;
+          
+          if (taskPoints >= 15000) {
+            level = "Expert";
+            nextLevel = "Max";
+            nextLevelPoints = 15000;
+            progress = 100;
+          } else if (taskPoints >= 8000) {
+            level = "Advanced";
+            nextLevel = "Expert";
+            nextLevelPoints = 15000;
+            progress = ((taskPoints - 8000) / (15000 - 8000)) * 100;
+          } else if (taskPoints >= 3000) {
+            level = "Intermediate";
+            nextLevel = "Advanced";
+            nextLevelPoints = 8000;
+            progress = ((taskPoints - 3000) / (8000 - 3000)) * 100;
+          } else {
+            progress = (taskPoints / 3000) * 100;
+          }
+          
+          setPerf({
+            tp: taskPoints,
+            level: level,
+            nextLevel: nextLevel,
+            progress: Math.min(progress, 100),
+            tasksCompleted: tasksCompleted
+          });
+          
+          // Set up rewards based on user's actual taskPoints
+          setRewards([
+            { 
+              id: "1", 
+              title: "Early Access Badge", 
+              desc: "Get priority access to high-paying premium tasks.", 
+              minTP: 5000, 
+              type: "Badge", 
+              tier: "Common", 
+              locked: taskPoints < 5000, 
+              claimed: taskPoints >= 5000,
+              claimable: taskPoints >= 5000 && taskPoints < 10000 
+            },
+            { 
+              id: "2", 
+              title: "1.5x Multiplier", 
+              desc: "Boost all TaskPoints earned by 50% for 24 hours.", 
+              minTP: 10000, 
+              type: "Boost", 
+              tier: "Rare", 
+              locked: taskPoints < 10000, 
+              claimed: false, 
+              claimable: taskPoints >= 10000 && taskPoints < 25000 
+            },
+            { 
+              id: "3", 
+              title: "Exclusive NFT Avatar", 
+              desc: "A unique digital collectible for Expert level users.", 
+              minTP: 25000, 
+              type: "NFT", 
+              tier: "Legendary", 
+              locked: taskPoints < 25000, 
+              claimed: false 
+            },
+          ]);
+        } else {
+          // If both APIs fail, set default values
+          console.warn('API calls failed, using default values');
+          const taskPoints = 50;
+          const tasksCompleted = 0;
+          
+          setPerf({
+            tp: taskPoints,
+            level: "Beginner",
+            nextLevel: "Intermediate",
+            progress: (taskPoints / 3000) * 100,
+            tasksCompleted: tasksCompleted
+          });
+          
+          setRewards([
+            { 
+              id: "1", 
+              title: "Early Access Badge", 
+              desc: "Get priority access to high-paying premium tasks.", 
+              minTP: 5000, 
+              type: "Badge", 
+              tier: "Common", 
+              locked: true, 
+              claimed: false,
+              claimable: false
+            },
+            { 
+              id: "2", 
+              title: "1.5x Multiplier", 
+              desc: "Boost all TaskPoints earned by 50% for 24 hours.", 
+              minTP: 10000, 
+              type: "Boost", 
+              tier: "Rare", 
+              locked: true, 
+              claimed: false, 
+              claimable: false
+            },
+            { 
+              id: "3", 
+              title: "Exclusive NFT Avatar", 
+              desc: "A unique digital collectible for Expert level users.", 
+              minTP: 25000, 
+              type: "NFT", 
+              tier: "Legendary", 
+              locked: true, 
+              claimed: false 
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        // Set default values on error
+        const taskPoints = 50;
+        const tasksCompleted = 0;
+        
+        setPerf({
+          tp: taskPoints,
+          level: "Beginner",
+          nextLevel: "Intermediate",
+          progress: (taskPoints / 3000) * 100,
+          tasksCompleted: tasksCompleted
+        });
+        
+        setRewards([
+          { 
+            id: "1", 
+            title: "Early Access Badge", 
+            desc: "Get priority access to high-paying premium tasks.", 
+            minTP: 5000, 
+            type: "Badge", 
+            tier: "Common", 
+            locked: true, 
+            claimed: false,
+            claimable: false
+          },
+          { 
+            id: "2", 
+            title: "1.5x Multiplier", 
+            desc: "Boost all TaskPoints earned by 50% for 24 hours.", 
+            minTP: 10000, 
+            type: "Boost", 
+            tier: "Rare", 
+            locked: true, 
+            claimed: false, 
+            claimable: false
+          },
+          { 
+            id: "3", 
+            title: "Exclusive NFT Avatar", 
+            desc: "A unique digital collectible for Expert level users.", 
+            minTP: 25000, 
+            type: "NFT", 
+            tier: "Legendary", 
+            locked: true, 
+            claimed: false 
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
   }, []);
 
   return (
@@ -66,7 +238,9 @@ export default function EnhancedRewardsPage() {
                 <div className="space-y-4 max-w-md mx-auto lg:mx-0">
                   <div className="flex justify-between text-sm font-bold">
                     <span className="text-muted-foreground">{perf?.tp.toLocaleString()} TP</span>
-                    <span className="text-primary">Next Rank: 15,000 TP</span>
+                    <span className="text-primary">
+                      {perf?.nextLevel === "Max" ? "Max Level" : `Next Rank: ${perf?.nextLevel === "Max" ? "15,000" : perf?.nextLevel === "Expert" ? "15,000" : perf?.nextLevel === "Advanced" ? "8,000" : "3,000"} TP`}
+                    </span>
                   </div>
                   <div className="h-4 w-full bg-muted rounded-full p-1 border border-border">
                     <motion.div 

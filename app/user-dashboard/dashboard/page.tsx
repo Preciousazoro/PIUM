@@ -14,16 +14,85 @@ import UserHeader from "@/components/user-dashboard/UserHeader";
 
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
+  const [tasksLoading, setTasksLoading] = useState(true);
+  const [taskPoints, setTaskPoints] = useState<number>(50); // Start with welcome bonus
+  const [tasksCompleted, setTasksCompleted] = useState<number>(0);
+  const [tasks, setTasks] = useState<any[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
 
+  // Fetch user data
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
+    const fetchUserData = async () => {
+      try {
+        // Try the new balance API first
+        let response = await fetch('/api/user/balance');
+        let data;
+        
+        if (!response.ok) {
+          // If new API fails, fall back to the original approve API
+          console.log('Falling back to original API');
+          response = await fetch('/api/tasks/approve');
+        }
+        
+        if (response.ok) {
+          data = await response.json();
+          setTaskPoints(data.taskPoints || 50); // Fallback to 50 if undefined
+          setTasksCompleted(data.tasksCompleted || 0);
+          
+          // Show welcome bonus notification if it was just applied
+          if (data.welcomeBonusApplied) {
+            console.log('Welcome bonus of 50 TP has been applied!');
+          }
+        } else {
+          // If both APIs fail, set default values
+          console.warn('API calls failed, using default values');
+          setTaskPoints(50);
+          setTasksCompleted(0);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        // Set default values on error
+        setTaskPoints(50);
+        setTasksCompleted(0);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+
+    // Set up periodic updates
+    const interval = setInterval(fetchUserData, 30000); // Update every 30 seconds
+
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
-  // Sample task data - in real app, this would come from API
+  // Fetch active tasks
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await fetch('/api/tasks');
+        if (!response.ok) {
+          throw new Error('Failed to fetch tasks');
+        }
+        const data = await response.json();
+        setTasks(data.tasks || []);
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+        // Keep sample tasks as fallback
+      } finally {
+        setTasksLoading(false);
+      }
+    };
+
+    fetchTasks();
+  }, []);
+
+  // Sample task data - fallback if API fails
   const sampleTasks: Task[] = [
     {
       id: "task-1",
@@ -81,6 +150,17 @@ export default function DashboardPage() {
     }
   ];
 
+  // Use real tasks if available, otherwise fallback to sample tasks
+  const displayTasks = tasks.length > 0 ? tasks.map(task => ({
+    id: task._id,
+    title: task.title,
+    description: task.description || `Complete this ${task.category} task and earn ${task.reward} TP!`,
+    reward: task.reward,
+    category: task.category,
+    url: `/tasks/${task._id}`,
+    proofRequired: true
+  })) : sampleTasks;
+
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
     setIsModalOpen(true);
@@ -103,7 +183,7 @@ export default function DashboardPage() {
     handleTaskClick(task);
   };
 
-  if (isLoading) {
+  if (isLoading || tasksLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
@@ -127,10 +207,10 @@ export default function DashboardPage() {
             {/* Welcome Section */}
             <div>
               <h1 className="text-3xl font-bold tracking-tight mb-2">
-                Welcome back, <span className="text-primary">User</span>! 👋
+                Welcome back! 👋
               </h1>
               <p className="text-muted-foreground text-lg">
-                You have <span className="text-foreground font-semibold">1,250 TP</span> available to redeem.
+                You've earned <span className="text-foreground font-semibold">{taskPoints.toLocaleString()} TP</span> total (including 50 TP welcome bonus).
               </p>
             </div>
 
@@ -141,7 +221,8 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-muted-foreground">Total Earned</p>
                   <Trophy className="w-4 h-4 text-yellow-500" />
                 </div>
-                <p className="text-3xl font-bold">1,250 TP</p>
+                <p className="text-3xl font-bold">{taskPoints.toLocaleString()} TP</p>
+                <p className="text-xs text-muted-foreground mt-1">Includes 50 TP welcome bonus</p>
               </div>
 
               <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
@@ -149,25 +230,30 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-muted-foreground">Tasks Done</p>
                   <CheckCircle2 className="w-4 h-4 text-green-500" />
                 </div>
-                <p className="text-3xl font-bold">24</p>
+                <p className="text-3xl font-bold">{tasksCompleted}</p>
               </div>
 
               <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-muted-foreground">Global Rank</p>
+                  <p className="text-sm font-medium text-muted-foreground">Available Balance</p>
                   <Flame className="w-4 h-4 text-orange-500" />
                 </div>
-                <p className="text-3xl font-bold">#42</p>
+                <p className="text-3xl font-bold">{taskPoints.toLocaleString()} TP</p>
               </div>
             </div>
 
             {/* Tasks Section */}
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold tracking-tight">Available Tasks</h2>
+              {tasks.length > 0 && (
+                <span className="text-sm text-muted-foreground">
+                  {tasks.length} active tasks available
+                </span>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sampleTasks.map((task) => (
+              {displayTasks.map((task) => (
                 <TaskCard 
                   key={task.id} 
                   task={task} 

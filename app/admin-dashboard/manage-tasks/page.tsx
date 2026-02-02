@@ -1,46 +1,54 @@
 "use client";
 
 import feather from "feather-icons";
-import { Edit, Eye, Trash2 } from "lucide-react";
+import { Edit, Eye, Trash2, Loader2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 import AdminHeader from "../../../components/admin-dashboard/AdminHeader";
 import AdminSidebar from "../../../components/admin-dashboard/AdminSidebar";
 
-/* ------------------ MOCK DATA ------------------ */
-const MOCK_TASKS = [
-  {
-    id: "1",
-    title: "Follow us on X",
-    category: "Social",
-    rewardPoints: 50,
-    status: "Active",
-    deadline: new Date().toISOString(),
-    participants: 120,
-    description: "Follow our official X account",
-    instructions: "Take a screenshot after following",
-    proofType: "Screenshot",
-  },
-  {
-    id: "2",
-    title: "Join Telegram",
-    category: "Community",
-    rewardPoints: 30,
-    status: "Draft",
-    deadline: "",
-    participants: 45,
-    description: "Join our Telegram community",
-    instructions: "Provide username",
-    proofType: "Username",
-  },
-];
+interface Task {
+  _id: string;
+  title: string;
+  category: string;
+  reward: number;
+  status: 'Active' | 'Draft' | 'Paused';
+  participants: number;
+  description?: string;
+  instructions?: string;
+  proofType?: string;
+  deadline?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 const ManageTasks = () => {
+  /* ------------------ API FUNCTIONS ------------------ */
+  const fetchTasks = async () => {
+    try {
+      const response = await fetch('/api/admin/tasks');
+      if (!response.ok) {
+        throw new Error('Failed to fetch tasks');
+      }
+      const data = await response.json();
+      setTasks(data.tasks || []);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      toast.error('Failed to load tasks');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     feather.replace();
+    fetchTasks();
   }, []);
 
   /* ------------------ STATE ------------------ */
-  const [tasks, setTasks] = useState(MOCK_TASKS);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -51,7 +59,11 @@ const ManageTasks = () => {
 
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
-  const [rewardPoints, setRewardPoints] = useState<number | "">("");
+  const [reward, setReward] = useState<number | "">("");
+  const [status, setStatus] = useState<'Active' | 'Draft' | 'Paused'>('Draft');
+  const [description, setDescription] = useState("");
+  const [instructions, setInstructions] = useState("");
+  const [proofType, setProofType] = useState('Screenshot');
 
   /* ------------------ HANDLERS ------------------ */
   const openViewModal = (task: any) => {
@@ -64,32 +76,73 @@ const ManageTasks = () => {
     setShowEditModal(true);
   };
 
-  const handleCreateTask = (e: React.FormEvent) => {
+  const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    const newTask = {
-      id: Date.now().toString(),
-      title,
-      category,
-      rewardPoints,
-      status: "Active",
-      participants: 0,
-      deadline: "",
-      description: "",
-      instructions: "",
-      proofType: "Screenshot",
-    };
+    try {
+      const response = await fetch('/api/admin/tasks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title,
+          category,
+          reward: Number(reward),
+          status,
+          description,
+          instructions,
+          proofType
+        }),
+      });
 
-    setTasks((prev) => [newTask, ...prev]);
-    setShowCreateModal(false);
-    setTitle("");
-    setCategory("");
-    setRewardPoints("");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create task');
+      }
+
+      const data = await response.json();
+      toast.success('Task created successfully!');
+      
+      // Reset form
+      setTitle("");
+      setCategory("");
+      setReward("");
+      setStatus('Draft');
+      setDescription("");
+      setInstructions("");
+      setProofType('Screenshot');
+      setShowCreateModal(false);
+      
+      // Refresh tasks list
+      fetchTasks();
+    } catch (error: any) {
+      console.error('Error creating task:', error);
+      toast.error(error.message || 'Failed to create task');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDeleteTask = (id: string) => {
+  const handleDeleteTask = async (id: string) => {
     if (!confirm("Delete this task?")) return;
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+
+    try {
+      const response = await fetch(`/api/admin/tasks/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete task');
+      }
+
+      toast.success('Task deleted successfully!');
+      fetchTasks();
+    } catch (error: any) {
+      console.error('Error deleting task:', error);
+      toast.error(error.message || 'Failed to delete task');
+    }
   };
 
   /* ------------------ RENDER ------------------ */
@@ -116,52 +169,66 @@ const ManageTasks = () => {
 
             {/* Tasks Table */}
             <div className="bg-card rounded-2xl border border-border overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-muted/50">
-                  <tr>
-                    {[
-                      "Title",
-                      "Category",
-                      "Reward",
-                      "Status",
-                      "Participants",
-                      "Actions",
-                    ].map((h) => (
-                      <th
-                        key={h}
-                        className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase"
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {tasks.map((task) => (
-                    <tr key={task.id} className="border-t hover:bg-muted/40">
-                      <td className="px-6 py-4 font-medium">{task.title}</td>
-                      <td className="px-6 py-4">{task.category}</td>
-                      <td className="px-6 py-4">{task.rewardPoints} TP</td>
-                      <td className="px-6 py-4">{task.status}</td>
-                      <td className="px-6 py-4">{task.participants}</td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-3">
-                          <button onClick={() => openViewModal(task)}>
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => openEditModal(task)}>
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => handleDeleteTask(task.id)}>
-                            <Trash2 className="w-4 h-4 text-red-500" />
-                          </button>
-                        </div>
-                      </td>
+              {isLoading ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="w-8 h-8 animate-spin" />
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      {[
+                        "Title",
+                        "Category",
+                        "Reward",
+                        "Status",
+                        "Participants",
+                        "Actions",
+                      ].map((h) => (
+                        <th
+                          key={h}
+                          className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase"
+                        >
+                          {h}
+                        </th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+
+                  <tbody>
+                    {tasks.map((task) => (
+                      <tr key={task._id} className="border-t hover:bg-muted/40">
+                        <td className="px-6 py-4 font-medium">{task.title}</td>
+                        <td className="px-6 py-4">{task.category}</td>
+                        <td className="px-6 py-4">{task.reward} TP</td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            task.status === 'Active' ? 'bg-green-100 text-green-800' :
+                            task.status === 'Draft' ? 'bg-gray-100 text-gray-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {task.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">{task.participants}</td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-3">
+                            <button onClick={() => openViewModal(task)}>
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => openEditModal(task)}>
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => handleDeleteTask(task._id)}>
+                              <Trash2 className="w-4 h-4 text-red-500" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
 
             {/* CREATE MODAL */}
@@ -197,26 +264,73 @@ const ManageTasks = () => {
                     type="number"
                     className="w-full border rounded px-3 py-2"
                     placeholder="Reward Points"
-                    value={rewardPoints}
+                    value={reward}
                     onChange={(e) =>
-                      setRewardPoints(e.target.value === "" ? "" : Number(e.target.value))
+                      setReward(e.target.value === "" ? "" : Number(e.target.value))
                     }
                     required
                   />
+
+                  <select
+                    className="w-full border rounded px-3 py-2"
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value as 'Active' | 'Draft' | 'Paused')}
+                    required
+                  >
+                    <option value="Draft">Draft</option>
+                    <option value="Active">Active</option>
+                    <option value="Paused">Paused</option>
+                  </select>
+
+                  <textarea
+                    className="w-full border rounded px-3 py-2"
+                    placeholder="Description (optional)"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={3}
+                  />
+
+                  <textarea
+                    className="w-full border rounded px-3 py-2"
+                    placeholder="Instructions (optional)"
+                    value={instructions}
+                    onChange={(e) => setInstructions(e.target.value)}
+                    rows={3}
+                  />
+
+                  <select
+                    className="w-full border rounded px-3 py-2"
+                    value={proofType}
+                    onChange={(e) => setProofType(e.target.value)}
+                  >
+                    <option value="Screenshot">Screenshot</option>
+                    <option value="Username">Username</option>
+                    <option value="Text">Text</option>
+                    <option value="Link">Link</option>
+                  </select>
 
                   <div className="flex justify-end gap-3">
                     <button
                       type="button"
                       onClick={() => setShowCreateModal(false)}
                       className="px-4 py-2 border rounded"
+                      disabled={isSubmitting}
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 bg-purple-600 text-white rounded"
+                      className="px-4 py-2 bg-purple-600 text-white rounded disabled:opacity-50"
+                      disabled={isSubmitting}
                     >
-                      Create
+                      {isSubmitting ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Creating...
+                        </div>
+                      ) : (
+                        'Create'
+                      )}
                     </button>
                   </div>
                 </form>
@@ -230,7 +344,12 @@ const ManageTasks = () => {
                   <h3 className="text-xl font-bold">Task Details</h3>
                   <p><b>Title:</b> {viewTask.title}</p>
                   <p><b>Category:</b> {viewTask.category}</p>
-                  <p><b>Reward:</b> {viewTask.rewardPoints} TP</p>
+                  <p><b>Reward:</b> {viewTask.reward} TP</p>
+                  <p><b>Status:</b> {viewTask.status}</p>
+                  <p><b>Participants:</b> {viewTask.participants}</p>
+                  {viewTask.description && <p><b>Description:</b> {viewTask.description}</p>}
+                  {viewTask.instructions && <p><b>Instructions:</b> {viewTask.instructions}</p>}
+                  {viewTask.proofType && <p><b>Proof Type:</b> {viewTask.proofType}</p>}
                   <button
                     onClick={() => setShowViewModal(false)}
                     className="mt-4 px-4 py-2 border rounded"

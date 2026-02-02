@@ -65,7 +65,7 @@ const UserSchema: Schema<IUser> = new Schema({
   },
   taskPoints: {
     type: Number,
-    default: 0,
+    default: 50,
     min: 0
   },
   tasksCompleted: {

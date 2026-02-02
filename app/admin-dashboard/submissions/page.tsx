@@ -59,14 +59,64 @@ export default function AdminSubmissionsPage() {
     pagination.page * pagination.limit
   );
 
-  /* ---------------- STATUS UPDATE (LOCAL ONLY) ---------------- */
+  /* ---------------- STATUS UPDATE (WITH API CALL) ---------------- */
 
-  const updateStatus = (id: string, status: string) => {
+  const updateStatus = async (id: string, status: string) => {
+    // Update local state first for immediate UI feedback
     setSubs((prev) =>
       prev.map((s) =>
         s.id === id ? { ...s, status } : s
       )
     );
+
+    // If approving, call the API to increment user's taskPoints
+    if (status === "Approved") {
+      const submission = subs.find(s => s.id === id);
+      if (submission?.taskSnapshot?.rewardPoints && submission?.userSnapshot?.email) {
+        try {
+          // Find user by email and get their ID
+          const userResponse = await fetch(`/api/user/by-email?email=${submission.userSnapshot.email}`);
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            
+            // Call the approval API to increment taskPoints
+            const approveResponse = await fetch('/api/tasks/approve', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                taskId: submission.id,
+                reward: submission.taskSnapshot.rewardPoints,
+                userId: userData.id
+              }),
+            });
+
+            if (approveResponse.ok) {
+              const result = await approveResponse.json();
+              console.log(`Task approved! User earned ${result.reward} TP. New balance: ${result.taskPoints} TP`);
+            } else {
+              console.error('Failed to approve task and award points');
+              // Revert status on failure
+              setSubs((prev) =>
+                prev.map((s) =>
+                  s.id === id ? { ...s, status: "Pending" } : s
+                )
+              );
+            }
+          }
+        } catch (error) {
+          console.error('Error approving task:', error);
+          // Revert status on failure
+          setSubs((prev) =>
+            prev.map((s) =>
+              s.id === id ? { ...s, status: "Pending" } : s
+            )
+          );
+        }
+      }
+    }
+
     setSelectedSubmission(null);
   };
 
