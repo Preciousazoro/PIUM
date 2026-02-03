@@ -36,6 +36,7 @@ type UserProfile = {
   image?: string | null;
   avatarPublicId?: string | null;
   points?: number;
+  dailyStreak?: number;
   socialMedia?: SocialMedia;
 };
 
@@ -54,6 +55,7 @@ export default function ProfilePage() {
     image: null,
     avatarPublicId: null,
     points: 0,
+    dailyStreak: 0,
     socialMedia: {
       twitter: null,
       instagram: null,
@@ -93,6 +95,7 @@ export default function ProfilePage() {
           image: data.avatarUrl,
           avatarPublicId: data.avatarPublicId,
           points: data.taskPoints,
+          dailyStreak: data.dailyStreak || 0,
           socialMedia: data.socialLinks || {
             twitter: null,
             instagram: null,

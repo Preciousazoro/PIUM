@@ -26,20 +26,30 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Ensure user has at least 50 TP (welcome bonus)
-    let updatedUser = user;
-    if (!user.taskPoints || user.taskPoints < 50) {
-      updatedUser = await User.findByIdAndUpdate(
-        session.user.id,
-        { $set: { taskPoints: 50 } },
-        { new: true }
-      );
+    // Only apply welcome bonus if not already granted and user has 0 points
+    let welcomeBonusApplied = false;
+    if (!user.welcomeBonusGranted && (!user.taskPoints || user.taskPoints === 0)) {
+      try {
+        const { createWelcomeBonus } = await import('@/lib/transactions');
+        await createWelcomeBonus(session.user.id);
+        welcomeBonusApplied = true;
+        
+        // Refresh user data after bonus
+        const updatedUser = await User.findById(session.user.id);
+        return NextResponse.json({
+          taskPoints: updatedUser?.taskPoints || 50,
+          tasksCompleted: updatedUser?.tasksCompleted || 0,
+          welcomeBonusApplied
+        });
+      } catch (error) {
+        console.error('Error applying welcome bonus:', error);
+      }
     }
 
     return NextResponse.json({
-      taskPoints: updatedUser.taskPoints,
-      tasksCompleted: updatedUser.tasksCompleted || 0,
-      welcomeBonusApplied: !user.taskPoints || user.taskPoints < 50
+      taskPoints: user.taskPoints || 0,
+      tasksCompleted: user.tasksCompleted || 0,
+      welcomeBonusApplied
     });
 
   } catch (error) {

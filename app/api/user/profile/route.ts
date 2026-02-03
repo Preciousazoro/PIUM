@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     await connectDB();
 
     const user = await User.findById(session.user.id)
-      .select('name username avatarUrl taskPoints tasksCompleted email')
+      .select('name username avatarUrl taskPoints tasksCompleted email role')
       .lean();
 
     if (!user) {
@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
       username: user.username,
       email: user.email,
       avatarUrl: user.avatarUrl,
+      role: user.role,
       taskPoints: user.taskPoints || 50,
       tasksCompleted: user.tasksCompleted || 0
     });

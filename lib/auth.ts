@@ -6,6 +6,7 @@ import {
   hasClaimedDailyBonusToday,
   createDailyLoginBonus,
 } from "@/lib/transactions";
+import { updateDailyStreak } from "@/lib/streak";
 
 export const {
   handlers,
@@ -68,12 +69,26 @@ export const {
           }
 
           /**
+           * 🔥 Update daily streak (never block login)
+           */
+          let updatedStreak = 0;
+          try {
+            updatedStreak = await updateDailyStreak(user._id.toString());
+          } catch (err) {
+            console.error("Daily streak error:", err);
+          }
+
+          /**
            * ✅ RETURN ONLY ESSENTIAL SERIALIZABLE DATA
            */
           return {
             id: user._id.toString(),
             email: user.email,
             name: user.name ?? undefined,
+            role: user.role,
+            taskPoints: user.taskPoints, // Include actual balance from DB
+            welcomeBonusGranted: user.welcomeBonusGranted, // Include bonus status
+            dailyStreak: updatedStreak, // Include updated daily streak
           };
         } catch (err) {
           console.error("Authorize error:", err);
@@ -96,9 +111,13 @@ export const {
    */
   callbacks: {
     async jwt({ token, user, trigger, session }) {
-      // Persist only essential user ID
+      // Persist user data from database
       if (user) {
         token.id = user.id;
+        token.role = user.role;
+        token.taskPoints = user.taskPoints;
+        token.welcomeBonusGranted = user.welcomeBonusGranted;
+        token.dailyStreak = user.dailyStreak;
       }
       
       // Handle session updates
@@ -110,9 +129,13 @@ export const {
     },
 
     async session({ session, token }) {
-      // Attach only essential user data to session
+      // Attach user data from token to session
       if (session.user && token) {
         session.user.id = token.id as string;
+        (session.user as any).role = token.role as string;
+        (session.user as any).taskPoints = token.taskPoints as number;
+        (session.user as any).welcomeBonusGranted = token.welcomeBonusGranted as boolean;
+        (session.user as any).dailyStreak = token.dailyStreak as number;
       }
       return session;
     },

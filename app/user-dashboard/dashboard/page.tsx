@@ -16,7 +16,7 @@ import UserHeader from "@/components/user-dashboard/UserHeader";
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [tasksLoading, setTasksLoading] = useState(true);
-  const [taskPoints, setTaskPoints] = useState<number>(50); // Start with welcome bonus
+  const [taskPoints, setTaskPoints] = useState<number>(0); // Start with 0
   const [tasksCompleted, setTasksCompleted] = useState<number>(0);
   const [tasks, setTasks] = useState<TaskDocument[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -39,23 +39,18 @@ export default function DashboardPage() {
         
         if (response.ok) {
           data = await response.json();
-          setTaskPoints(data.taskPoints || 50); // Fallback to 50 if undefined
+          setTaskPoints(data.taskPoints || 0); // Fallback to 0 if undefined
           setTasksCompleted(data.tasksCompleted || 0);
-          
-          // Show welcome bonus notification if it was just applied
-          if (data.welcomeBonusApplied) {
-            console.log('Welcome bonus of 50 TP has been applied!');
-          }
         } else {
           // If both APIs fail, set default values
           console.warn('API calls failed, using default values');
-          setTaskPoints(50);
+          setTaskPoints(0);
           setTasksCompleted(0);
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
         // Set default values on error
-        setTaskPoints(50);
+        setTaskPoints(0);
         setTasksCompleted(0);
       } finally {
         setIsLoading(false);
@@ -84,7 +79,7 @@ export default function DashboardPage() {
         setTasks(data.tasks || []);
       } catch (error) {
         console.error('Error fetching tasks:', error);
-        // Keep sample tasks as fallback
+        setTasks([]);
       } finally {
         setTasksLoading(false);
       }
@@ -93,68 +88,6 @@ export default function DashboardPage() {
     fetchTasks();
   }, []);
 
-  // Sample task data - fallback if API fails
-  const sampleTasks: Task[] = [
-    {
-      id: "task-1",
-      title: "Follow TaskKash on X",
-      description: "Follow our official handle to stay updated with the latest rewards and announcements. Make sure to follow and stay engaged for future opportunities.",
-      reward: 50,
-      category: "social",
-      url: "https://twitter.com/taskkash",
-      proofRequired: true
-    },
-    {
-      id: "task-2", 
-      title: "Join our Discord Community",
-      description: "Become part of our growing community on Discord. Participate in discussions, get support, and be the first to know about new features and rewards.",
-      reward: 75,
-      category: "social",
-      url: "https://discord.gg/taskkash",
-      proofRequired: true
-    },
-    {
-      id: "task-3",
-      title: "Create Content About TaskKash",
-      description: "Create a short video or post about TaskKash and share it on your social media. Show your creativity and earn rewards!",
-      reward: 150,
-      category: "content", 
-      url: "https://taskkash.com/content-creator",
-      proofRequired: true
-    },
-    {
-      id: "task-4",
-      title: "Refer a Friend",
-      description: "Invite your friends to join TaskKash and earn rewards when they complete their first task. Share your unique referral link and track your referrals.",
-      reward: 100,
-      category: "social", 
-      url: "https://taskkash.com/referrals",
-      proofRequired: true
-    },
-    {
-      id: "task-5",
-      title: "Complete a Purchase",
-      description: "Make a purchase from one of our partner stores and earn cashback in TP. The more you shop, the more you earn!",
-      reward: 200,
-      category: "commerce", 
-      url: "https://taskkash.com/partners",
-      proofRequired: true
-    },
-    {
-      id: "task-6",
-      title: "Complete Your Profile",
-      description: "Fill out your complete profile information including avatar, bio, and preferences. This helps us match you with better tasks.",
-      reward: 25,
-      category: "social", 
-      url: "https://taskkash.com/profile",
-      proofRequired: false
-    }
-  ];
-
-  // Use real tasks if available, otherwise fallback to sample tasks
-  const displayTasks: Task[] = tasks.length > 0 
-    ? tasks.map(transformTaskToCard) 
-    : sampleTasks;
 
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
@@ -205,7 +138,7 @@ export default function DashboardPage() {
                 Welcome back! 👋
               </h1>
               <p className="text-muted-foreground text-lg">
-                You've earned <span className="text-foreground font-semibold">{taskPoints.toLocaleString()} TP</span> total (including 50 TP welcome bonus).
+                You've earned <span className="text-foreground font-semibold">{taskPoints.toLocaleString()} TP</span> total.
               </p>
             </div>
 
@@ -217,7 +150,7 @@ export default function DashboardPage() {
                   <Trophy className="w-4 h-4 text-yellow-500" />
                 </div>
                 <p className="text-3xl font-bold">{taskPoints.toLocaleString()} TP</p>
-                <p className="text-xs text-muted-foreground mt-1">Includes 50 TP welcome bonus</p>
+                <p className="text-xs text-muted-foreground mt-1">{taskPoints > 0 ? 'Keep completing tasks to earn more TP' : 'Start completing tasks to earn TP'}</p>
               </div>
 
               <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
@@ -248,15 +181,29 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {displayTasks.map((task) => (
-                <TaskCardComponent 
-                  key={task.id} 
-                  task={task} 
-                  onClick={handleTaskClick}
-                  onStartTask={handleStartTask}
-                  onSubmitProof={handleSubmitProof}
-                />
-              ))}
+              {tasks.length > 0 ? (
+                tasks.map((task) => (
+                  <TaskCardComponent 
+                    key={task._id} 
+                    task={transformTaskToCard(task)} 
+                    onClick={handleTaskClick}
+                    onStartTask={handleStartTask}
+                    onSubmitProof={handleSubmitProof}
+                  />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12">
+                  <div className="max-w-md mx-auto">
+                    <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle2 className="w-10 h-10 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">No tasks available yet</h3>
+                    <p className="text-muted-foreground">
+                      Check back later! New tasks are added regularly by administrators.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 4. Recent Activity Section */}

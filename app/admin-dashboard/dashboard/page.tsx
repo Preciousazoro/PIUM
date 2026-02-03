@@ -238,7 +238,7 @@ const Dashboard = () => {
             </h2>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-gradient-to-r from-green-500 to-purple-500 hover:opacity-90"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-linear-to-r from-green-500 to-purple-500 hover:opacity-90"
             >
               <Plus size={16} />
               Create Task
@@ -397,7 +397,7 @@ const Dashboard = () => {
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 text-white rounded bg-gradient-to-r from-green-500 to-purple-500"
+                className="px-4 py-2 text-white rounded bg-linear-to-r from-green-500 to-purple-500"
               >
                 Create
               </button>

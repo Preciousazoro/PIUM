@@ -6,6 +6,22 @@ export async function GET(request: NextRequest) {
   try {
     await connectDB();
     
+    // Ensure all users have role and status fields (migration)
+    await User.updateMany(
+      { 
+        $or: [
+          { role: { $exists: false } },
+          { status: { $exists: false } }
+        ]
+      },
+      { 
+        $set: { 
+          role: 'user',
+          status: 'active'
+        }
+      }
+    );
+    
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
@@ -30,8 +46,8 @@ export async function GET(request: NextRequest) {
       email: user.email,
       username: user.username || null,
       avatarUrl: user.avatarUrl || null,
-      role: 'user', // Default role since User model doesn't have role field
-      status: 'active', // Default status since User model doesn't have status field
+      role: user.role || 'user',
+      status: user.status || 'active',
       points: user.taskPoints || 0,
       tasksCompleted: user.tasksCompleted || 0,
       createdAt: user.createdAt.toISOString(),

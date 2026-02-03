@@ -2,11 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import feather from "feather-icons";
+import { Eye, Edit, Ban, Trash2, Shield } from "lucide-react";
 import AdminHeader from "../../../components/admin-dashboard/AdminHeader";
 import AdminSidebar from "../../../components/admin-dashboard/AdminSidebar";
 import { toast } from "sonner";
 import { Pagination } from "@/components/ui/Pagination";
+import { UserAvatar } from "../../../components/admin-dashboard/UserAvatar";
+import { UserPreviewModal } from "../../../components/admin-dashboard/UserPreviewModal";
+import { confirmToast } from "../../../components/admin-dashboard/confirmToast";
 
 interface User {
   _id: string;
@@ -47,6 +50,7 @@ export default function AdminUsersPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailUser, setDetailUser] = useState<User | null>(null);
   const [editingPoints, setEditingPoints] = useState<{ [k: string]: number }>({});
+  const [loadingActions, setLoadingActions] = useState<{ [k: string]: boolean }>({});
   
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -97,19 +101,25 @@ export default function AdminUsersPage() {
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  /* -------- ICONS -------- */
-  useEffect(() => {
-    if (users.length > 0) {
-      feather.replace({ width: 16, height: 16 });
-    }
-  }, [users, detailOpen]);
 
   /* -------- ACTIONS (UI ONLY) -------- */
   const showToast = (msg: string, type: "success" | "error" | "info" = "info") =>
     type === "success" ? toast.success(msg) : type === "error" ? toast.error(msg) : toast(msg);
 
-  const onViewDetails = (u: User) => {
-    setDetailUser(u);
+  const onViewDetails = async (u: User) => {
+    try {
+      // Try to fetch full user details, fallback to existing data
+      const response = await fetch(`/api/admin/users/${u._id}`);
+      if (response.ok) {
+        const fullUser = await response.json();
+        setDetailUser(fullUser);
+      } else {
+        setDetailUser(u);
+      }
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+      setDetailUser(u);
+    }
     setDetailOpen(true);
   };
 
@@ -125,28 +135,104 @@ export default function AdminUsersPage() {
     showToast("Points updated", "success");
   };
 
-  const toggleSuspend = (u: User) => {
-    setUsers(prev =>
-      prev.map(x =>
-        x._id === u._id
-          ? { ...x, status: x.status === "suspended" ? "active" : "suspended" }
-          : x
-      )
-    );
-    showToast("User status updated", "success");
+  const toggleSuspend = async (u: User) => {
+    await confirmToast({
+      title: `${u.status === 'suspended' ? 'Activate' : 'Suspend'} User`,
+      message: `Are you sure you want to ${u.status === 'suspended' ? 'activate' : 'suspend'} ${u.name}?`,
+      confirmText: u.status === 'suspended' ? 'Activate' : 'Suspend',
+      confirmButtonVariant: u.status === 'suspended' ? 'default' : 'destructive',
+      onConfirm: async () => {
+        setLoadingActions(prev => ({ ...prev, [u._id]: true }));
+        
+        try {
+          const response = await fetch(`/api/admin/users/${u._id}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              status: u.status === 'suspended' ? 'active' : 'suspended' 
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to update user status');
+          }
+
+          // Refresh user list
+          await fetchUsers(pagination.currentPage, pagination.limit);
+        } finally {
+          setLoadingActions(prev => {
+            const p = { ...prev };
+            delete p[u._id];
+            return p;
+          });
+        }
+      }
+    });
   };
 
-  const makeAdmin = (u: User) => {
-    setUsers(prev =>
-      prev.map(x => (x._id === u._id ? { ...x, role: "admin" } : x))
-    );
-    showToast("User is now an admin", "success");
+  const makeAdmin = async (u: User) => {
+    await confirmToast({
+      title: 'Make Admin',
+      message: `Are you sure you want to make ${u.name} an admin?`,
+      confirmText: 'Make Admin',
+      confirmButtonVariant: 'default',
+      onConfirm: async () => {
+        setLoadingActions(prev => ({ ...prev, [u._id]: true }));
+        
+        try {
+          const response = await fetch(`/api/admin/users/${u._id}/role`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: 'admin' })
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to make admin');
+          }
+
+          // Refresh user list
+          await fetchUsers(pagination.currentPage, pagination.limit);
+        } finally {
+          setLoadingActions(prev => {
+            const p = { ...prev };
+            delete p[u._id];
+            return p;
+          });
+        }
+      }
+    });
   };
 
-  const deleteUser = (u: User) => {
-    setUsers(prev => prev.filter(x => x._id !== u._id));
-    setDetailOpen(false);
-    showToast("User deleted", "success");
+  const deleteUser = async (u: User) => {
+    await confirmToast({
+      title: 'Delete User',
+      message: `Are you sure you want to delete ${u.name}? This action cannot be undone.`,
+      confirmText: 'Delete',
+      confirmButtonVariant: 'destructive',
+      onConfirm: async () => {
+        setLoadingActions(prev => ({ ...prev, [u._id]: true }));
+        
+        try {
+          const response = await fetch(`/api/admin/users/${u._id}`, {
+            method: 'DELETE'
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to delete user');
+          }
+
+          // Refresh user list
+          setDetailOpen(false);
+          await fetchUsers(pagination.currentPage, pagination.limit);
+        } finally {
+          setLoadingActions(prev => {
+            const p = { ...prev };
+            delete p[u._id];
+            return p;
+          });
+        }
+      }
+    });
   };
 
   /* ---------------- UI ---------------- */
@@ -194,8 +280,13 @@ export default function AdminUsersPage() {
                   users.map(u => (
                     <tr key={u._id} className="hover:bg-muted/50">
                       <td className="px-6 py-4">
-                        <div className="font-medium">{u.name}</div>
-                        <div className="text-xs text-muted-foreground">{u.email}</div>
+                        <div className="flex items-center gap-3">
+                          <UserAvatar user={u} size="sm" />
+                          <div>
+                            <div className="font-medium">{u.name}</div>
+                            <div className="text-xs text-muted-foreground">{u.email}</div>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-6 py-4 capitalize">{u.role}</td>
                       <td className="px-6 py-4 capitalize">{u.status}</td>
@@ -211,11 +302,11 @@ export default function AdminUsersPage() {
                                   [u._id]: Number(e.target.value),
                                 }))
                               }
-                              className="w-20 border rounded px-2 py-1"
+                              className="w-20 border rounded px-2 py-1 bg-background"
                             />
                             <button
                               onClick={() => updatePoints(u._id, editingPoints[u._id])}
-                              className="px-2 py-1 text-xs bg-primary text-white rounded"
+                              className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90"
                             >
                               Save
                             </button>
@@ -227,8 +318,9 @@ export default function AdminUsersPage() {
                               onClick={() =>
                                 setEditingPoints(p => ({ ...p, [u._id]: u.points }))
                               }
+                              className="p-1 hover:bg-muted rounded"
                             >
-                              <i data-feather="edit-2"></i>
+                              <Edit className="w-3 h-3" />
                             </button>
                           </div>
                         )}
@@ -236,21 +328,64 @@ export default function AdminUsersPage() {
                       <td className="px-6 py-4 text-sm text-muted-foreground">
                         {new Date(u.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4 flex gap-3 justify-end">
-                        <button onClick={() => onViewDetails(u)}>
-                          <i data-feather="eye"></i>
-                        </button>
-                        {u.role !== "admin" && (
-                          <button onClick={() => makeAdmin(u)}>
-                            <i data-feather="shield"></i>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 justify-end">
+                          {/* View */}
+                          <button
+                            onClick={() => onViewDetails(u)}
+                            className="p-2 text-blue-500 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 rounded-lg transition-colors"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
                           </button>
-                        )}
-                        <button onClick={() => toggleSuspend(u)}>
-                          <i data-feather="slash"></i>
-                        </button>
-                        <button onClick={() => deleteUser(u)}>
-                          <i data-feather="trash-2"></i>
-                        </button>
+
+                          {/* Edit */}
+                          <button
+                            onClick={() => {
+                              toast.info('Edit functionality coming soon');
+                            }}
+                            className="p-2 text-purple-500 hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-950 rounded-lg transition-colors"
+                            title="Edit User"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+
+                          {/* Make Admin (only for non-admins) */}
+                          {u.role !== "admin" && (
+                            <button
+                              onClick={() => makeAdmin(u)}
+                              disabled={loadingActions[u._id]}
+                              className="p-2 text-indigo-500 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950 rounded-lg transition-colors disabled:opacity-50"
+                              title="Make Admin"
+                            >
+                              <Shield className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {/* Suspend/Unsuspend */}
+                          <button
+                            onClick={() => toggleSuspend(u)}
+                            disabled={loadingActions[u._id]}
+                            className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${
+                              u.status === 'suspended'
+                                ? 'text-green-500 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-950'
+                                : 'text-orange-500 hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-950'
+                            }`}
+                            title={u.status === 'suspended' ? 'Activate User' : 'Suspend User'}
+                          >
+                            <Ban className="w-4 h-4" />
+                          </button>
+
+                          {/* Delete */}
+                          <button
+                            onClick={() => deleteUser(u)}
+                            disabled={loadingActions[u._id]}
+                            className="p-2 text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 rounded-lg transition-colors disabled:opacity-50"
+                            title="Delete User"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -270,37 +405,13 @@ export default function AdminUsersPage() {
             </div>
           </div>
 
-          {/* DETAILS MODAL */}
-          {detailOpen && detailUser && (
-            <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-              <div className="bg-card p-6 rounded-2xl max-w-lg w-full">
-                <h3 className="text-xl font-bold mb-4">
-                  {detailUser.name}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-2">
-                  {detailUser.email}
-                </p>
-                <p>Role: {detailUser.role}</p>
-                <p>Status: {detailUser.status}</p>
-                <p>Points: {detailUser.points}</p>
-
-                <div className="flex justify-end gap-3 mt-6">
-                  <button
-                    onClick={() => setDetailOpen(false)}
-                    className="px-4 py-2 border rounded"
-                  >
-                    Close
-                  </button>
-                  <button
-                    onClick={() => deleteUser(detailUser)}
-                    className="px-4 py-2 bg-red-600 text-white rounded"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* USER PREVIEW MODAL */}
+          <UserPreviewModal
+            user={detailUser}
+            isOpen={detailOpen}
+            onClose={() => setDetailOpen(false)}
+            onUserUpdate={() => fetchUsers(pagination.currentPage, pagination.limit)}
+          />
         </main>
       </div>
     </div>

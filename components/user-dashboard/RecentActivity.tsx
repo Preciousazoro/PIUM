@@ -1,58 +1,101 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
 import {
   CheckCircle2,
   Clock,
   XCircle,
   Info,
+  Loader2,
 } from 'lucide-react';
 import { Pagination } from '../ui/Pagination';
 
 interface ActivityItem {
   _id: string;
+  type: string;
   status: string;
-  updatedAt: string;
+  title: string;
+  description?: string;
+  rewardPoints?: number;
   taskDetails?: {
     title?: string;
     rewardPoints?: number;
+    category?: string;
   };
+  metadata?: {
+    taskTitle?: string;
+    taskCategory?: string;
+    rejectionReason?: string;
+    [key: string]: any;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
-/* 🔹 Mock frontend data */
-const MOCK_ACTIVITIES: ActivityItem[] = [
-  {
-    _id: '1',
-    status: 'approved',
-    updatedAt: new Date().toISOString(),
-    taskDetails: { title: 'Daily Login', rewardPoints: 10 },
-  },
-  {
-    _id: '2',
-    status: 'pending',
-    updatedAt: new Date(Date.now() - 86400000).toISOString(),
-    taskDetails: { title: 'Profile Completion', rewardPoints: 20 },
-  },
-  {
-    _id: '3',
-    status: 'rejected',
-    updatedAt: new Date(Date.now() - 172800000).toISOString(),
-    taskDetails: { title: 'Referral Task' },
-  },
-];
+interface ActivitiesResponse {
+  activities: ActivityItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
 
 export function RecentActivity() {
   const [page, setPage] = useState(1);
   const limit = 5;
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false
+  });
 
-  const total = MOCK_ACTIVITIES.length;
-  const totalPages = Math.max(1, Math.ceil(total / limit));
+  // Fetch activities from API
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch(`/api/activities?page=${page}&limit=${limit}`);
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            setError('Please login to view your activities');
+          } else if (response.status === 404) {
+            setError('No activities found');
+          } else {
+            setError('Failed to load activities');
+          }
+          return;
+        }
+        
+        const data: ActivitiesResponse = await response.json();
+        setActivities(data.activities);
+        setPagination({
+          total: data.pagination.total,
+          totalPages: data.pagination.totalPages,
+          hasNext: data.pagination.hasNext,
+          hasPrev: data.pagination.hasPrev
+        });
+      } catch (err) {
+        console.error('Error fetching activities:', err);
+        setError('Failed to load activities');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const activities = MOCK_ACTIVITIES.slice(
-    (page - 1) * limit,
-    page * limit
-  );
+    fetchActivities();
+  }, [page, limit]);
 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
@@ -68,10 +111,39 @@ export function RecentActivity() {
     }
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="space-y-4 rounded-lg border bg-background p-6 text-foreground">
+        <h2 className="text-lg font-medium">Your Recent Activity</h2>
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          <span className="ml-2 text-muted-foreground">Loading activities...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="space-y-4 rounded-lg border bg-background p-6 text-foreground">
+        <h2 className="text-lg font-medium">Your Recent Activity</h2>
+        <div className="text-center py-8 text-muted-foreground">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state
   if (activities.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
-        No recent activity found.
+      <div className="space-y-4 rounded-lg border bg-background p-6 text-foreground">
+        <h2 className="text-lg font-medium">Your Recent Activity</h2>
+        <div className="text-center py-8 text-muted-foreground">
+          No recent activity found. Start completing tasks to see your activity here!
+        </div>
       </div>
     );
   }
@@ -108,7 +180,7 @@ export function RecentActivity() {
                 className="transition-colors hover:bg-muted/60"
               >
                 <td className="px-6 py-4 text-sm font-medium">
-                  {activity.taskDetails?.title || 'Task'}
+                  {activity.taskDetails?.title || activity.title || activity.metadata?.taskTitle || 'Activity'}
                 </td>
 
                 <td className="px-6 py-4">
@@ -130,9 +202,9 @@ export function RecentActivity() {
                 </td>
 
                 <td className="px-6 py-4 text-sm">
-                  {activity.taskDetails?.rewardPoints ? (
+                  {activity.taskDetails?.rewardPoints || activity.rewardPoints ? (
                     <span className="font-medium text-green-600 dark:text-green-400">
-                      {activity.taskDetails.rewardPoints} pts
+                      {activity.taskDetails?.rewardPoints || activity.rewardPoints} pts
                     </span>
                   ) : (
                     <span className="text-muted-foreground">-</span>
@@ -141,7 +213,7 @@ export function RecentActivity() {
 
                 <td className="px-6 py-4 text-sm text-muted-foreground">
                   {formatDistanceToNow(
-                    new Date(activity.updatedAt),
+                    new Date(activity.updatedAt || activity.createdAt),
                     { addSuffix: true }
                   )}
                 </td>
@@ -151,16 +223,16 @@ export function RecentActivity() {
         </table>
       </div>
 
-      {totalPages > 1 && (
+      {pagination.totalPages > 1 && (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pt-4">
           <p className="text-sm text-muted-foreground">
             Showing {(page - 1) * limit + 1}–
-            {Math.min(page * limit, total)} of {total}
+            {Math.min(page * limit, pagination.total)} of {pagination.total}
           </p>
 
           <Pagination
             currentPage={page}
-            totalItems={total}
+            totalItems={pagination.total}
             itemsPerPage={limit}
             onPageChange={setPage}
             showItemsPerPage={false}

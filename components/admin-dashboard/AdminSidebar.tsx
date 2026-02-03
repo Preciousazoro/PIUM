@@ -17,15 +17,55 @@ import {
   X,
 } from "lucide-react";
 
+interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatarUrl?: string;
+  createdAt: string;
+}
+
 const AdminSidebar = () => {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [admin, setAdmin] = useState<AdminUser | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const onOpen = () => setMenuOpen(true);
     window.addEventListener("open-sidebar", onOpen);
     return () => window.removeEventListener("open-sidebar", onOpen);
   }, []);
+
+  // Fetch admin data
+  useEffect(() => {
+    const fetchAdmin = async () => {
+      try {
+        const response = await fetch('/api/admin/me');
+        if (response.ok) {
+          const data = await response.json();
+          setAdmin(data.admin);
+        }
+      } catch (error) {
+        console.error('Error fetching admin data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAdmin();
+  }, []);
+
+  // Get initials for avatar fallback
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   const iconClass = "w-4 h-4";
 
@@ -58,7 +98,7 @@ const AdminSidebar = () => {
                 href={item.href}
                 className={`flex items-center space-x-3 p-3 rounded-lg transition ${
                   isActive
-                    ? "bg-gradient-to-r from-green-500 to-purple-500 text-white"
+                    ? "bg-linear-to-r from-green-500 to-purple-500 text-white"
                     : "text-muted-foreground hover:bg-muted"
                 }`}
               >
@@ -71,13 +111,29 @@ const AdminSidebar = () => {
 
         {/* Footer */}
         <div className="p-4 border-t border-border">
-          <Link href="/admin/profile" className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-              <UserIcon className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="font-medium">Admin</p>
-              <p className="text-xs text-muted-foreground">Administrator</p>
+          <Link href="/admin-dashboard/profile" className="flex items-center space-x-3">
+            {admin?.avatarUrl ? (
+              <img
+                src={admin.avatarUrl}
+                alt={admin.name}
+                className="w-10 h-10 rounded-full object-cover"
+              />
+            ) : admin?.name ? (
+              <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                {getInitials(admin.name)}
+              </div>
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                <UserIcon className="w-5 h-5 text-muted-foreground" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="font-medium truncate">
+                {loading ? 'Loading...' : (admin?.name || 'Admin')}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {admin?.role === 'admin' ? 'Administrator' : 'User'}
+              </p>
             </div>
           </Link>
 
@@ -129,13 +185,42 @@ const AdminSidebar = () => {
                   </Link>
                 ))}
 
-                <Link
-                  href="/auth/login"
-                  className="flex items-center space-x-3 p-3 text-red-500 hover:bg-muted"
-                >
-                  <LogOut />
-                  <span>Logout</span>
+              {/* Mobile Admin Profile */}
+              <div className="p-4 border-t border-border mt-4">
+                <Link href="/admin-dashboard/profile" className="flex items-center space-x-3">
+                  {admin?.avatarUrl ? (
+                    <img
+                      src={admin.avatarUrl}
+                      alt={admin.name}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : admin?.name ? (
+                    <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-medium">
+                      {getInitials(admin.name)}
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                      <UserIcon className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">
+                      {loading ? 'Loading...' : (admin?.name || 'Admin')}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {admin?.role === 'admin' ? 'Administrator' : 'User'}
+                    </p>
+                  </div>
                 </Link>
+              </div>
+
+              <Link
+                href="/auth/login"
+                className="flex items-center space-x-3 p-3 text-red-500 hover:bg-muted"
+              >
+                <LogOut />
+                <span>Logout</span>
+              </Link>
               </nav>
             </motion.aside>
           </>

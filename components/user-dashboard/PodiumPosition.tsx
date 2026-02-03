@@ -24,9 +24,9 @@ export function PodiumPosition({ user, rank, isFirst }: PodiumProps) {
       <div className="relative">
         {/* Avatar Ring */}
         <div className={`relative rounded-full p-1 shadow-2xl ${
-          rank === 1 ? "bg-gradient-to-b from-yellow-400 to-orange-600 w-28 h-28" : 
-          rank === 2 ? "bg-gradient-to-b from-slate-300 to-slate-500 w-24 h-24" : 
-          "bg-gradient-to-b from-amber-600 to-amber-800 w-24 h-24"
+          rank === 1 ? "bg-linear-to-b from-yellow-400 to-orange-600 w-28 h-28" : 
+          rank === 2 ? "bg-linear-to-b from-slate-300 to-slate-500 w-24 h-24" : 
+          "bg-linear-to-b from-amber-600 to-amber-800 w-24 h-24"
         }`}>
           <div className="w-full h-full rounded-full overflow-hidden bg-card border-4 border-background">
             {user.avatar ? (

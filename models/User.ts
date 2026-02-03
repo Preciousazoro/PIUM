@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema, Types } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 export interface SocialMedia {
@@ -8,21 +8,28 @@ export interface SocialMedia {
 }
 
 export interface IUser extends Document {
+  _id: Types.ObjectId;
   name: string;
   email: string;
   password: string;
   username?: string;
-  avatarUrl?: string;
-  avatarPublicId?: string; // Cloudinary public ID for deletion
-  taskPoints?: number;
-  tasksCompleted?: number;
+  avatarUrl?: string | null;
+  avatarPublicId?: string | null;
+  taskPoints: number;
+  welcomeBonusGranted: boolean;
+  lastLoginBonusAt?: Date;
+  tasksCompleted: number;
+  role: 'user' | 'admin';
+  status: 'active' | 'suspended';
   socialLinks?: SocialMedia;
+  dailyStreak: number;
+  lastStreakDate?: Date;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
-const UserSchema: Schema<IUser> = new Schema({
+const UserSchema = new Schema<IUser>({
   name: {
     type: String,
     required: [true, 'Please provide a name'],
@@ -65,13 +72,31 @@ const UserSchema: Schema<IUser> = new Schema({
   },
   taskPoints: {
     type: Number,
-    default: 50,
+    default: 0,
     min: 0
+  },
+  welcomeBonusGranted: {
+    type: Boolean,
+    default: false
+  },
+  lastLoginBonusAt: {
+    type: Date,
+    default: null
   },
   tasksCompleted: {
     type: Number,
     default: 0,
     min: 0
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
+  },
+  status: {
+    type: String,
+    enum: ['active', 'suspended'],
+    default: 'active'
   },
   socialLinks: {
     twitter: {
@@ -104,6 +129,16 @@ const UserSchema: Schema<IUser> = new Schema({
         message: 'Please provide a valid LinkedIn URL'
       }
     }
+  },
+  dailyStreak: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 7
+  },
+  lastStreakDate: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true
