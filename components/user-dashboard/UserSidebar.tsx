@@ -89,7 +89,7 @@ export default function UserSidebar() {
               <div className="flex items-center p-4">
                 <p className="mx-auto font-bold text-sm">User Dashboard</p>
                 <button onClick={() => setMenuOpen(false)}>
-                  <X className="w-6 h-6" />
+                  <X className="w-6 h-6 text-gray-500" />
                 </button>
               </div>
 
@@ -129,14 +129,14 @@ function SidebarContent({
     pathname === href || pathname.startsWith(href + "/");
 
   const links = [
-    { href: "/user-dashboard/dashboard", icon: Home, label: "Dashboard" },
-    { href: "/user-dashboard/profile", icon: Users, label: "Profile" },
-    { href: "/user-dashboard/transactions", icon: Edit2, label: "Transactions" },
-    { href: "/user-dashboard/settings", icon: Settings, label: "Settings" },
-    { href: "#", icon: ShoppingCart, label: "Commerce Tasks" },
-    { href: "/user-dashboard/leaderboard", icon: Award, label: "Leaderboard" },
-    { href: "/user-dashboard/task-verification", icon: CheckSquare, label: "Task Verification" },
-    { href: "/user-dashboard/rewards", icon: Gift, label: "Rewards" },
+    { href: "/user-dashboard/dashboard", icon: Home, label: "Dashboard", color: "text-blue-500" },
+    { href: "/user-dashboard/profile", icon: Users, label: "Profile", color: "text-purple-500" },
+    { href: "/user-dashboard/transactions", icon: Edit2, label: "Transactions", color: "text-green-500" },
+    { href: "/user-dashboard/settings", icon: Settings, label: "Settings", color: "text-gray-500" },
+    { href: "#", icon: ShoppingCart, label: "Commerce Tasks", color: "text-orange-500" },
+    { href: "/user-dashboard/leaderboard", icon: Award, label: "Leaderboard", color: "text-yellow-500" },
+    { href: "/user-dashboard/task-verification", icon: CheckSquare, label: "Task Verification", color: "text-indigo-500" },
+    { href: "/user-dashboard/rewards", icon: Gift, label: "Rewards", color: "text-pink-500" },
   ];
 
   const streak = userData?.dailyStreak || 0;
@@ -187,7 +187,7 @@ function SidebarContent({
                     : "text-muted-foreground hover:bg-muted"
                 }`}
             >
-              <link.icon className="w-5" />
+              <link.icon className={`w-5 ${active ? "text-white" : link.color}`} />
               {link.label}
             </Link>
           );
@@ -228,7 +228,7 @@ function AdminAndLogoutLinks({ userData, isLoading }: { userData: any; isLoading
         onClick={handleLogout}
         className="w-full flex items-center space-x-3 p-3 rounded-xl text-muted-foreground hover:bg-red-500/5 hover:text-red-500 transition-all"
       >
-        <LogOut className="w-4 h-4" />
+        <LogOut className="w-4 h-4 text-red-500" />
         <span className="font-medium text-sm">Logout</span>
       </button>
 
@@ -242,7 +242,7 @@ function AdminAndLogoutLinks({ userData, isLoading }: { userData: any; isLoading
           />
         ) : (
           <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-            <User className="w-5 h-5" />
+            <User className="w-5 h-5 text-blue-500" />
           </div>
         )}
         <div>

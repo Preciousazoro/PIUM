@@ -68,16 +68,18 @@ const AdminSidebar = () => {
   };
 
   const iconClass = "w-4 h-4";
+  const activeIconClass = "w-4 h-4 text-white";
+  const inactiveIconClass = "w-4 h-4 text-muted-foreground";
 
   const menuItems = [
-    { icon: <Layout className={iconClass} />, label: "Dashboard", href: "/admin-dashboard/dashboard" },
-    { icon: <CheckCircle className={iconClass} />, label: "Manage Tasks", href: "/admin-dashboard/manage-tasks" },
-    { icon: <Users className={iconClass} />, label: "Users", href: "/admin-dashboard/users" },
-    { icon: <FileText className={iconClass} />, label: "Submissions", href: "/admin-dashboard/submissions" },
-    { icon: <Award className={iconClass} />, label: "Rewards", href: "/admin-dashboard/rewards" },
-    { icon: <BarChart2 className={iconClass} />, label: "Reports & Analytics", href: "/admin-dashboard/reports" },
-    { icon: <Settings className={iconClass} />, label: "Settings", href: "/admin-dashboard/settings" },
-    { icon: <UserIcon className={iconClass} />, label: "Switch To User", href: "/user-dashboard/dashboard" },
+    { icon: <Layout className={iconClass} />, label: "Dashboard", href: "/admin-dashboard/dashboard", color: "text-blue-500" },
+    { icon: <CheckCircle className={iconClass} />, label: "Manage Tasks", href: "/admin-dashboard/manage-tasks", color: "text-green-500" },
+    { icon: <Users className={iconClass} />, label: "Users", href: "/admin-dashboard/users", color: "text-purple-500" },
+    { icon: <FileText className={iconClass} />, label: "Submissions", href: "/admin-dashboard/submissions", color: "text-orange-500" },
+    { icon: <Award className={iconClass} />, label: "Rewards", href: "/admin-dashboard/rewards", color: "text-yellow-500" },
+    { icon: <BarChart2 className={iconClass} />, label: "Reports & Analytics", href: "/admin-dashboard/reports", color: "text-indigo-500" },
+    { icon: <Settings className={iconClass} />, label: "Settings", href: "/admin-dashboard/settings", color: "text-gray-500" },
+    { icon: <UserIcon className={iconClass} />, label: "Switch To User", href: "/user-dashboard/dashboard", color: "text-cyan-500" },
   ];
 
   return (
@@ -102,7 +104,9 @@ const AdminSidebar = () => {
                     : "text-muted-foreground hover:bg-muted"
                 }`}
               >
-                {item.icon}
+                <span className={isActive ? "text-white" : item.color}>
+                  {item.icon}
+                </span>
                 <span>{item.label}</span>
               </Link>
             );
@@ -141,7 +145,7 @@ const AdminSidebar = () => {
             href="/auth/login"
             className="mt-3 flex items-center space-x-3 p-2 rounded-lg text-muted-foreground hover:text-red-600 hover:bg-muted"
           >
-            <LogOut className={iconClass} />
+            <LogOut className={`${iconClass} text-red-500`} />
             <span>Logout</span>
           </Link>
         </div>
@@ -180,7 +184,9 @@ const AdminSidebar = () => {
                     onClick={() => setMenuOpen(false)}
                     className="flex items-center space-x-3 p-3 rounded-lg hover:bg-muted"
                   >
-                    {item.icon}
+                    <span className={item.color}>
+                      {item.icon}
+                    </span>
                     <span>{item.label}</span>
                   </Link>
                 ))}
@@ -218,7 +224,7 @@ const AdminSidebar = () => {
                 href="/auth/login"
                 className="flex items-center space-x-3 p-3 text-red-500 hover:bg-muted"
               >
-                <LogOut />
+                <LogOut className="text-red-500" />
                 <span>Logout</span>
               </Link>
               </nav>

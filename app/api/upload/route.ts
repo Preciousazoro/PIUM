@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,19 +17,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // For now, just return a placeholder URL
-    // In a real implementation, you would upload to Cloudinary or similar service
-    const url = `https://placeholder-taskkash-proof.com/${Date.now()}-${file.name}`;
+    // Validate file type (only allow images)
+    if (!file.type.startsWith('image/')) {
+      return NextResponse.json({ error: 'Only image files are allowed' }, { status: 400 });
+    }
+
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    if (file.size > maxSize) {
+      return NextResponse.json({ error: 'File size must be less than 10MB' }, { status: 400 });
+    }
+
+    // Convert file to buffer
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    // Generate unique filename
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 15);
+    const filename = `${timestamp}-${randomString}`;
+
+    // Upload to Cloudinary (use task-proofs folder for task submissions)
+    const uploadResult = await uploadToCloudinary(
+      buffer,
+      filename,
+      'taskkash/task-proofs'
+    );
 
     return NextResponse.json({
       success: true,
-      url: url
+      url: uploadResult.url,
+      publicId: uploadResult.publicId
     });
 
   } catch (error) {
     console.error('Upload error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to upload file' },
       { status: 500 }
     );
   }

@@ -739,140 +739,194 @@ const ManageTasks = () => {
 
             {/* EDIT MODAL */}
             {showEditModal && editTask && (
-              <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
                 <form
                   onSubmit={handleEditTask}
-                  className="bg-card p-6 rounded-2xl w-full max-w-lg space-y-4 max-h-[80vh] overflow-y-auto"
+                  className="bg-black p-8 rounded-2xl w-full max-w-2xl max-h-[90vh] space-y-6 text-white overflow-y-auto"
                 >
-                  <h3 className="text-xl font-bold">Edit Task</h3>
+                  <h3 className="text-2xl font-bold text-center sticky top-0 bg-black pb-4 border-b border-gray-700">Edit Task</h3>
 
-                  <input
-                    className="w-full border rounded px-3 py-2"
-                    placeholder="Task Title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    required
-                  />
+                  {/* Title */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-200">Title</label>
+                    <input
+                      className="w-full bg-black border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/20"
+                      placeholder="Enter task title"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      required
+                    />
+                  </div>
 
-                  <textarea
-                    className="w-full border rounded px-3 py-2"
-                    placeholder="Task Description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={3}
-                    required
-                  />
-
-                  <select
-                    className="w-full border rounded px-3 py-2"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value as 'social' | 'content' | 'commerce')}
-                    required
-                  >
-                    <option value="social">Social</option>
-                    <option value="content">Content</option>
-                    <option value="commerce">Commerce</option>
-                  </select>
-
-                  <input
-                    type="number"
-                    className="w-full border rounded px-3 py-2"
-                    placeholder="Reward Points"
-                    value={rewardPoints}
-                    onChange={(e) =>
-                      setRewardPoints(e.target.value === "" ? "" : Number(e.target.value))
-                    }
-                    required
-                  />
-
-                  <input
-                    className="w-full border rounded px-3 py-2"
-                    placeholder="Validation Type"
-                    value={validationType}
-                    onChange={(e) => setValidationType(e.target.value)}
-                    required
-                  />
-
-                  <textarea
-                    className="w-full border rounded px-3 py-2"
-                    placeholder="Task Instructions"
-                    value={instructions}
-                    onChange={(e) => setInstructions(e.target.value)}
-                    rows={3}
-                    required
-                  />
-
-                  <input
-                    className="w-full border rounded px-3 py-2"
-                    placeholder="Task Link"
-                    value={taskLink}
-                    onChange={(e) => setTaskLink(e.target.value)}
-                    required
-                  />
-
-                  <input
-                    className="w-full border rounded px-3 py-2"
-                    placeholder="Alternate URL (optional)"
-                    value={alternateUrl}
-                    onChange={(e) => setAlternateUrl(e.target.value)}
-                  />
-
-                  <input
-                    type="datetime-local"
-                    className="w-full border rounded px-3 py-2"
-                    placeholder="Deadline (optional)"
-                    value={deadline}
-                    onChange={(e) => setDeadline(e.target.value)}
-                  />
-
-                  <select
-                    className="w-full border rounded px-3 py-2"
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as 'active' | 'expired' | 'disabled')}
-                    required
-                  >
-                    <option value="active">Active</option>
-                    <option value="expired">Expired</option>
-                    <option value="disabled">Disabled</option>
-                  </select>
-
-                  <div className="flex justify-end gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowEditModal(false);
-                        setEditTask(null);
-                        // Reset form
-                        setTitle("");
-                        setDescription("");
-                        setCategory('social');
-                        setRewardPoints("");
-                        setValidationType("");
-                        setInstructions("");
-                        setTaskLink("");
-                        setAlternateUrl("");
-                        setDeadline("");
-                        setStatus('active');
-                      }}
-                      className="px-4 py-2 border rounded"
-                      disabled={isSubmitting}
+                  {/* Category */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-200">Category</label>
+                    <select
+                      className="w-full bg-black border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-black focus:ring-2 focus:ring-black/20"
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value as 'social' | 'content' | 'commerce')}
+                      required
                     >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-purple-600 text-white rounded disabled:opacity-50"
-                      disabled={isSubmitting}
+                      <option value="social" className="bg-gray-800">Social</option>
+                      <option value="content" className="bg-gray-800">Content</option>
+                      <option value="commerce" className="bg-gray-800">Commerce</option>
+                    </select>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-200">Description</label>
+                    <textarea
+                      className="w-full bg-black border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/20 resize-none"
+                      placeholder="Enter task description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={4}
+                      required
+                    />
+                  </div>
+
+                  {/* Reward Points */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-200">Reward Points</label>
+                    <input
+                      type="number"
+                      className="w-full bg-black border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/20"
+                      placeholder="Enter reward points"
+                      value={rewardPoints}
+                      onChange={(e) =>
+                        setRewardPoints(e.target.value === "" ? "" : Number(e.target.value))
+                      }
+                      required
+                    />
+                  </div>
+
+                  {/* Validation Type */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-200">Validation Type</label>
+                    <select
+                      className="w-full bg-black border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-black focus:ring-2 focus:ring-black/20"
+                      value={validationType}
+                      onChange={(e) => setValidationType(e.target.value)}
+                      required
                     >
-                      {isSubmitting ? (
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Updating...
-                        </div>
-                      ) : (
-                        'Update'
-                      )}
-                    </button>
+                      <option value="screenshot" className="bg-gray-800">Screenshot</option>
+                      <option value="username" className="bg-gray-800">Username</option>
+                      <option value="text" className="bg-gray-800">Text</option>
+                      <option value="link" className="bg-gray-800">Link</option>
+                    </select>
+                  </div>
+
+                  {/* Instructions */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-200">Instructions</label>
+                    <textarea
+                      className="w-full bg-black border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/20 resize-none"
+                      placeholder="Enter task instructions"
+                      value={instructions}
+                      onChange={(e) => setInstructions(e.target.value)}
+                      rows={4}
+                      required
+                    />
+                  </div>
+
+                  {/* Task Links */}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-200">Task Link (preferred)</label>
+                      <input
+                        type="url"
+                        className="w-full bg-black border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/20"
+                        placeholder="https://example.com/task"
+                        value={taskLink}
+                        onChange={(e) => setTaskLink(e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-200">Alternate URL</label>
+                      <input
+                        type="url"
+                        className="w-full bg-black border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/20"
+                        placeholder="https://example.com/alternate"
+                        value={alternateUrl}
+                        onChange={(e) => setAlternateUrl(e.target.value)}
+                      />
+                    </div>
+
+                    <p className="text-xs text-gray-400 bg-black p-3 rounded-lg border border-gray-700">
+                      ⚠️ At least one link is required (Task Link or Alternate URL)
+                    </p>
+                  </div>
+
+                  {/* Deadline */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-200">Deadline</label>
+                    <input
+                      type="datetime-local"
+                      className="w-full bg-black border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/20"
+                      value={deadline}
+                      onChange={(e) => setDeadline(e.target.value)}
+                      min={new Date().toISOString().slice(0, 16)}
+                      pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}"
+                    />
+                  </div>
+
+                  {/* Status */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-200">Status</label>
+                    <select
+                      className="w-full bg-black border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-black focus:ring-2 focus:ring-black/20"
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value as 'active' | 'expired' | 'disabled')}
+                      required
+                    >
+                      <option value="active" className="bg-gray-800">Active</option>
+                      <option value="expired" className="bg-gray-800">Expired</option>
+                      <option value="disabled" className="bg-gray-800">Disabled</option>
+                    </select>
+                  </div>
+
+                  {/* Form Actions - Sticky at bottom */}
+                  <div className="sticky bottom-0 bg-black pt-6 border-t border-gray-700">
+                    <div className="flex justify-end gap-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowEditModal(false);
+                          setEditTask(null);
+                          // Reset form
+                          setTitle("");
+                          setDescription("");
+                          setCategory('social');
+                          setRewardPoints("");
+                          setValidationType("");
+                          setInstructions("");
+                          setTaskLink("");
+                          setAlternateUrl("");
+                          setDeadline("");
+                          setStatus('active');
+                        }}
+                        className="px-6 py-3 border border-gray-600 rounded-lg text-white hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500/20"
+                        disabled={isSubmitting}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-6 py-3 bg-linear-to-r from-green-500 to-purple-500 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Updating...
+                          </div>
+                        ) : (
+                          'Update Task'
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </form>
               </div>

@@ -17,6 +17,24 @@ export async function uploadToCloudinary(
   folder: string = 'taskkash/avatars'
 ): Promise<{ url: string; publicId: string }> {
   return new Promise((resolve, reject) => {
+    // Set different transformations based on folder
+    const isAvatar = folder.includes('avatars');
+    const transformation = isAvatar ? [
+      {
+        width: 400,
+        height: 400,
+        crop: 'fill',
+        gravity: 'face',
+      },
+      {
+        quality: 'auto',
+      },
+    ] : [
+      {
+        quality: 'auto:good',
+      },
+    ];
+
     cloudinary.uploader.upload_stream(
       {
         folder,
@@ -25,17 +43,7 @@ export async function uploadToCloudinary(
         format: 'webp', // Convert to WebP for better performance
         quality: 'auto:good',
         fetch_format: 'auto',
-        transformation: [
-          {
-            width: 400,
-            height: 400,
-            crop: 'fill',
-            gravity: 'face',
-          },
-          {
-            quality: 'auto',
-          },
-        ],
+        transformation,
       },
       (error, result) => {
         if (error) {
