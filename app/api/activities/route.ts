@@ -45,8 +45,6 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's email from session and find their activities
-    // Note: You'll need to adapt this based on your auth setup
-    // For now, we'll assume the user ID is available in the session
     const userId = session.user.id || session.user.email;
     
     // If we have email but not ID, we need to find the user first
@@ -59,8 +57,10 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
       userObjectId = user._id;
-    } else {
+    } else if (userId) {
       userObjectId = new mongoose.Types.ObjectId(userId as string);
+    } else {
+      return NextResponse.json({ error: 'User ID not found in session' }, { status: 401 });
     }
 
     query.userId = userObjectId;

@@ -1,15 +1,14 @@
 "use client";
 
 import { Clock, CheckCircle2, XCircle, AlertCircle, Timer } from "lucide-react";
-import { TaskStatus } from "@/lib/taskState";
 
 interface StatusBadgeProps {
-  status: TaskStatus;
+  status: string;
   className?: string;
 }
 
 export function StatusBadge({ status, className = "" }: StatusBadgeProps) {
-  const getStatusConfig = (status: TaskStatus) => {
+  const getStatusConfig = (status: string) => {
     switch (status) {
       case 'available':
         return {
@@ -44,6 +43,13 @@ export function StatusBadge({ status, className = "" }: StatusBadgeProps) {
           icon: <XCircle className="w-3 h-3" />,
           text: 'Rejected',
           className: 'bg-destructive/10 text-destructive border-destructive/20',
+        };
+      
+      case 'completed':
+        return {
+          icon: <CheckCircle2 className="w-3 h-3" />,
+          text: 'Completed',
+          className: 'bg-chart-1/10 text-chart-1 border-chart-1/20',
         };
       
       default:

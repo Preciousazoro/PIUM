@@ -87,6 +87,7 @@ export const {
             name: user.name ?? undefined,
             role: user.role,
             taskPoints: user.taskPoints, // Include actual balance from DB
+            tasksCompleted: user.tasksCompleted, // Include tasks completed from DB
             welcomeBonusGranted: user.welcomeBonusGranted, // Include bonus status
             dailyStreak: updatedStreak, // Include updated daily streak
           };
@@ -116,6 +117,7 @@ export const {
         token.id = user.id;
         token.role = user.role;
         token.taskPoints = user.taskPoints;
+        token.tasksCompleted = user.tasksCompleted;
         token.welcomeBonusGranted = user.welcomeBonusGranted;
         token.dailyStreak = user.dailyStreak;
       }
@@ -134,6 +136,7 @@ export const {
         session.user.id = token.id as string;
         (session.user as any).role = token.role as string;
         (session.user as any).taskPoints = token.taskPoints as number;
+        (session.user as any).tasksCompleted = token.tasksCompleted as number;
         (session.user as any).welcomeBonusGranted = token.welcomeBonusGranted as boolean;
         (session.user as any).dailyStreak = token.dailyStreak as number;
       }

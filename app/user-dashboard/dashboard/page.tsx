@@ -19,7 +19,7 @@ export default function DashboardPage() {
   const [taskPoints, setTaskPoints] = useState<number>(0); // Start with 0
   const [tasksCompleted, setTasksCompleted] = useState<number>(0);
   const [tasks, setTasks] = useState<TaskDocument[]>([]);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedTask, setSelectedTask] = useState<TaskDocument | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
 
@@ -89,7 +89,7 @@ export default function DashboardPage() {
   }, []);
 
 
-  const handleTaskClick = (task: Task) => {
+  const handleTaskClick = (task: TaskDocument) => {
     setSelectedTask(task);
     setIsModalOpen(true);
   };
@@ -99,14 +99,14 @@ export default function DashboardPage() {
     setSelectedTask(null);
   };
 
-  const handleStartTask = (task: Task) => {
-    // This will be handled by the TaskCard component
+  const handleStartTask = (task: TaskDocument) => {
+    // This will be handled by TaskCard component
     // The modal will also handle starting tasks
     handleTaskClick(task);
   };
 
-  const handleSubmitProof = (task: Task) => {
-    // This will be handled by the TaskCard component
+  const handleSubmitProof = (task: TaskDocument) => {
+    // This will be handled by TaskCard component
     // The modal will also handle proof submission
     handleTaskClick(task);
   };
@@ -143,7 +143,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Stats Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-medium text-muted-foreground">Total Earned</p>
@@ -159,14 +159,6 @@ export default function DashboardPage() {
                   <CheckCircle2 className="w-4 h-4 text-green-500" />
                 </div>
                 <p className="text-3xl font-bold">{tasksCompleted}</p>
-              </div>
-
-              <div className="bg-card p-6 rounded-2xl border border-border shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-medium text-muted-foreground">Available Balance</p>
-                  <Flame className="w-4 h-4 text-orange-500" />
-                </div>
-                <p className="text-3xl font-bold">{taskPoints.toLocaleString()} TP</p>
               </div>
             </div>
 
@@ -185,7 +177,7 @@ export default function DashboardPage() {
                 tasks.map((task) => (
                   <TaskCardComponent 
                     key={task._id} 
-                    task={transformTaskToCard(task)} 
+                    task={task} 
                     onClick={handleTaskClick}
                     onStartTask={handleStartTask}
                     onSubmitProof={handleSubmitProof}

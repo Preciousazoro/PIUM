@@ -56,19 +56,52 @@ export default function TaskVerificationPage() {
     setIsSubmitting(true);
     
     try {
+      // Upload file if provided
+      let proofUrl = '';
+      if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          proofUrl = uploadData.url;
+        }
+      }
+
+      // Submit task proof to API
+      const submissionData = {
+        taskId,
+        proofUrls: proofUrl ? [proofUrl] : [],
+        proofLink: taskUrl,
+        notes: description
+      };
+      
+      console.log('Sending submission data:', submissionData);
+      
+      const response = await fetch('/api/tasks/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Submission error response:', errorData);
+        throw new Error(errorData.error || 'Failed to submit proof');
+      }
+
+      const data = await response.json();
+      console.log('Submission successful:', data);
+      
       // Update task state to submitted
       TaskStateManager.updateTaskState(taskId as string, 'submitted');
-      
-      // Log submission data (in real app, this would be sent to backend)
-      console.log({ 
-        taskId: taskId as string, 
-        taskTitle, 
-        reward, 
-        description, 
-        fileName: file?.name,
-        category,
-        taskUrl
-      });
       
       toast.success("Proof submitted successfully! You'll receive your reward after verification.");
       
@@ -79,7 +112,7 @@ export default function TaskVerificationPage() {
       
     } catch (error) {
       console.error('Error submitting proof:', error);
-      toast.error("Failed to submit proof. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Failed to submit proof. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

@@ -151,7 +151,7 @@ function SidebarContent({
         </div>
         <div className="h-2 bg-muted rounded-full">
           <div
-            className="h-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-full transition-all duration-500"
+            className="h-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all duration-500"
             style={{ width: `${Math.min((streak / 7) * 100, 100)}%` }}
           />
         </div>
@@ -162,7 +162,7 @@ function SidebarContent({
                 key={i}
                 className={`w-2 h-2 rounded-full transition-colors duration-300 ${
                   i < streak
-                    ? 'bg-orange-500'
+                    ? 'bg-green-500'
                     : 'bg-muted/30'
                 }`}
               />

@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Check, FilePlus, FileText, UploadCloud, Loader2, AlertCircle } from "lucide-react";
+import { TaskStateManager } from "@/lib/taskState";
+import { toast } from "sonner";
 
 export default function SubmitProofClient() {
   const searchParams = useSearchParams();
@@ -24,9 +26,8 @@ export default function SubmitProofClient() {
   const screenshotInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Check if task is started via localStorage
-    const v = localStorage.getItem(`tk_started_${taskId}`);
-    setStarted(v === "1" || v === "true");
+    // Check if task is started using TaskStateManager
+    setStarted(TaskStateManager.isTaskStarted(taskId));
   }, [taskId]);
 
   useEffect(() => {
@@ -39,13 +40,70 @@ export default function SubmitProofClient() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!started || !proofLink) {
+      return;
+    }
+
     setIsSubmitting(true);
-    // Mimicking submission logic
-    setTimeout(() => {
-      setIsSubmitting(false);
+    
+    try {
+      // Upload screenshot if provided
+      let proofUrl = '';
+      if (screenshot) {
+        const formData = new FormData();
+        formData.append('file', screenshot);
+        
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          proofUrl = uploadData.url;
+        }
+      }
+
+      // Submit task proof
+      const submissionData = {
+        taskId,
+        proofUrls: proofUrl ? [proofUrl] : [],
+        proofLink,
+        notes: description
+      };
+      
+      console.log('Sending submission data:', submissionData);
+      
+      const response = await fetch('/api/tasks/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Submission error response:', errorData);
+        throw new Error(errorData.error || 'Failed to submit proof');
+      }
+
+      const data = await response.json();
+      console.log('Submission successful:', data);
+      
+      // Update task state to submitted
+      TaskStateManager.updateTaskState(taskId, 'submitted');
+      
+      // Show success message
       setShowSuccess(true);
-      localStorage.setItem(`tk_submitted_${taskId}`, "1");
-    }, 1500);
+      
+    } catch (error) {
+      console.error('Submission error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to submit proof. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

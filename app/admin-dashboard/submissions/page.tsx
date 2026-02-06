@@ -1,123 +1,146 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import React from "react";
 import feather from "feather-icons";
 import AdminHeader from "../../../components/admin-dashboard/AdminHeader";
 import AdminSidebar from "../../../components/admin-dashboard/AdminSidebar";
 import { Pagination } from "@/components/ui/Pagination";
+import { toast } from "sonner";
 
-/* ---------------- MOCK DATA ---------------- */
+/* ---------------- TYPES ---------------- */
 
-const MOCK_SUBMISSIONS = [
-  {
-    id: "1",
-    userSnapshot: { name: "John Doe", email: "john@example.com" },
-    taskSnapshot: { title: "Twitter Follow", rewardPoints: 50 },
-    status: "Pending",
-    createdAt: new Date().toISOString(),
-    proofUrls: ["/placeholder.png"],
-    notes: "Completed successfully",
-  },
-  {
-    id: "2",
-    userSnapshot: { name: "Jane Smith", email: "jane@example.com" },
-    taskSnapshot: { title: "Discord Join", rewardPoints: 30 },
-    status: "Approved",
-    createdAt: new Date().toISOString(),
-    proofUrls: [],
-  },
-];
+interface UserSnapshot {
+  _id: string;
+  name: string;
+  email: string;
+  username?: string;
+  avatarUrl?: string;
+}
+
+interface TaskSnapshot {
+  _id: string;
+  title: string;
+  description: string;
+  instructions: string;
+  rewardPoints: number;
+  category: string;
+}
+
+interface Submission {
+  _id: string;
+  userSnapshot: UserSnapshot;
+  taskSnapshot: TaskSnapshot;
+  status: 'pending' | 'approved' | 'rejected';
+  proofUrls: string[];
+  proofLink: string;
+  notes: string;
+  submittedAt: string;
+  reviewedAt?: string;
+  metadata?: any;
+}
 
 /* ---------------- COMPONENT ---------------- */
 
 export default function AdminSubmissionsPage() {
-  const [subs, setSubs] = useState(MOCK_SUBMISSIONS);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<
-    "All" | "Pending" | "Reviewed" | "Approved" | "Rejected" | "Rewarded"
+    "All" | "pending" | "approved" | "rejected"
   >("All");
 
-  const [selectedSubmission, setSelectedSubmission] = useState<any | null>(null);
-  const [previewImageIndex, setPreviewImageIndex] = useState(0);
+  const [expandedSubmission, setExpandedSubmission] = useState<string | null>(null);
+  const [updating, setUpdating] = useState<string | null>(null);
 
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
+    total: 0,
+    totalPages: 0,
   });
 
   useEffect(() => {
     feather.replace();
-  }, []);
+    fetchSubmissions();
+  }, [statusFilter, pagination.page, pagination.limit]);
 
-  /* ---------------- CLIENT-SIDE FILTERING ---------------- */
+  /* ---------------- DATA FETCHING ---------------- */
 
-  const filtered = subs.filter(
-    (s) => statusFilter === "All" || s.status === statusFilter
-  );
-
-  const paginated = filtered.slice(
-    (pagination.page - 1) * pagination.limit,
-    pagination.page * pagination.limit
-  );
-
-  /* ---------------- STATUS UPDATE (WITH API CALL) ---------------- */
-
-  const updateStatus = async (id: string, status: string) => {
-    // Update local state first for immediate UI feedback
-    setSubs((prev) =>
-      prev.map((s) =>
-        s.id === id ? { ...s, status } : s
-      )
-    );
-
-    // If approving, call the API to increment user's taskPoints
-    if (status === "Approved") {
-      const submission = subs.find(s => s.id === id);
-      if (submission?.taskSnapshot?.rewardPoints && submission?.userSnapshot?.email) {
-        try {
-          // Find user by email and get their ID
-          const userResponse = await fetch(`/api/user/by-email?email=${submission.userSnapshot.email}`);
-          if (userResponse.ok) {
-            const userData = await userResponse.json();
-            
-            // Call the approval API to increment taskPoints
-            const approveResponse = await fetch('/api/tasks/approve', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                taskId: submission.id,
-                reward: submission.taskSnapshot.rewardPoints,
-                userId: userData.id
-              }),
-            });
-
-            if (approveResponse.ok) {
-              const result = await approveResponse.json();
-              console.log(`Task approved! User earned ${result.reward} TP. New balance: ${result.taskPoints} TP`);
-            } else {
-              console.error('Failed to approve task and award points');
-              // Revert status on failure
-              setSubs((prev) =>
-                prev.map((s) =>
-                  s.id === id ? { ...s, status: "Pending" } : s
-                )
-              );
-            }
-          }
-        } catch (error) {
-          console.error('Error approving task:', error);
-          // Revert status on failure
-          setSubs((prev) =>
-            prev.map((s) =>
-              s.id === id ? { ...s, status: "Pending" } : s
-            )
-          );
-        }
+  const fetchSubmissions = async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        page: pagination.page.toString(),
+        limit: pagination.limit.toString(),
+      });
+      
+      if (statusFilter !== "All") {
+        params.append('status', statusFilter);
       }
-    }
 
-    setSelectedSubmission(null);
+      const response = await fetch(`/api/admin/submissions?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch submissions');
+      
+      const data = await response.json();
+      setSubmissions(data.submissions);
+      setPagination(prev => ({
+        ...prev,
+        total: data.pagination.total,
+        totalPages: data.pagination.totalPages,
+      }));
+    } catch (error) {
+      console.error('Error fetching submissions:', error);
+      toast.error('Failed to load submissions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ---------------- STATUS UPDATE ---------------- */
+
+  const updateSubmissionStatus = async (submissionId: string, status: 'approved' | 'rejected', rejectionReason?: string) => {
+    try {
+      setUpdating(submissionId);
+      
+      const response = await fetch('/api/admin/submissions', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          submissionId,
+          status,
+          rejectionReason: status === 'rejected' ? rejectionReason : undefined,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update submission');
+      
+      const result = await response.json();
+      
+      // Update local state
+      setSubmissions(prev => prev.map(s => 
+        s._id === submissionId 
+          ? { ...s, status, reviewedAt: new Date().toISOString() }
+          : s
+      ));
+
+      // Show success message
+      if (status === 'approved') {
+        toast.success(`Submission approved! User earned ${result.awardedPoints} TP`);
+      } else {
+        toast.success('Submission rejected');
+      }
+
+      // Close expanded view
+      setExpandedSubmission(null);
+      
+    } catch (error) {
+      console.error('Error updating submission:', error);
+      toast.error('Failed to update submission');
+    } finally {
+      setUpdating(null);
+    }
   };
 
   /* ---------------- RENDER ---------------- */
@@ -134,7 +157,7 @@ export default function AdminSubmissionsPage() {
 
           {/* Filters */}
           <div className="flex gap-2 mb-4">
-            {["All", "Pending", "Reviewed", "Approved", "Rejected", "Rewarded"].map(
+            {["All", "pending", "approved", "rejected"].map(
               (st) => (
                 <button
                   key={st}
@@ -142,13 +165,14 @@ export default function AdminSubmissionsPage() {
                     setStatusFilter(st as any);
                     setPagination((p) => ({ ...p, page: 1 }));
                   }}
-                  className={`px-3 py-1 rounded-full text-sm border ${
+                  disabled={loading}
+                  className={`px-3 py-1 rounded-full text-sm border transition-colors ${
                     statusFilter === st
                       ? "bg-purple-600 text-white"
-                      : "bg-muted"
-                  }`}
+                      : "bg-muted hover:bg-muted/80"
+                  } disabled:opacity-50`}
                 >
-                  {st}
+                  {st.charAt(0).toUpperCase() + st.slice(1)}
                 </button>
               )
             )}
@@ -156,140 +180,269 @@ export default function AdminSubmissionsPage() {
 
           {/* Table */}
           <div className="bg-card border rounded-xl overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-muted">
-                <tr>
-                  {["User", "Task", "Reward", "Status", "Date", "Actions"].map(
-                    (h) => (
-                      <th key={h} className="px-6 py-3 text-left text-xs uppercase">
-                        {h}
-                      </th>
-                    )
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {paginated.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-6 text-center text-muted-foreground">
-                      No submissions
-                    </td>
-                  </tr>
-                ) : (
-                  paginated.map((s) => (
-                    <tr key={s.id} className="border-t">
-                      <td className="px-6 py-4">
-                        <div className="font-medium">{s.userSnapshot.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {s.userSnapshot.email}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">{s.taskSnapshot.title}</td>
-                      <td className="px-6 py-4">
-                        {s.taskSnapshot.rewardPoints} TP
-                      </td>
-                      <td className="px-6 py-4">{s.status}</td>
-                      <td className="px-6 py-4">
-                        {new Date(s.createdAt).toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setSelectedSubmission(s)}
-                            className="text-blue-500 text-sm"
-                          >
-                            View
-                          </button>
-                          {s.status === "Pending" && (
-                            <>
-                              <button
-                                onClick={() => updateStatus(s.id, "Approved")}
-                                className="text-green-500 text-sm"
-                              >
-                                Approve
-                              </button>
-                              <button
-                                onClick={() => updateStatus(s.id, "Rejected")}
-                                className="text-red-500 text-sm"
-                              >
-                                Reject
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
+            {loading ? (
+              <div className="p-8 text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                <p className="mt-2 text-muted-foreground">Loading submissions...</p>
+              </div>
+            ) : (
+              <>
+                <table className="w-full">
+                  <thead className="bg-muted">
+                    <tr>
+                      {["User", "Task", "Reward", "Status", "Date", "Actions"].map(
+                        (h) => (
+                          <th key={h} className="px-6 py-3 text-left text-xs uppercase">
+                            {h}
+                          </th>
+                        )
+                      )}
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {submissions.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-6 text-center text-muted-foreground">
+                          No submissions found
+                        </td>
+                      </tr>
+                    ) : (
+                      submissions.map((submission) => (
+                        <React.Fragment key={submission._id}>
+                          <tr className="border-t hover:bg-muted/30 transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                {submission.userSnapshot.avatarUrl && (
+                                  <img
+                                    src={submission.userSnapshot.avatarUrl}
+                                    alt={submission.userSnapshot.name}
+                                    className="w-8 h-8 rounded-full object-cover"
+                                  />
+                                )}
+                                <div>
+                                  <div className="font-medium">{submission.userSnapshot.name}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {submission.userSnapshot.email}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="font-medium">{submission.taskSnapshot.title}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {submission.taskSnapshot.category}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="font-medium text-purple-600">
+                                +{submission.taskSnapshot.rewardPoints} TP
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex px-2 py-1 text-xs rounded-full font-medium ${
+                                submission.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                submission.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="text-xs">
+                                {new Date(submission.submittedAt).toLocaleDateString()}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => setExpandedSubmission(
+                                    expandedSubmission === submission._id ? null : submission._id
+                                  )}
+                                  className="text-blue-500 text-sm hover:text-blue-700 transition-colors"
+                                >
+                                  {expandedSubmission === submission._id ? 'Hide' : 'View'}
+                                </button>
+                                {submission.status === 'pending' && (
+                                  <>
+                                    <button
+                                      onClick={() => updateSubmissionStatus(submission._id, 'approved')}
+                                      disabled={updating === submission._id}
+                                      className="text-green-500 text-sm hover:text-green-700 transition-colors disabled:opacity-50"
+                                    >
+                                      {updating === submission._id ? '...' : 'Accept'}
+                                    </button>
+                                    <button
+                                      onClick={() => updateSubmissionStatus(submission._id, 'rejected')}
+                                      disabled={updating === submission._id}
+                                      className="text-red-500 text-sm hover:text-red-700 transition-colors disabled:opacity-50"
+                                    >
+                                      {updating === submission._id ? '...' : 'Reject'}
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                          
+                          {/* Expanded Preview Panel */}
+                          {expandedSubmission === submission._id && (
+                            <tr>
+                              <td colSpan={6} className="bg-muted/20 border-t">
+                                <div className="p-6 space-y-6">
+                                  {/* Task Details */}
+                                  <div>
+                                    <h4 className="font-semibold text-sm uppercase tracking-wide mb-3">Task Details</h4>
+                                    <div className="bg-card rounded-lg p-4 space-y-2">
+                                      <div><strong>Title:</strong> {submission.taskSnapshot.title}</div>
+                                      <div><strong>Category:</strong> {submission.taskSnapshot.category}</div>
+                                      <div><strong>Reward:</strong> +{submission.taskSnapshot.rewardPoints} TP</div>
+                                      <div><strong>Instructions:</strong></div>
+                                      <div className="text-sm text-muted-foreground bg-muted/30 rounded p-3">
+                                        {submission.taskSnapshot.instructions || 'No instructions provided'}
+                                      </div>
+                                    </div>
+                                  </div>
 
-            <div className="p-4 border-t">
-              <Pagination
-                currentPage={pagination.page}
-                totalItems={filtered.length}
-                itemsPerPage={pagination.limit}
-                onPageChange={(page) =>
-                  setPagination((p) => ({ ...p, page }))
-                }
-                onItemsPerPageChange={(limit) =>
-                  setPagination({ page: 1, limit })
-                }
-              />
-            </div>
+                                  {/* Proof Section */}
+                                  <div>
+                                    <h4 className="font-semibold text-sm uppercase tracking-wide mb-3">Submitted Proof</h4>
+                                    <div className="bg-card rounded-lg p-4 space-y-3">
+                                      {submission.proofUrls?.length > 0 && (
+                                        <div>
+                                          <div className="text-sm font-medium mb-2">Screenshot/Image:</div>
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            {submission.proofUrls.map((url, index) => (
+                                              <div key={index} className="relative group">
+                                                <img
+                                                  src={url}
+                                                  alt={`Proof ${index + 1}`}
+                                                  className="w-full h-48 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
+                                                  onClick={() => window.open(url, '_blank')}
+                                                />
+                                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center cursor-pointer"
+                                                     onClick={() => window.open(url, '_blank')}>
+                                                  <span className="text-white text-sm">Open in new tab</span>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      
+                                      {submission.proofLink && (
+                                        <div>
+                                          <div className="text-sm font-medium mb-2">Proof Link:</div>
+                                          <a
+                                            href={submission.proofLink}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-500 hover:text-blue-700 text-sm underline break-all"
+                                          >
+                                            {submission.proofLink}
+                                          </a>
+                                        </div>
+                                      )}
+                                      
+                                      {submission.notes && (
+                                        <div>
+                                          <div className="text-sm font-medium mb-2">Additional Notes:</div>
+                                          <div className="text-sm text-muted-foreground bg-muted/30 rounded p-3">
+                                            {submission.notes}
+                                          </div>
+                                        </div>
+                                      )}
+                                      
+                                      {!submission.proofUrls?.length && !submission.proofLink && !submission.notes && (
+                                        <div className="text-muted-foreground text-sm">
+                                          No proof provided
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Submission Metadata */}
+                                  <div>
+                                    <h4 className="font-semibold text-sm uppercase tracking-wide mb-3">Submission Info</h4>
+                                    <div className="bg-card rounded-lg p-4 space-y-2 text-sm">
+                                      <div><strong>Submitted by:</strong> {submission.userSnapshot.name} ({submission.userSnapshot.email})</div>
+                                      <div><strong>Submitted on:</strong> {new Date(submission.submittedAt).toLocaleString()}</div>
+                                      {submission.reviewedAt && (
+                                        <div><strong>Reviewed on:</strong> {new Date(submission.reviewedAt).toLocaleString()}</div>
+                                      )}
+                                      <div><strong>Status:</strong> 
+                                        <span className={`ml-2 inline-flex px-2 py-1 text-xs rounded-full font-medium ${
+                                          submission.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                          submission.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                          'bg-yellow-100 text-yellow-800'
+                                        }`}>
+                                          {submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Action Buttons */}
+                                  {submission.status === 'pending' && (
+                                    <div className="flex gap-3 pt-4 border-t">
+                                      <button
+                                        onClick={() => updateSubmissionStatus(submission._id, 'approved')}
+                                        disabled={updating === submission._id}
+                                        className="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
+                                        {updating === submission._id ? (
+                                          <div className="flex items-center justify-center gap-2">
+                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                            Processing...
+                                          </div>
+                                        ) : (
+                                          '✓ Accept Submission'
+                                        )}
+                                      </button>
+                                      <button
+                                        onClick={() => updateSubmissionStatus(submission._id, 'rejected')}
+                                        disabled={updating === submission._id}
+                                        className="flex-1 bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
+                                        {updating === submission._id ? (
+                                          <div className="flex items-center justify-center gap-2">
+                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                            Processing...
+                                          </div>
+                                        ) : (
+                                          '✗ Reject Submission'
+                                        )}
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+
+                <div className="p-4 border-t">
+                  <Pagination
+                    currentPage={pagination.page}
+                    totalItems={pagination.total}
+                    itemsPerPage={pagination.limit}
+                    onPageChange={(page) =>
+                      setPagination((p) => ({ ...p, page }))
+                    }
+                    onItemsPerPageChange={(limit) =>
+                      setPagination(prev => ({ ...prev, page: 1, limit }))
+                    }
+                  />
+                </div>
+              </>
+            )}
           </div>
         </main>
       </div>
 
-      {/* Preview Modal */}
-      {selectedSubmission && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
-          <div className="bg-card rounded-xl max-w-3xl w-full p-6">
-            <h3 className="text-xl font-semibold mb-2">
-              Submission Preview
-            </h3>
-
-            {selectedSubmission.proofUrls?.length ? (
-              <img
-                src={selectedSubmission.proofUrls[previewImageIndex]}
-                className="max-h-[50vh] mx-auto rounded"
-                alt="proof"
-              />
-            ) : (
-              <div className="text-muted-foreground">
-                No proof uploaded
-              </div>
-            )}
-
-            <div className="mt-4 space-y-2">
-              <div><strong>User:</strong> {selectedSubmission.userSnapshot.name}</div>
-              <div><strong>Task:</strong> {selectedSubmission.taskSnapshot.title}</div>
-              <div><strong>Status:</strong> {selectedSubmission.status}</div>
-            </div>
-
-            <div className="flex gap-2 mt-6">
-              <button
-                onClick={() => updateStatus(selectedSubmission.id, "Approved")}
-                className="flex-1 bg-green-600 text-white py-2 rounded"
-              >
-                Approve
-              </button>
-              <button
-                onClick={() => updateStatus(selectedSubmission.id, "Rejected")}
-                className="flex-1 bg-red-600 text-white py-2 rounded"
-              >
-                Reject
-              </button>
-              <button
-                onClick={() => setSelectedSubmission(null)}
-                className="px-4 py-2 border rounded"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
