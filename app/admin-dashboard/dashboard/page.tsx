@@ -481,7 +481,7 @@ const Dashboard = () => {
                                   activity.type === 'task_submitted' ? 'bg-blue-500' :
                                   'bg-gray-500'
                                 }`}></span>
-                                {activity.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                {activity.type.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                               </span>
                             </div>
                           </div>
