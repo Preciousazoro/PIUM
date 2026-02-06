@@ -79,6 +79,9 @@ const AdminSidebar = () => {
     { icon: <Award className={iconClass} />, label: "Rewards", href: "/admin-dashboard/rewards", color: "text-yellow-500" },
     { icon: <BarChart2 className={iconClass} />, label: "Reports & Analytics", href: "/admin-dashboard/reports", color: "text-indigo-500" },
     { icon: <Settings className={iconClass} />, label: "Settings", href: "/admin-dashboard/settings", color: "text-gray-500" },
+  ];
+
+  const bottomMenuItems = [
     { icon: <UserIcon className={iconClass} />, label: "Switch To User", href: "/user-dashboard/dashboard", color: "text-cyan-500" },
   ];
 
@@ -114,7 +117,31 @@ const AdminSidebar = () => {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-border">
+        <div className="p-4 border-t border-border space-y-3">
+          {/* Bottom Menu Items */}
+          <nav className="space-y-1">
+            {bottomMenuItems.map((item, i) => {
+              const isActive = pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={i}
+                  href={item.href}
+                  className={`flex items-center space-x-3 p-3 rounded-lg transition ${
+                    isActive
+                      ? "bg-linear-to-r from-green-500 to-purple-500 text-white"
+                      : "text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  <span className={isActive ? "text-white" : item.color}>
+                    {item.icon}
+                  </span>
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+          
+          {/* Admin Profile */}
           <Link href="/admin-dashboard/profile" className="flex items-center space-x-3">
             {admin?.avatarUrl ? (
               <img
@@ -143,7 +170,7 @@ const AdminSidebar = () => {
 
           <Link
             href="/auth/login"
-            className="mt-3 flex items-center space-x-3 p-2 rounded-lg text-muted-foreground hover:text-red-600 hover:bg-muted"
+            className="flex items-center space-x-3 p-2 rounded-lg text-muted-foreground hover:text-red-600 hover:bg-muted"
           >
             <LogOut className={`${iconClass} text-red-500`} />
             <span>Logout</span>
@@ -170,29 +197,58 @@ const AdminSidebar = () => {
               exit={{ x: "-100%" }}
             >
               <div className="flex items-center p-4 border-b border-border">
-                <span className="font-bold">TASKKASH</span>
+                <span className="font-bold">Admin Dashboard</span>
                 <button className="ml-auto" onClick={() => setMenuOpen(false)}>
                   <X />
                 </button>
               </div>
 
-              <nav className="p-4 space-y-1">
-                {menuItems.map((item, i) => (
-                  <Link
-                    key={i}
-                    href={item.href}
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center space-x-3 p-3 rounded-lg hover:bg-muted"
-                  >
-                    <span className={item.color}>
-                      {item.icon}
-                    </span>
-                    <span>{item.label}</span>
-                  </Link>
-                ))}
+              <div className="flex-1 p-4">
+                <nav className="space-y-1">
+                  {menuItems.map((item, i) => (
+                    <Link
+                      key={i}
+                      href={item.href}
+                      onClick={() => setMenuOpen(false)}
+                      className={`flex items-center space-x-3 p-3 rounded-lg transition text-base ${
+                        pathname.startsWith(item.href)
+                          ? "bg-linear-to-r from-green-500 to-purple-500 text-white"
+                          : "text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      <span className={pathname.startsWith(item.href) ? "text-white" : item.color}>
+                        {item.icon}
+                      </span>
+                      <span>{item.label}</span>
+                    </Link>
+                  ))}
+                </nav>
+              </div>
 
-              {/* Mobile Admin Profile */}
-              <div className="p-4 border-t border-border mt-4">
+              {/* Mobile Admin Profile and Logout - At Bottom */}
+              <div className="p-4 border-t border-border space-y-3">
+                {/* Bottom Menu Items */}
+                <nav className="space-y-1">
+                  {bottomMenuItems.map((item, i) => (
+                    <Link
+                      key={i}
+                      href={item.href}
+                      onClick={() => setMenuOpen(false)}
+                      className={`flex items-center space-x-3 p-3 rounded-lg transition text-base ${
+                        pathname.startsWith(item.href)
+                          ? "bg-linear-to-r from-green-500 to-purple-500 text-white"
+                          : "text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      <span className={pathname.startsWith(item.href) ? "text-white" : item.color}>
+                        {item.icon}
+                      </span>
+                      <span>{item.label}</span>
+                    </Link>
+                  ))}
+                </nav>
+                
+                {/* Admin Profile */}
                 <Link href="/admin-dashboard/profile" className="flex items-center space-x-3">
                   {admin?.avatarUrl ? (
                     <img
@@ -218,16 +274,15 @@ const AdminSidebar = () => {
                     </p>
                   </div>
                 </Link>
-              </div>
 
-              <Link
-                href="/auth/login"
-                className="flex items-center space-x-3 p-3 text-red-500 hover:bg-muted"
-              >
-                <LogOut className="text-red-500" />
-                <span>Logout</span>
-              </Link>
-              </nav>
+                <Link
+                  href="/auth/login"
+                  className="flex items-center space-x-3 p-3 rounded-lg text-muted-foreground hover:text-red-600 hover:bg-muted"
+                >
+                  <LogOut className={`${iconClass} text-red-500`} />
+                  <span>Logout</span>
+                </Link>
+              </div>
             </motion.aside>
           </>
         )}

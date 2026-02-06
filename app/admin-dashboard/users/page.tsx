@@ -271,186 +271,187 @@ export default function AdminUsersPage() {
     <div className="min-h-screen flex bg-background text-foreground">
       <AdminSidebar />
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <AdminHeader />
 
-        <main className="p-6 overflow-y-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">Users</h2>
-            <span className="text-muted-foreground text-sm">
-              Total: {filterCounts.all} users
-            </span>
-          </div>
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+          <div className="flex flex-col gap-4 lg:gap-6 min-w-0">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+              <h2 className="text-xl lg:text-2xl font-bold">Users</h2>
+              <span className="text-muted-foreground text-sm">
+                Total: {filterCounts.all} users
+              </span>
+            </div>
 
           {/* FILTER TABS */}
-          <div className="mb-6">
-            <div className="flex gap-2 p-1 bg-muted rounded-lg w-fit">
-              <button
-                onClick={() => handleFilterChange('all')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  activeFilter === 'all'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                }`}
-              >
-                All Users ({filterCounts.all})
-              </button>
-              <button
-                onClick={() => handleFilterChange('admins')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  activeFilter === 'admins'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                }`}
-              >
-                Admins ({filterCounts.admins})
-              </button>
-              <button
-                onClick={() => handleFilterChange('suspended')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  activeFilter === 'suspended'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                }`}
-              >
-                Suspended ({filterCounts.suspended})
-              </button>
-            </div>
+          <div className="flex flex-wrap gap-2 p-1 bg-muted rounded-lg">
+            <button
+              onClick={() => handleFilterChange('all')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex-shrink-0 ${
+                activeFilter === 'all'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+              }`}
+            >
+              All ({filterCounts.all})
+            </button>
+            <button
+              onClick={() => handleFilterChange('admins')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex-shrink-0 ${
+                activeFilter === 'admins'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+              }`}
+            >
+              Admins ({filterCounts.admins})
+            </button>
+            <button
+              onClick={() => handleFilterChange('suspended')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex-shrink-0 ${
+                activeFilter === 'suspended'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+              }`}
+            >
+              Suspended ({filterCounts.suspended})
+            </button>
           </div>
 
           {/* TABLE */}
           <div className="bg-card border rounded-2xl overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-muted">
-                <tr>
-                  {["User", "Role", "Status", "Points", "Created", "Actions"].map(h => (
-                    <th key={h} className="px-6 py-3 text-left text-xs uppercase text-muted-foreground">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {loading ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[600px]">
+                <thead className="bg-muted">
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
-                      Loading users...
-                    </td>
+                    {["User", "Role", "Status", "Points", "Created", "Actions"].map(h => (
+                      <th key={h} className="px-4 lg:px-6 py-3 text-left text-xs uppercase text-muted-foreground whitespace-nowrap">
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                ) : filteredUsers.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
-                      {activeFilter === 'admins' && 'No admin users found'}
-                      {activeFilter === 'suspended' && 'No suspended users found'}
-                      {activeFilter === 'all' && 'No users found'}
-                    </td>
-                  </tr>
-                ) : (
-                  filteredUsers.map(u => (
-                    <tr key={u._id} className="hover:bg-muted/50">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <UserAvatar user={u} size="sm" />
-                          <div>
-                            <div className="font-medium">{u.name}</div>
-                            <div className="text-xs text-muted-foreground">{u.email}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 capitalize">{u.role}</td>
-                      <td className="px-6 py-4 capitalize">{u.status}</td>
-                      <td className="px-6 py-4">
-                        {editingPoints[u._id] !== undefined ? (
-                          <div className="flex gap-2">
-                            <input
-                              type="number"
-                              value={editingPoints[u._id]}
-                              onChange={e =>
-                                setEditingPoints(p => ({
-                                  ...p,
-                                  [u._id]: Number(e.target.value),
-                                }))
-                              }
-                              className="w-20 border rounded px-2 py-1 bg-background"
-                            />
-                            <button
-                              onClick={() => updatePoints(u._id, editingPoints[u._id])}
-                              className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90"
-                            >
-                              Save
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            {u.points}
-                            <button
-                              onClick={() =>
-                                setEditingPoints(p => ({ ...p, [u._id]: u.points }))
-                              }
-                              className="p-1 hover:bg-muted rounded"
-                            >
-                              <Edit className="w-3 h-3" />
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-muted-foreground">
-                        {new Date(u.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2 justify-end">
-                          {/* View */}
-                          <button
-                            onClick={() => onViewDetails(u)}
-                            className="p-2 text-blue-500 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 rounded-lg transition-colors"
-                            title="View Details"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-
-                          
-                          {/* Make Admin (only for non-admins) */}
-                          {u.role !== "admin" && (
-                            <button
-                              onClick={() => makeAdmin(u)}
-                              disabled={loadingActions[u._id]}
-                              className="p-2 text-indigo-500 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950 rounded-lg transition-colors disabled:opacity-50"
-                              title="Make Admin"
-                            >
-                              <Shield className="w-4 h-4" />
-                            </button>
-                          )}
-
-                          {/* Suspend/Unsuspend */}
-                          <button
-                            onClick={() => toggleSuspend(u)}
-                            disabled={loadingActions[u._id]}
-                            className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${
-                              u.status === 'suspended'
-                                ? 'text-green-500 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-950'
-                                : 'text-orange-500 hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-950'
-                            }`}
-                            title={u.status === 'suspended' ? 'Activate User' : 'Suspend User'}
-                          >
-                            <Ban className="w-4 h-4" />
-                          </button>
-
-                          {/* Delete */}
-                          <button
-                            onClick={() => deleteUser(u)}
-                            disabled={loadingActions[u._id]}
-                            className="p-2 text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 rounded-lg transition-colors disabled:opacity-50"
-                            title="Delete User"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={6} className="px-4 lg:px-6 py-8 text-center text-muted-foreground">
+                        Loading users...
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : filteredUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-4 lg:px-6 py-8 text-center text-muted-foreground">
+                        {activeFilter === 'admins' && 'No admin users found'}
+                        {activeFilter === 'suspended' && 'No suspended users found'}
+                        {activeFilter === 'all' && 'No users found'}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredUsers.map(u => (
+                      <tr key={u._id} className="hover:bg-muted/50">
+                        <td className="px-4 lg:px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <UserAvatar user={u} size="sm" />
+                            <div className="min-w-0 flex-1">
+                              <div className="font-medium truncate">{u.name}</div>
+                              <div className="text-xs text-muted-foreground truncate">{u.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 lg:px-6 py-4 capitalize whitespace-nowrap">{u.role}</td>
+                        <td className="px-4 lg:px-6 py-4 capitalize whitespace-nowrap">{u.status}</td>
+                        <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                          {editingPoints[u._id] !== undefined ? (
+                            <div className="flex gap-2">
+                              <input
+                                type="number"
+                                value={editingPoints[u._id]}
+                                onChange={e =>
+                                  setEditingPoints(p => ({
+                                    ...p,
+                                    [u._id]: Number(e.target.value),
+                                  }))
+                                }
+                                className="w-16 lg:w-20 border rounded px-2 py-1 bg-background"
+                              />
+                              <button
+                                onClick={() => updatePoints(u._id, editingPoints[u._id])}
+                                className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90"
+                              >
+                                Save
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              {u.points}
+                              <button
+                                onClick={() =>
+                                  setEditingPoints(p => ({ ...p, [u._id]: u.points }))
+                                }
+                                className="p-1 hover:bg-muted rounded"
+                              >
+                                <Edit className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 lg:px-6 py-4 text-sm text-muted-foreground whitespace-nowrap">
+                          {new Date(u.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 lg:px-6 py-4">
+                          <div className="flex items-center gap-1 lg:gap-2 justify-end">
+                            {/* View */}
+                            <button
+                              onClick={() => onViewDetails(u)}
+                              className="p-1.5 lg:p-2 text-blue-500 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 rounded-lg transition-colors"
+                              title="View Details"
+                            >
+                              <Eye className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                            </button>
+
+                            
+                            {/* Make Admin (only for non-admins) */}
+                            {u.role !== "admin" && (
+                              <button
+                                onClick={() => makeAdmin(u)}
+                                disabled={loadingActions[u._id]}
+                                className="p-1.5 lg:p-2 text-indigo-500 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950 rounded-lg transition-colors disabled:opacity-50"
+                                title="Make Admin"
+                              >
+                                <Shield className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                              </button>
+                            )}
+
+                            {/* Suspend/Unsuspend */}
+                            <button
+                              onClick={() => toggleSuspend(u)}
+                              disabled={loadingActions[u._id]}
+                              className={`p-1.5 lg:p-2 rounded-lg transition-colors disabled:opacity-50 ${
+                                u.status === 'suspended'
+                                  ? 'text-green-500 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-950'
+                                  : 'text-orange-500 hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-950'
+                              }`}
+                              title={u.status === 'suspended' ? 'Activate User' : 'Suspend User'}
+                            >
+                              <Ban className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                            </button>
+
+                            {/* Delete */}
+                            <button
+                              onClick={() => deleteUser(u)}
+                              disabled={loadingActions[u._id]}
+                              className="p-1.5 lg:p-2 text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950 rounded-lg transition-colors disabled:opacity-50"
+                              title="Delete User"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
 
             {/* PAGINATION */}
             <div className="p-4 border-t">
@@ -471,8 +472,9 @@ export default function AdminUsersPage() {
             onClose={() => setDetailOpen(false)}
             onUserUpdate={() => fetchUsers(pagination.currentPage, pagination.limit)}
           />
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
-  );
+  </div>
+);
 }

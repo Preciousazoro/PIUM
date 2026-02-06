@@ -13,6 +13,8 @@ import {
   Shield,
 } from "lucide-react";
 import { toast } from "sonner";
+import AdminHeader from "../../../components/admin-dashboard/AdminHeader";
+import AdminSidebar from "../../../components/admin-dashboard/AdminSidebar";
 
 type AdminProfile = {
   id: string;
@@ -190,17 +192,23 @@ export default function AdminProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Admin Profile</h1>
-          <p className="text-muted-foreground">Manage your administrator profile information</p>
-        </div>
+    <div className="min-h-screen flex bg-background text-foreground overflow-hidden">
+      <AdminSidebar />
 
-        {/* Profile Card */}
-        <div className="bg-card rounded-xl border shadow-sm">
-          <div className="p-8">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        <AdminHeader />
+
+        <main className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-4xl mx-auto">
+            {/* Header */}
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold">Admin Profile</h1>
+              <p className="text-muted-foreground">Manage your administrator profile information</p>
+            </div>
+
+            {/* Profile Card */}
+            <div className="bg-card rounded-xl border shadow-sm">
+              <div className="p-8">
             {/* Profile Header with Avatar */}
             <div className="flex items-start justify-between mb-8">
               <div className="flex items-center space-x-6">
@@ -340,8 +348,10 @@ export default function AdminProfilePage() {
                 <li>• Configure system settings</li>
               </ul>
             </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );

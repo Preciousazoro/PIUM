@@ -30,7 +30,7 @@ export default function ModeToggle() {
         <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-blue-400" />
         <span className="sr-only">Toggle theme</span>
       </Button>
-      <span className="text-sm text-muted-foreground min-w-[40px]">
+      <span className="hidden sm:block text-sm text-muted-foreground min-w-[40px]">
         {theme === 'dark' ? 'Dark' : 'Light'}
       </span>
     </div>

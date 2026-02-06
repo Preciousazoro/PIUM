@@ -19,14 +19,14 @@ export async function GET(request: NextRequest) {
 
     // Get top 3 users for podium
     const topThreeUsers = await User.find({})
-      .select('username avatarUrl taskPoints tasksCompleted createdAt')
+      .select('username name avatarUrl taskPoints tasksCompleted createdAt')
       .sort({ taskPoints: -1, tasksCompleted: -1, createdAt: 1 })
       .limit(3)
       .lean();
 
     // Get top 10 users for table
     const topTenUsers = await User.find({})
-      .select('username avatarUrl taskPoints tasksCompleted createdAt')
+      .select('username name avatarUrl taskPoints tasksCompleted createdAt')
       .sort({ taskPoints: -1, tasksCompleted: -1, createdAt: 1 })
       .limit(10)
       .lean();
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     // Transform data for frontend
     const transformUser = (user: any, rank: number) => ({
       rank,
-      username: user.username || `User${user._id.toString().slice(-6)}`,
+      username: user.username || user.name || `User${user._id.toString().slice(-6)}`,
       avatar: user.avatarUrl || null,
       taskPoints: user.taskPoints || 0,
       tasksCompleted: user.tasksCompleted || 0,

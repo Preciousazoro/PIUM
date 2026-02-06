@@ -291,13 +291,13 @@ const Dashboard = () => {
 
   /* ---------- UI ---------- */
   return (
-    <div className="min-h-screen flex bg-background text-foreground">
+    <div className="min-h-screen flex bg-background text-foreground overflow-hidden">
       <AdminSidebar />
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <AdminHeader />
 
-        <main className="p-6 space-y-8 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto p-6 space-y-8">
           {/* HEADER */}
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">
@@ -374,109 +374,178 @@ const Dashboard = () => {
           </div>
 
           {/* RECENT ACTIVITY */}
-          <div className="bg-card border rounded-2xl p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-lg">
+          <div className="bg-card border rounded-2xl overflow-hidden">
+            <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 px-6 py-4 border-b">
+              <h3 className="font-semibold text-lg flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 Recent Activity
               </h3>
             </div>
 
-            {activitiesLoading ? (
-              <div className="space-y-3">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-lg border">
-                    <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
-                    <div className="flex-1">
-                      <div className="h-4 bg-muted rounded animate-pulse w-3/4 mb-2" />
-                      <div className="h-3 bg-muted rounded animate-pulse w-1/2" />
+            <div className="p-6">
+              {activitiesLoading ? (
+                <div className="space-y-4">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="bg-muted/30 rounded-xl p-4 border border-border/50">
+                      <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 rounded-full bg-muted animate-pulse" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+                          <div className="h-3 bg-muted rounded animate-pulse w-1/2" />
+                          <div className="h-3 bg-muted rounded animate-pulse w-2/3" />
+                        </div>
+                        <div className="h-6 bg-muted rounded-full animate-pulse w-20" />
+                      </div>
                     </div>
+                  ))}
+                </div>
+              ) : activitiesError ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-red-600 dark:text-red-400 text-2xl">⚠️</span>
                   </div>
-                ))}
-              </div>
-            ) : activitiesError ? (
-              <div className="text-center py-6">
-                <p className="text-red-500 text-sm mb-2">{activitiesError}</p>
-                <button 
-                  onClick={() => fetchActivities(activitiesPage)}
-                  className="text-xs text-blue-500 hover:underline"
-                >
-                  Retry
-                </button>
-              </div>
-            ) : activities.length === 0 ? (
-              <p className="text-muted-foreground text-sm text-center py-6">
-                No recent activity
-              </p>
-            ) : (
-              <>
-                <ul className="space-y-3 text-sm">
-                  {activities.map((activity) => (
-                    <li
-                      key={activity._id}
-                      className="flex items-start gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                        {activity.user?.avatarUrl ? (
-                          <img 
-                            src={activity.user.avatarUrl} 
-                            alt={activity.user.name}
-                            className="w-8 h-8 rounded-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-xs font-semibold">
-                            {activity.user?.name?.charAt(0) || 'U'}
-                          </span>
+                  <p className="text-red-500 text-sm mb-4">{activitiesError}</p>
+                  <button 
+                    onClick={() => fetchActivities(activitiesPage)}
+                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : activities.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-muted-foreground text-2xl">📋</span>
+                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    No recent activity
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-4">
+                    {activities.map((activity) => (
+                      <div
+                        key={activity._id}
+                        className="bg-muted/30 rounded-xl p-4 border border-border/50 hover:bg-muted/50 transition-all duration-200 hover:shadow-sm hover:border-border"
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className="relative">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+                              {activity.user?.avatarUrl ? (
+                                <img 
+                                  src={activity.user.avatarUrl} 
+                                  alt={activity.user.name}
+                                  className="w-10 h-10 rounded-full object-cover border-2 border-background"
+                                />
+                              ) : (
+                                <span className="text-sm font-semibold text-white">
+                                  {activity.user?.name?.charAt(0) || 'U'}
+                                </span>
+                              )}
+                            </div>
+                            <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-background ${
+                              activity.type === 'task_approved' ? 'bg-green-500' :
+                              activity.type === 'task_rejected' ? 'bg-red-500' :
+                              activity.type === 'task_submitted' ? 'bg-blue-500' :
+                              'bg-gray-500'
+                            }`}></div>
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-3 mb-2">
+                              <div className="flex-1">
+                                <p className="font-medium text-sm mb-1 leading-tight">
+                                  {activity.title}
+                                </p>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <span>{activity.user?.name || 'Unknown User'}</span>
+                                  <span>•</span>
+                                  <span>{new Date(activity.createdAt).toLocaleDateString()}</span>
+                                  <span>•</span>
+                                  <span>{new Date(activity.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
+                                activity.type === 'task_approved' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800' :
+                                activity.type === 'task_rejected' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800' :
+                                activity.type === 'task_submitted' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800' :
+                                'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800'
+                              }`}>
+                                <span className={`w-2 h-2 rounded-full mr-2 ${
+                                  activity.type === 'task_approved' ? 'bg-green-500' :
+                                  activity.type === 'task_rejected' ? 'bg-red-500' :
+                                  activity.type === 'task_submitted' ? 'bg-blue-500' :
+                                  'bg-gray-500'
+                                }`}></span>
+                                {activity.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* PAGINATION */}
+                  {activitiesTotalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 mt-8 pt-6 border-t border-border/50">
+                      <button
+                        onClick={() => fetchActivities(activitiesPage - 1)}
+                        disabled={activitiesPage <= 1}
+                        className="px-4 py-2 text-sm font-medium border border-border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted transition-colors hover:border-border"
+                      >
+                        ← Previous
+                      </button>
+                      <div className="flex items-center gap-1">
+                        {[...Array(Math.min(3, activitiesTotalPages))].map((_, i) => {
+                          const pageNum = i + 1;
+                          const isActive = pageNum === activitiesPage;
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => fetchActivities(pageNum)}
+                              className={`w-8 h-8 text-sm font-medium rounded-md transition-colors ${
+                                isActive 
+                                  ? 'bg-primary text-primary-foreground' 
+                                  : 'hover:bg-muted'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                        {activitiesTotalPages > 3 && (
+                          <>
+                            <span className="text-muted-foreground">...</span>
+                            <button
+                              onClick={() => fetchActivities(activitiesTotalPages)}
+                              className={`w-8 h-8 text-sm font-medium rounded-md transition-colors ${
+                                activitiesTotalPages === activitiesPage 
+                                  ? 'bg-primary text-primary-foreground' 
+                                  : 'hover:bg-muted'
+                              }`}
+                            >
+                              {activitiesTotalPages}
+                            </button>
+                          </>
                         )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">
-                          {activity.title}
-                        </p>
-                        <p className="text-xs text-muted-foreground mb-1">
-                          {activity.user?.name || 'Unknown User'}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(activity.createdAt).toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="flex-shrink-0">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          activity.type === 'task_approved' ? 'bg-green-100 text-green-800' :
-                          activity.type === 'task_rejected' ? 'bg-red-100 text-red-800' :
-                          activity.type === 'task_submitted' ? 'bg-blue-100 text-blue-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {activity.type.replace('_', ' ')}
-                        </span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* PAGINATION */}
-                {activitiesTotalPages > 1 && (
-                  <div className="flex justify-center items-center gap-2 mt-6 pt-4 border-t">
-                    <button
-                      onClick={() => fetchActivities(activitiesPage - 1)}
-                      disabled={activitiesPage <= 1}
-                      className="px-3 py-1 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted"
-                    >
-                      Previous
-                    </button>
-                    <span className="text-sm text-muted-foreground">
-                      Page {activitiesPage} of {activitiesTotalPages}
-                    </span>
-                    <button
-                      onClick={() => fetchActivities(activitiesPage + 1)}
-                      disabled={activitiesPage >= activitiesTotalPages}
-                      className="px-3 py-1 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted"
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
+                      <button
+                        onClick={() => fetchActivities(activitiesPage + 1)}
+                        disabled={activitiesPage >= activitiesTotalPages}
+                        className="px-4 py-2 text-sm font-medium border border-border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted transition-colors hover:border-border"
+                      >
+                        Next →
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </main>
       </div>

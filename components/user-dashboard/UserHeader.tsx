@@ -114,7 +114,7 @@ export default function UserHeader({ title }: { title?: string }) {
             alt="TaskKash Logo"
             className="w-12 h-12 object-contain"
           />
-        <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-500 to-purple-600 ml-2 tracking-tight">
+        <span className="hidden sm:block text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-500 to-purple-600 ml-2 tracking-tight">
           TASKKASH
         </span>
       </div>

@@ -154,73 +154,124 @@ export function RecentActivity() {
         Your Recent Activity
       </h2>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-border">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Task
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Reward
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Date
-              </th>
-            </tr>
-          </thead>
-
-          <tbody className="divide-y divide-border">
-            {activities.map((activity) => (
-              <tr
-                key={activity._id}
-                className="transition-colors hover:bg-muted/60"
-              >
-                <td className="px-6 py-4 text-sm font-medium">
-                  {activity.taskDetails?.title || activity.title || activity.metadata?.taskTitle || 'Activity'}
-                </td>
-
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(activity.status)}
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                        activity.status === 'approved' ||
-                        activity.status === 'completed'
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                          : activity.status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
-                          : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                      }`}
-                    >
-                      {activity.status}
-                    </span>
-                  </div>
-                </td>
-
-                <td className="px-6 py-4 text-sm">
-                  {activity.taskDetails?.rewardPoints || activity.rewardPoints ? (
-                    <span className="font-medium text-green-600 dark:text-green-400">
-                      {activity.taskDetails?.rewardPoints || activity.rewardPoints} pts
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">-</span>
-                  )}
-                </td>
-
-                <td className="px-6 py-4 text-sm text-muted-foreground">
-                  {formatDistanceToNow(
-                    new Date(activity.updatedAt || activity.createdAt),
-                    { addSuffix: true }
-                  )}
-                </td>
+      <div className="space-y-4">
+        {/* Desktop Table View */}
+        <div className="hidden sm:block overflow-x-auto">
+          <table className="min-w-full divide-y divide-border">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Task
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Reward
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Date
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody className="divide-y divide-border">
+              {activities.map((activity) => (
+                <tr
+                  key={activity._id}
+                  className="transition-colors hover:bg-muted/60"
+                >
+                  <td className="px-6 py-4 text-sm font-medium">
+                    {activity.taskDetails?.title || activity.title || activity.metadata?.taskTitle || 'Activity'}
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(activity.status)}
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                          activity.status === 'approved' ||
+                          activity.status === 'completed'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                            : activity.status === 'pending'
+                            ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                        }`}
+                      >
+                        {activity.status}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td className="px-6 py-4 text-sm">
+                    {activity.taskDetails?.rewardPoints || activity.rewardPoints ? (
+                      <span className="font-medium text-green-600 dark:text-green-400">
+                        {activity.taskDetails?.rewardPoints || activity.rewardPoints} pts
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </td>
+
+                  <td className="px-6 py-4 text-sm text-muted-foreground">
+                    {formatDistanceToNow(
+                      new Date(activity.updatedAt || activity.createdAt),
+                      { addSuffix: true }
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="sm:hidden space-y-3">
+          {activities.map((activity) => (
+            <div
+              key={activity._id}
+              className="bg-muted/30 rounded-lg p-4 border border-border/50 space-y-3"
+            >
+              {/* Task Title */}
+              <div className="font-medium text-sm pr-2">
+                {activity.taskDetails?.title || activity.title || activity.metadata?.taskTitle || 'Activity'}
+              </div>
+
+              {/* Status and Reward Row */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {getStatusIcon(activity.status)}
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                      activity.status === 'approved' ||
+                      activity.status === 'completed'
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                        : activity.status === 'pending'
+                        ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
+                        : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                    }`}
+                  >
+                    {activity.status}
+                  </span>
+                </div>
+                
+                {activity.taskDetails?.rewardPoints || activity.rewardPoints ? (
+                  <span className="font-medium text-green-600 dark:text-green-400 text-sm flex-shrink-0">
+                    {activity.taskDetails?.rewardPoints || activity.rewardPoints} pts
+                  </span>
+                ) : null}
+              </div>
+
+              {/* Date */}
+              <div className="text-xs text-muted-foreground">
+                {formatDistanceToNow(
+                  new Date(activity.updatedAt || activity.createdAt),
+                  { addSuffix: true }
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {pagination.totalPages > 1 && (

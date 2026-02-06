@@ -38,6 +38,8 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const dateRange = searchParams.get('dateRange');
     const search = searchParams.get('search');
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
 
     // Build filter object
     const filter: any = {};
@@ -83,10 +85,29 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Fetch tasks with filters
-    const tasks = await Task.find(filter).sort({ createdAt: -1 });
+    // Fetch tasks with filters and pagination
+    const skip = (page - 1) * limit;
+    
+    // Get total count for pagination
+    const totalTasks = await Task.countDocuments(filter);
+    
+    // Get paginated tasks
+    const tasks = await Task.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
-    return NextResponse.json({ tasks }, { status: 200 });
+    return NextResponse.json({ 
+      tasks, 
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalTasks / limit),
+        totalTasks,
+        limit,
+        hasNextPage: page < Math.ceil(totalTasks / limit),
+        hasPrevPage: page > 1
+      }
+    }, { status: 200 });
   } catch (error: unknown) {
     console.error('Error fetching tasks:', error);
     

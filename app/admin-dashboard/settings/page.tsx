@@ -27,10 +27,10 @@ export default function AdminSettingsPage() {
   const isOpen = (id: SectionId) => open.has(id);
 
   return (
-    <div className="min-h-screen flex bg-background text-foreground">
+    <div className="min-h-screen flex bg-background text-foreground overflow-hidden">
       <AdminSidebar />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <AdminHeader />
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">

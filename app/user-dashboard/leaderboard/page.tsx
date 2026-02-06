@@ -170,13 +170,14 @@ export default function LeaderboardPage() {
             </div>
 
             {/* Podium Layout */}
-            <section className="relative w-full max-w-5xl mx-auto pt-10">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-end px-4">
+            <section className="relative w-full max-w-7xl mx-auto pt-24 sm:pt-32">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-12 sm:gap-16 items-end px-6 sm:px-12">
                 {/* 2nd Place */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
+                  className="order-2 sm:order-1"
                 >
                   <PodiumPosition user={top[1]} rank={2} isFirst={false} />
                 </motion.div>
@@ -186,6 +187,7 @@ export default function LeaderboardPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0 }}
+                  className="order-1 sm:order-2"
                 >
                   <PodiumPosition user={top[0]} rank={1} isFirst={true} />
                 </motion.div>
@@ -195,6 +197,7 @@ export default function LeaderboardPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
+                  className="order-3 sm:order-3"
                 >
                   <PodiumPosition user={top[2]} rank={3} isFirst={false} />
                 </motion.div>
@@ -203,18 +206,19 @@ export default function LeaderboardPage() {
             </section>
 
             {/* Table Section */}
-            <section className="bg-card border border-border rounded-3xl p-6 shadow-sm overflow-hidden">
+            <section className="bg-card border border-border rounded-3xl p-4 sm:p-6 shadow-sm overflow-hidden">
               <h3 className="text-xl font-bold mb-6">Top Performers</h3>
               
-              <div className="overflow-x-auto">
+              {/* Desktop Table View */}
+              <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border text-muted-foreground">
                       <th className="text-left pb-4 font-bold uppercase tracking-wider text-[10px] w-16">Rank</th>
                       <th className="text-left pb-4 font-bold uppercase tracking-wider text-[10px]">User</th>
-                      <th className="text-right pb-4 font-bold uppercase tracking-wider text-[10px] hidden sm:table-cell">Tasks</th>
+                      <th className="text-right pb-4 font-bold uppercase tracking-wider text-[10px]">Tasks</th>
                       <th className="text-right pb-4 font-bold uppercase tracking-wider text-[10px]">Points</th>
-                      <th className="text-right pb-4 font-bold uppercase tracking-wider text-[10px] hidden sm:table-cell">Level</th>
+                      <th className="text-right pb-4 font-bold uppercase tracking-wider text-[10px]">Level</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -228,25 +232,25 @@ export default function LeaderboardPage() {
                           </td>
                           <td className="py-4">
                             <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 bg-muted rounded-full overflow-hidden border border-border">
+                              <div className="w-10 h-10 bg-muted rounded-full overflow-hidden border border-border flex-shrink-0">
                                 {user.avatar ? (
-                                  <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                                  <img src={user.avatar} alt={user.username} className="w-full h-full object-cover" />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-bold">
                                     {user.username.charAt(0).toUpperCase()}
                                   </div>
                                 )}
                               </div>
-                              <div className="font-bold">{user.username}</div>
+                              <div className="font-bold truncate max-w-[150px]">{user.username}</div>
                             </div>
                           </td>
-                          <td className="py-4 text-right hidden sm:table-cell font-medium">
+                          <td className="py-4 text-right font-medium">
                             {user.tasks}
                           </td>
                           <td className="py-4 text-right">
                             <span className="font-bold text-primary">{user.tp.toLocaleString()} TP</span>
                           </td>
-                          <td className="py-4 text-right hidden sm:table-cell">
+                          <td className="py-4 text-right">
                             <span className={`px-2 py-1 rounded-md bg-muted text-[10px] font-bold uppercase ${
                               user.level === 'Expert' ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border border-yellow-500/30' :
                               user.level === 'Advanced' ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-400 border border-purple-500/30' :
@@ -267,6 +271,62 @@ export default function LeaderboardPage() {
                     )}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="sm:hidden space-y-3">
+                {filteredItems.length > 0 ? (
+                  filteredItems.map((user, index) => (
+                    <div key={`${user.rank}-${user.username}`} className="bg-muted/30 rounded-lg p-4 border border-border/50 space-y-3">
+                      {/* Rank and User Row */}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <span className={`font-black ${user.rank <= 3 ? 'text-primary text-lg' : 'text-muted-foreground'} flex-shrink-0`}>
+                            #{user.rank}
+                          </span>
+                          <div className="w-10 h-10 bg-muted rounded-full overflow-hidden border border-border flex-shrink-0">
+                            {user.avatar ? (
+                              <img src={user.avatar} alt={user.username} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-bold">
+                                {user.username.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                          <div className="font-bold truncate">{user.username}</div>
+                        </div>
+                        
+                        {/* Level Badge */}
+                        <span className={`px-2 py-1 rounded-md bg-muted text-[10px] font-bold uppercase flex-shrink-0 ${
+                          user.level === 'Expert' ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border border-yellow-500/30' :
+                          user.level === 'Advanced' ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-400 border border-purple-500/30' :
+                          user.level === 'Intermediate' ? 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-400 border border-blue-500/30' :
+                          'bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-400 border border-green-500/30'
+                        }`}>
+                          {user.level}
+                        </span>
+                      </div>
+
+                      {/* Stats Row */}
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                          <div className="text-center">
+                            <p className="text-xs text-muted-foreground">Tasks</p>
+                            <p className="font-bold">{user.tasks}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xs text-muted-foreground">Points</p>
+                            <p className="font-bold text-primary">{user.tp.toLocaleString()}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No users found matching your criteria.
+                  </div>
+                )}
               </div>
             </section>
           </div>

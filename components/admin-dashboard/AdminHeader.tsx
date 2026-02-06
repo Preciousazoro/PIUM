@@ -355,18 +355,23 @@ const AdminHeader = () => {
         </div>
       </div>
 
-      {/* Mobile Hamburger */}
-      <button
-        onClick={() =>
-          window.dispatchEvent(new CustomEvent("open-sidebar"))
-        }
-        className="md:hidden p-2 rounded hover:bg-muted"
-        aria-label="Open menu"
-      >
-        <span className="block w-6 h-0.5 bg-foreground/70 mb-1" />
-        <span className="block w-6 h-0.5 bg-foreground/70 mb-1" />
-        <span className="block w-6 h-0.5 bg-foreground/70" />
-      </button>
+      {/* Mobile Actions */}
+      <div className="md:hidden flex items-center space-x-2">
+        <ModeToggle />
+        
+        {/* Mobile Hamburger */}
+        <button
+          onClick={() =>
+            window.dispatchEvent(new CustomEvent("open-sidebar"))
+          }
+          className="p-2 rounded hover:bg-muted"
+          aria-label="Open menu"
+        >
+          <span className="block w-6 h-0.5 bg-foreground/70 mb-1" />
+          <span className="block w-6 h-0.5 bg-foreground/70 mb-1" />
+          <span className="block w-6 h-0.5 bg-foreground/70" />
+        </button>
+      </div>
     </header>
   );
 };

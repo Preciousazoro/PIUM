@@ -29,12 +29,26 @@ interface Task {
   updatedAt: string;
 }
 
+interface PaginationData {
+  currentPage: number;
+  totalPages: number;
+  totalTasks: number;
+  limit: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
 const ManageTasks = () => {
   /* ------------------ STATE ------------------ */
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Pagination state
+  const [pagination, setPagination] = useState<PaginationData | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Filter states
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -68,6 +82,8 @@ const ManageTasks = () => {
     status?: string;
     dateRange?: string;
     search?: string;
+    page?: number;
+    limit?: number;
   }) => {
     try {
       const params = new URLSearchParams();
@@ -75,6 +91,8 @@ const ManageTasks = () => {
       if (filters?.status && filters.status !== 'all') params.append('status', filters.status);
       if (filters?.dateRange && filters.dateRange !== 'all') params.append('dateRange', filters.dateRange);
       if (filters?.search) params.append('search', filters.search);
+      if (filters?.page) params.append('page', filters.page.toString());
+      if (filters?.limit) params.append('limit', filters.limit.toString());
       
       const url = params.toString() ? `/api/admin/tasks?${params.toString()}` : '/api/admin/tasks';
       const response = await fetch(url);
@@ -84,6 +102,7 @@ const ManageTasks = () => {
       const data = await response.json();
       setTasks(data.tasks || []);
       setFilteredTasks(data.tasks || []);
+      setPagination(data.pagination || null);
     } catch (error) {
       console.error('Error fetching tasks:', error);
       toast.error('Failed to load tasks');
@@ -94,22 +113,52 @@ const ManageTasks = () => {
 
   useEffect(() => {
     feather.replace();
-    fetchTasks();
+    fetchTasks({ page: currentPage, limit: itemsPerPage });
   }, []);
 
   // Debounced search effect
   useEffect(() => {
     const timer = setTimeout(() => {
+      setCurrentPage(1); // Reset to first page when filters change
       fetchTasks({
         category: categoryFilter,
         status: statusFilter,
         dateRange: dateRangeFilter,
-        search: searchQuery
+        search: searchQuery,
+        page: 1,
+        limit: itemsPerPage
       });
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [categoryFilter, statusFilter, dateRangeFilter, searchQuery]);
+  }, [categoryFilter, statusFilter, dateRangeFilter, searchQuery, itemsPerPage]);
+
+  // Handle page changes
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    fetchTasks({
+      category: categoryFilter,
+      status: statusFilter,
+      dateRange: dateRangeFilter,
+      search: searchQuery,
+      page: newPage,
+      limit: itemsPerPage
+    });
+  };
+
+  // Handle items per page change
+  const handleItemsPerPageChange = (newLimit: number) => {
+    setItemsPerPage(newLimit);
+    setCurrentPage(1); // Reset to first page
+    fetchTasks({
+      category: categoryFilter,
+      status: statusFilter,
+      dateRange: dateRangeFilter,
+      search: searchQuery,
+      page: 1,
+      limit: newLimit
+    });
+  };
 
   /* ------------------ HANDLERS ------------------ */
   const openViewModal = (task: any) => {
@@ -185,7 +234,9 @@ const ManageTasks = () => {
         category: categoryFilter,
         status: statusFilter,
         dateRange: dateRangeFilter,
-        search: searchQuery
+        search: searchQuery,
+        page: currentPage,
+        limit: itemsPerPage
       });
     } catch (error: any) {
       console.error('Error updating task:', error);
@@ -273,7 +324,9 @@ const ManageTasks = () => {
         category: categoryFilter,
         status: statusFilter,
         dateRange: dateRangeFilter,
-        search: searchQuery
+        search: searchQuery,
+        page: currentPage,
+        limit: itemsPerPage
       });
     } catch (error: any) {
       console.error('Error creating task:', error);
@@ -300,7 +353,9 @@ const ManageTasks = () => {
         category: categoryFilter,
         status: statusFilter,
         dateRange: dateRangeFilter,
-        search: searchQuery
+        search: searchQuery,
+        page: currentPage,
+        limit: itemsPerPage
       });
     } catch (error: any) {
       console.error('Error deleting task:', error);
@@ -341,7 +396,9 @@ const ManageTasks = () => {
         category: categoryFilter,
         status: statusFilter,
         dateRange: dateRangeFilter,
-        search: searchQuery
+        search: searchQuery,
+        page: currentPage,
+        limit: itemsPerPage
       });
     } catch (error: any) {
       console.error('Error performing bulk action:', error);
@@ -366,20 +423,23 @@ const ManageTasks = () => {
   };
 
   const applyFilters = () => {
+    setCurrentPage(1); // Reset to first page when applying filters
     fetchTasks({
       category: categoryFilter,
       status: statusFilter,
       dateRange: dateRangeFilter,
-      search: searchQuery
+      search: searchQuery,
+      page: 1,
+      limit: itemsPerPage
     });
   };
 
   /* ------------------ RENDER ------------------ */
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden">
       <AdminSidebar />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <AdminHeader />
 
         <main className="flex-1 overflow-y-auto p-6">
@@ -503,72 +563,151 @@ const ManageTasks = () => {
                   <Loader2 className="w-8 h-8 animate-spin" />
                 </div>
               ) : (
-                <table className="w-full">
-                  <thead className="bg-muted/50">
-                    <tr>
-                      <th className="px-6 py-3 text-left">
-                        <Checkbox
-                          checked={selectedTasks.length === filteredTasks.length && filteredTasks.length > 0}
-                          onCheckedChange={handleSelectAll}
-                        />
-                      </th>
-                      {[
-                        "Title",
-                        "Category",
-                        "Reward",
-                        "Status",
-                        "Actions",
-                      ].map((h) => (
-                        <th
-                          key={h}
-                          className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase"
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {filteredTasks.map((task) => (
-                      <tr key={task._id} className="border-t hover:bg-muted/40">
-                        <td className="px-6 py-4">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[640px]">
+                    <thead className="bg-muted/50 sticky top-0 z-10">
+                      <tr>
+                        <th className="px-6 py-3 text-left">
                           <Checkbox
-                            checked={selectedTasks.includes(task._id)}
-                            onCheckedChange={(checked) => handleSelectTask(task._id, checked as boolean)}
+                            checked={selectedTasks.length === filteredTasks.length && filteredTasks.length > 0}
+                            onCheckedChange={handleSelectAll}
                           />
-                        </td>
-                        <td className="px-6 py-4 font-medium">{task.title}</td>
-                        <td className="px-6 py-4">{task.category}</td>
-                        <td className="px-6 py-4">{task.rewardPoints} TP</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            task.status === 'active' ? 'bg-green-100 text-green-800' :
-                            task.status === 'expired' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {task.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-3">
-                            <button onClick={() => openViewModal(task)}>
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => openEditModal(task)}>
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => handleDeleteTask(task._id)}>
-                              <Trash2 className="w-4 h-4 text-red-500" />
-                            </button>
-                          </div>
-                        </td>
+                        </th>
+                        {[
+                          "Title",
+                          "Category",
+                          "Reward",
+                          "Status",
+                          "Actions",
+                        ].map((h) => (
+                          <th
+                            key={h}
+                            className="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase whitespace-nowrap"
+                          >
+                            {h}
+                          </th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+
+                    <tbody>
+                      {filteredTasks.map((task) => (
+                        <tr key={task._id} className="border-t hover:bg-muted/40">
+                          <td className="px-6 py-4">
+                            <Checkbox
+                              checked={selectedTasks.includes(task._id)}
+                              onCheckedChange={(checked) => handleSelectTask(task._id, checked as boolean)}
+                            />
+                          </td>
+                          <td className="px-6 py-4 font-medium min-w-[200px] max-w-xs truncate">{task.title}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">{task.category}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">{task.rewardPoints} TP</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              task.status === 'active' ? 'bg-green-100 text-green-800' :
+                              task.status === 'expired' ? 'bg-red-100 text-red-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {task.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right whitespace-nowrap">
+                            <div className="flex justify-end gap-3">
+                              <button onClick={() => openViewModal(task)}>
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => openEditModal(task)}>
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => handleDeleteTask(task._id)}>
+                                <Trash2 className="w-4 h-4 text-red-500" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
+
+            {/* Pagination */}
+            {pagination && pagination.totalPages > 1 && (
+              <div className="bg-card rounded-2xl border border-border p-4">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Showing {((pagination.currentPage - 1) * pagination.limit) + 1} to {Math.min(pagination.currentPage * pagination.limit, pagination.totalTasks)} of {pagination.totalTasks} tasks</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    {/* Items per page selector */}
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm text-muted-foreground">Show:</label>
+                      <Select value={itemsPerPage.toString()} onValueChange={(value) => handleItemsPerPageChange(parseInt(value))}>
+                        <SelectTrigger className="w-[70px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="5">5</SelectItem>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="20">20</SelectItem>
+                          <SelectItem value="50">50</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Pagination controls */}
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(pagination.currentPage - 1)}
+                        disabled={!pagination.hasPrevPage}
+                      >
+                        Previous
+                      </Button>
+                      
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                          let pageNum;
+                          if (pagination.totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (pagination.currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (pagination.currentPage >= pagination.totalPages - 2) {
+                            pageNum = pagination.totalPages - 4 + i;
+                          } else {
+                            pageNum = pagination.currentPage - 2 + i;
+                          }
+                          
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={pageNum === pagination.currentPage ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => handlePageChange(pageNum)}
+                              className="w-8 h-8 p-0"
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(pagination.currentPage + 1)}
+                        disabled={!pagination.hasNextPage}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* CREATE MODAL */}
             {showCreateModal && (
