@@ -4,12 +4,13 @@ import User from '@/models/User';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
     
-    const user = await User.findById(params.id).select('-password').lean();
+    const { id } = await params;
+    const user = await User.findById(id).select('-password').lean();
     
     if (!user) {
       return NextResponse.json(

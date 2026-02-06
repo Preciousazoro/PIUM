@@ -126,7 +126,8 @@ export default function DashboardPage() {
     const sorted = [...filtered].sort((a, b) => {
       if (activeTab === 'All') {
         // In All tab: available/rejected first, then pending, then approved last
-        const getSortPriority = (status: string) => {
+        const getSortPriority = (status: string | undefined) => {
+          if (!status) return 3;
           if (status === 'available' || status === 'rejected') return 0;
           if (status === 'pending') return 1;
           if (status === 'approved') return 2;

@@ -4,11 +4,12 @@ import User from '@/models/User';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
     
+    const { id } = await params;
     const body = await request.json();
     const { points } = body;
 
@@ -20,7 +21,7 @@ export async function PATCH(
     }
 
     const user = await User.findByIdAndUpdate(
-      params.id,
+      id,
       { taskPoints: points },
       { new: true, runValidators: true }
     ).select('-password');
