@@ -18,6 +18,13 @@ export interface TaskDocument {
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
+  latestSubmission?: {
+    id: string;
+    status: 'pending' | 'approved' | 'rejected';
+    submittedAt: string;
+    createdAt: string;
+  } | null;
+  userTaskStatus?: 'pending' | 'approved' | 'rejected' | 'available';
 }
 
 // Frontend Task Card interface (what the UI expects)

@@ -46,16 +46,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
-    // Find existing submission
-    const existingSubmission = await Submission.findOne({
+    // Check for existing pending submission
+    const existingPendingSubmission = await Submission.findOne({
       userId: user._id,
-      taskId: task._id
+      taskId: task._id,
+      status: 'pending'
     });
 
-    if (existingSubmission) {
+    if (existingPendingSubmission) {
       return NextResponse.json(
-        { error: 'Submission already exists for this task' },
-        { status: 400 }
+        { error: 'You already have a pending submission for this task' },
+        { status: 409 }
       );
     }
 

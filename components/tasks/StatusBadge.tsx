@@ -31,6 +31,13 @@ export function StatusBadge({ status, className = "" }: StatusBadgeProps) {
           className: 'bg-chart-3/10 text-chart-3 border-chart-3/20',
         };
       
+      case 'pending':
+        return {
+          icon: <Clock className="w-3 h-3" />,
+          text: 'Pending review',
+          className: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
+        };
+      
       case 'approved':
         return {
           icon: <CheckCircle2 className="w-3 h-3" />,

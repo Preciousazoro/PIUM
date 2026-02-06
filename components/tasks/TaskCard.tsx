@@ -19,6 +19,10 @@ export function TaskCard({
   onStartTask,
   onSubmitProof,
 }: TaskCardProps) {
+  const isPending = task.userTaskStatus === 'pending';
+  const isApproved = task.userTaskStatus === 'approved';
+  const isRejected = task.userTaskStatus === 'rejected';
+  const isAvailable = task.userTaskStatus === 'available';
   const categoryStyles = {
     social: "from-pink-500/40 to-purple-500/40",
     content: "from-blue-500/40 to-cyan-500/40",
@@ -27,10 +31,12 @@ export function TaskCard({
 
   return (
     <motion.div
-      whileHover={{ y: -4 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={() => onClick(task)}
-      className="relative cursor-pointer rounded-2xl border border-border/60 bg-card/70 backdrop-blur-xl shadow-sm hover:shadow-xl transition-all overflow-hidden"
+      whileHover={{ y: isPending || isApproved ? 0 : -4 }}
+      whileTap={{ scale: isPending || isApproved ? 1 : 0.98 }}
+      onClick={() => !isPending && !isApproved && onClick(task)}
+      className={`relative rounded-2xl border border-border/60 bg-card/70 backdrop-blur-xl shadow-sm hover:shadow-xl transition-all overflow-hidden ${
+        isPending ? 'opacity-50 cursor-not-allowed' : ''
+      } ${isApproved ? 'opacity-60 cursor-not-allowed' : ''}`}
     >
       {/* Accent gradient strip */}
       <div
@@ -51,7 +57,7 @@ export function TaskCard({
             </h3>
           </div>
 
-          <StatusBadge status="available" />
+          <StatusBadge status={task.userTaskStatus || 'available'} />
         </div>
 
         {/* Description */}
@@ -69,28 +75,44 @@ export function TaskCard({
 
           {/* Actions */}
           <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={(e) => {
-                e.stopPropagation();
-                onStartTask(task);
-              }}
-              className="font-semibold"
-            >
-              Start
-            </Button>
+            {isAvailable && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStartTask(task);
+                }}
+                className="font-semibold"
+              >
+                Start
+              </Button>
+            )}
 
-            <Button
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onSubmitProof(task);
-              }}
-              className="font-semibold bg-gradient-to-r from-green-500 to-purple-600 hover:from-green-600 hover:to-purple-700"
-            >
-              Submit
-            </Button>
+            {(isAvailable || isRejected) && (
+              <Button
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSubmitProof(task);
+                }}
+                className="font-semibold bg-gradient-to-r from-green-500 to-purple-600 hover:from-green-600 hover:to-purple-700"
+              >
+                {isRejected ? 'Resubmit' : 'Submit'}
+              </Button>
+            )}
+
+            {isPending && (
+              <div className="flex items-center text-xs text-muted-foreground font-medium">
+                Pending review
+              </div>
+            )}
+
+            {isApproved && (
+              <div className="flex items-center text-xs text-green-600 font-medium">
+                Completed
+              </div>
+            )}
           </div>
         </div>
       </div>
