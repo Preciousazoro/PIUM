@@ -1,6 +1,9 @@
 import { redirect } from 'next/navigation';
 import { isAdmin } from '@/lib/admin-auth';
 
+// Force dynamic rendering for admin routes since they depend on authentication
+export const dynamic = 'force-dynamic';
+
 export default async function AdminDashboardLayout({
   children,
 }: {
