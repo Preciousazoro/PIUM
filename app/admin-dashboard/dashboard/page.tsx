@@ -6,11 +6,9 @@ import AdminSidebar from "@/components/admin-dashboard/AdminSidebar";
 import Chart from "chart.js/auto";
 import {
   Users,
-  Award,
   FileText,
   CheckCircle,
   Plus,
-  Search,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -28,7 +26,6 @@ type DashboardMetrics = {
   totalUsers: number;
   tasksCompleted: number;
   pendingReviews: number;
-  rewardsIssued: number;
   lastUpdated: string;
 };
 
@@ -36,7 +33,6 @@ type DashboardMetrics = {
 const Dashboard = () => {
   /* ---------- UI STATE ---------- */
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [search, setSearch] = useState("");
 
   /* ---------- FORM STATE ---------- */
   const [title, setTitle] = useState("");
@@ -45,10 +41,14 @@ const Dashboard = () => {
 
   /* ---------- LOCAL DATA ---------- */
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [recent, setRecent] = useState<any[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(true);
   const [metricsError, setMetricsError] = useState<string | null>(null);
+  const [activitiesLoading, setActivitiesLoading] = useState(true);
+  const [activitiesError, setActivitiesError] = useState<string | null>(null);
+  const [activitiesPage, setActivitiesPage] = useState(1);
+  const [activitiesTotalPages, setActivitiesTotalPages] = useState(1);
 
   /* ---------- FETCH METRICS ---------- */
   const fetchMetrics = async () => {
@@ -73,9 +73,35 @@ const Dashboard = () => {
     }
   };
 
+  /* ---------- FETCH ACTIVITIES ---------- */
+  const fetchActivities = async (page: number = 1) => {
+    try {
+      setActivitiesLoading(true);
+      setActivitiesError(null);
+      
+      const response = await fetch(`/api/admin/activities?page=${page}&limit=5`);
+      const data = await response.json();
+      
+      if (data.activities) {
+        setActivities(data.activities);
+        setActivitiesTotalPages(data.pagination.totalPages);
+        setActivitiesPage(page);
+      } else {
+        throw new Error('Failed to fetch activities');
+      }
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+      setActivitiesError(error instanceof Error ? error.message : 'Unknown error');
+      toast.error('Failed to load recent activities');
+    } finally {
+      setActivitiesLoading(false);
+    }
+  };
+
   /* ---------- EFFECTS ---------- */
   useEffect(() => {
     fetchMetrics();
+    fetchActivities();
     // Refresh metrics every 30 seconds
     const interval = setInterval(fetchMetrics, 30000);
     return () => clearInterval(interval);
@@ -88,7 +114,6 @@ const Dashboard = () => {
         totalUsers: metrics.totalUsers,
         tasksCompleted: metrics.tasksCompleted,
         pendingReviews: metrics.pendingReviews,
-        rewardsIssued: metrics.rewardsIssued,
       };
     }
     
@@ -97,10 +122,6 @@ const Dashboard = () => {
       totalUsers: 0,
       tasksCompleted: tasks.length * 5,
       pendingReviews: tasks.length,
-      rewardsIssued: tasks.reduce(
-        (sum, t) => sum + t.rewardPoints,
-        0
-      ),
     };
   }, [metrics, tasks]);
 
@@ -201,14 +222,6 @@ const Dashboard = () => {
     };
 
     setTasks((prev) => [newTask, ...prev]);
-    setRecent((prev) => [
-      {
-        id: newTask.id,
-        message: `New task created: "${newTask.title}"`,
-        time: new Date().toLocaleString(),
-      },
-      ...prev,
-    ]);
 
     toast.success("Task created successfully");
 
@@ -216,11 +229,10 @@ const Dashboard = () => {
     setCategory("");
     setRewardPoints("");
     setShowCreateModal(false);
+    
+    // Refresh activities to show the new task creation
+    fetchActivities();
   };
-
-  const filteredRecent = recent.filter((r) =>
-    r.message.toLowerCase().includes(search.toLowerCase())
-  );
 
   /* ---------- UI ---------- */
   return (
@@ -246,13 +258,12 @@ const Dashboard = () => {
           </div>
 
           {/* STATS */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {metricsLoading ? (
               <>
                 <StatSkeleton label="Total Users" />
                 <StatSkeleton label="Tasks Completed" />
                 <StatSkeleton label="Pending Reviews" />
-                <StatSkeleton label="Rewards Issued" />
               </>
             ) : metricsError ? (
               <div className="col-span-full">
@@ -271,7 +282,6 @@ const Dashboard = () => {
                 <Stat icon={<Users />} label="Total Users" value={stats.totalUsers} />
                 <Stat icon={<CheckCircle />} label="Tasks Completed" value={stats.tasksCompleted} />
                 <Stat icon={<FileText />} label="Pending Reviews" value={stats.pendingReviews} />
-                <Stat icon={<Award />} label="Rewards Issued" value={stats.rewardsIssued} />
               </>
             )}
           </div>
@@ -314,35 +324,103 @@ const Dashboard = () => {
               <h3 className="font-semibold text-lg">
                 Recent Activity
               </h3>
-              <div className="flex items-center gap-2">
-                <Search size={14} />
-                <input
-                  className="bg-background border rounded px-2 py-1 text-sm"
-                  placeholder="Search..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
             </div>
 
-            {filteredRecent.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
+            {activitiesLoading ? (
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-lg border">
+                    <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
+                    <div className="flex-1">
+                      <div className="h-4 bg-muted rounded animate-pulse w-3/4 mb-2" />
+                      <div className="h-3 bg-muted rounded animate-pulse w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : activitiesError ? (
+              <div className="text-center py-6">
+                <p className="text-red-500 text-sm mb-2">{activitiesError}</p>
+                <button 
+                  onClick={() => fetchActivities(activitiesPage)}
+                  className="text-xs text-blue-500 hover:underline"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : activities.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center py-6">
                 No recent activity
               </p>
             ) : (
-              <ul className="space-y-3 text-sm">
-                {filteredRecent.map((r) => (
-                  <li
-                    key={r.id}
-                    className="flex justify-between"
-                  >
-                    <span>📌 {r.message}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {r.time}
+              <>
+                <ul className="space-y-3 text-sm">
+                  {activities.map((activity) => (
+                    <li
+                      key={activity._id}
+                      className="flex items-start gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                        {activity.user?.avatarUrl ? (
+                          <img 
+                            src={activity.user.avatarUrl} 
+                            alt={activity.user.name}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-xs font-semibold">
+                            {activity.user?.name?.charAt(0) || 'U'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">
+                          {activity.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground mb-1">
+                          {activity.user?.name || 'Unknown User'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(activity.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          activity.type === 'task_approved' ? 'bg-green-100 text-green-800' :
+                          activity.type === 'task_rejected' ? 'bg-red-100 text-red-800' :
+                          activity.type === 'task_submitted' ? 'bg-blue-100 text-blue-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {activity.type.replace('_', ' ')}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* PAGINATION */}
+                {activitiesTotalPages > 1 && (
+                  <div className="flex justify-center items-center gap-2 mt-6 pt-4 border-t">
+                    <button
+                      onClick={() => fetchActivities(activitiesPage - 1)}
+                      disabled={activitiesPage <= 1}
+                      className="px-3 py-1 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-sm text-muted-foreground">
+                      Page {activitiesPage} of {activitiesTotalPages}
                     </span>
-                  </li>
-                ))}
-              </ul>
+                    <button
+                      onClick={() => fetchActivities(activitiesPage + 1)}
+                      disabled={activitiesPage >= activitiesTotalPages}
+                      className="px-3 py-1 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </main>

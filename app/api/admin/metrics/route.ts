@@ -4,6 +4,7 @@ import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import Task from '@/models/Task';
 import Transaction from '@/models/Transaction';
+import Submission from '@/models/Submission';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,8 +15,7 @@ export async function GET(request: NextRequest) {
     const [
       totalUsers,
       tasksCompleted,
-      pendingReviews,
-      rewardsIssued
+      pendingReviews
     ] = await Promise.all([
       // Total Users - Count all registered users
       User.countDocuments(),
@@ -30,34 +30,17 @@ export async function GET(request: NextRequest) {
         }
       ]),
       
-      // Pending Reviews - Count active tasks that need review
-      Task.countDocuments({ status: 'active' }),
-      
-      // Rewards Issued - Sum of all positive transactions (task completions, bonuses)
-      Transaction.aggregate([
-        {
-          $match: {
-            type: { $in: ['task_completed', 'task_approved', 'welcome_bonus', 'daily_login'] }
-          }
-        },
-        {
-          $group: {
-            _id: null,
-            total: { $sum: '$amount' }
-          }
-        }
-      ])
+      // Pending Reviews - Count pending submissions
+      Submission.countDocuments({ status: 'pending' })
     ]);
 
     // Extract values from aggregation results
     const totalTasksCompleted = tasksCompleted[0]?.total || 0;
-    const totalRewardsIssued = rewardsIssued[0]?.total || 0;
 
     const metrics = {
       totalUsers,
       tasksCompleted: totalTasksCompleted,
       pendingReviews,
-      rewardsIssued: totalRewardsIssued,
       lastUpdated: new Date().toISOString()
     };
 

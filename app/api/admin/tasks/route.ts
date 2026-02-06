@@ -8,7 +8,7 @@ import { validateTaskData } from '@/lib/validation';
 // GET /api/admin/tasks - Fetch all tasks for admin panel
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     
@@ -32,8 +32,59 @@ export async function GET() {
     // In production, uncomment: if (user.email !== process.env.ADMIN_EMAIL) {
     console.log('Admin access granted to:', session.user.email);
     
-    // Fetch all tasks sorted by creation date
-    const tasks = await Task.find().sort({ createdAt: -1 });
+    // Get query parameters for filtering and search
+    const { searchParams } = new URL(request.url);
+    const category = searchParams.get('category');
+    const status = searchParams.get('status');
+    const dateRange = searchParams.get('dateRange');
+    const search = searchParams.get('search');
+
+    // Build filter object
+    const filter: any = {};
+
+    // Category filter
+    if (category && category !== 'all') {
+      filter.category = category;
+    }
+
+    // Status filter
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+
+    // Date range filter
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      let startDate: Date;
+
+      switch (dateRange) {
+        case 'today':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          break;
+        case '7days':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case '30days':
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        default:
+          startDate = new Date(0);
+      }
+
+      filter.createdAt = { $gte: startDate };
+    }
+
+    // Search filter (title and description)
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      filter.$or = [
+        { title: searchRegex },
+        { description: searchRegex }
+      ];
+    }
+
+    // Fetch tasks with filters
+    const tasks = await Task.find(filter).sort({ createdAt: -1 });
 
     return NextResponse.json({ tasks }, { status: 200 });
   } catch (error: unknown) {

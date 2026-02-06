@@ -38,6 +38,8 @@ interface PaginationData {
 /* ---------------- COMPONENT ---------------- */
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'admins' | 'suspended'>('all');
   const [pagination, setPagination] = useState<PaginationData>({
     currentPage: 1,
     totalPages: 0,
@@ -56,6 +58,30 @@ export default function AdminUsersPage() {
   const router = useRouter();
   const pathname = usePathname();
 
+  /* -------- FILTER USERS -------- */
+  const filteredUsers = useMemo(() => {
+    switch (activeFilter) {
+      case 'admins':
+        return allUsers.filter(user => user.role === 'admin');
+      case 'suspended':
+        return allUsers.filter(user => user.status === 'suspended');
+      default:
+        return allUsers;
+    }
+  }, [allUsers, activeFilter]);
+
+  /* -------- FILTER COUNTS -------- */
+  const filterCounts = useMemo(() => {
+    const admins = allUsers.filter(user => user.role === 'admin').length;
+    const suspended = allUsers.filter(user => user.status === 'suspended').length;
+    
+    return {
+      all: allUsers.length,
+      admins,
+      suspended
+    };
+  }, [allUsers]);
+
   /* -------- FETCH USERS FROM DATABASE -------- */
   const fetchUsers = async (page: number, limit: number) => {
     try {
@@ -67,7 +93,7 @@ export default function AdminUsersPage() {
       }
       
       const data = await response.json();
-      setUsers(data.users);
+      setAllUsers(data.users);
       setPagination(data.pagination);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -101,6 +127,11 @@ export default function AdminUsersPage() {
     router.push(`${pathname}?${params.toString()}`);
   };
 
+  /* -------- FILTER HANDLERS -------- */
+  const handleFilterChange = (filter: 'all' | 'admins' | 'suspended') => {
+    setActiveFilter(filter);
+  };
+
 
   /* -------- ACTIONS (UI ONLY) -------- */
   const showToast = (msg: string, type: "success" | "error" | "info" = "info") =>
@@ -124,7 +155,7 @@ export default function AdminUsersPage() {
   };
 
   const updatePoints = (id: string, value: number) => {
-    setUsers(prev =>
+    setAllUsers(prev =>
       prev.map(u => (u._id === id ? { ...u, points: value } : u))
     );
     setEditingPoints(prev => {
@@ -244,11 +275,47 @@ export default function AdminUsersPage() {
         <AdminHeader />
 
         <main className="p-6 overflow-y-auto">
-          <div className="flex justify-between mb-6">
+          <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">Users</h2>
             <span className="text-muted-foreground text-sm">
-              Total: {pagination.totalUsers}
+              Total: {filterCounts.all} users
             </span>
+          </div>
+
+          {/* FILTER TABS */}
+          <div className="mb-6">
+            <div className="flex gap-2 p-1 bg-muted rounded-lg w-fit">
+              <button
+                onClick={() => handleFilterChange('all')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  activeFilter === 'all'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                }`}
+              >
+                All Users ({filterCounts.all})
+              </button>
+              <button
+                onClick={() => handleFilterChange('admins')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  activeFilter === 'admins'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                }`}
+              >
+                Admins ({filterCounts.admins})
+              </button>
+              <button
+                onClick={() => handleFilterChange('suspended')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  activeFilter === 'suspended'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                }`}
+              >
+                Suspended ({filterCounts.suspended})
+              </button>
+            </div>
           </div>
 
           {/* TABLE */}
@@ -270,14 +337,16 @@ export default function AdminUsersPage() {
                       Loading users...
                     </td>
                   </tr>
-                ) : users.length === 0 ? (
+                ) : filteredUsers.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
-                      No users found
+                      {activeFilter === 'admins' && 'No admin users found'}
+                      {activeFilter === 'suspended' && 'No suspended users found'}
+                      {activeFilter === 'all' && 'No users found'}
                     </td>
                   </tr>
                 ) : (
-                  users.map(u => (
+                  filteredUsers.map(u => (
                     <tr key={u._id} className="hover:bg-muted/50">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -339,17 +408,7 @@ export default function AdminUsersPage() {
                             <Eye className="w-4 h-4" />
                           </button>
 
-                          {/* Edit */}
-                          <button
-                            onClick={() => {
-                              toast.info('Edit functionality coming soon');
-                            }}
-                            className="p-2 text-purple-500 hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-950 rounded-lg transition-colors"
-                            title="Edit User"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-
+                          
                           {/* Make Admin (only for non-admins) */}
                           {u.role !== "admin" && (
                             <button

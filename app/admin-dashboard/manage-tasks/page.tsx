@@ -1,11 +1,16 @@
 "use client";
 
 import feather from "feather-icons";
-import { Edit, Eye, Trash2, Loader2 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { Edit, Eye, Trash2, Loader2, Search, CheckSquare } from "lucide-react";
+import React, { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
 import AdminHeader from "../../../components/admin-dashboard/AdminHeader";
 import AdminSidebar from "../../../components/admin-dashboard/AdminSidebar";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
+import { Checkbox } from "../../../components/ui/checkbox";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../../components/ui/dropdown-menu";
 
 interface Task {
   _id: string;
@@ -25,32 +30,19 @@ interface Task {
 }
 
 const ManageTasks = () => {
-  /* ------------------ API FUNCTIONS ------------------ */
-  const fetchTasks = async () => {
-    try {
-      const response = await fetch('/api/admin/tasks');
-      if (!response.ok) {
-        throw new Error('Failed to fetch tasks');
-      }
-      const data = await response.json();
-      setTasks(data.tasks || []);
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-      toast.error('Failed to load tasks');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    feather.replace();
-    fetchTasks();
-  }, []);
-
   /* ------------------ STATE ------------------ */
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Filter states
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateRangeFilter, setDateRangeFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
+  const [bulkAction, setBulkAction] = useState('');
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -69,6 +61,55 @@ const ManageTasks = () => {
   const [alternateUrl, setAlternateUrl] = useState("");
   const [deadline, setDeadline] = useState("");
   const [status, setStatus] = useState<'active' | 'expired' | 'disabled'>('active');
+
+  /* ------------------ API FUNCTIONS ------------------ */
+  const fetchTasks = async (filters?: {
+    category?: string;
+    status?: string;
+    dateRange?: string;
+    search?: string;
+  }) => {
+    try {
+      const params = new URLSearchParams();
+      if (filters?.category && filters.category !== 'all') params.append('category', filters.category);
+      if (filters?.status && filters.status !== 'all') params.append('status', filters.status);
+      if (filters?.dateRange && filters.dateRange !== 'all') params.append('dateRange', filters.dateRange);
+      if (filters?.search) params.append('search', filters.search);
+      
+      const url = params.toString() ? `/api/admin/tasks?${params.toString()}` : '/api/admin/tasks';
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch tasks');
+      }
+      const data = await response.json();
+      setTasks(data.tasks || []);
+      setFilteredTasks(data.tasks || []);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      toast.error('Failed to load tasks');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    feather.replace();
+    fetchTasks();
+  }, []);
+
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchTasks({
+        category: categoryFilter,
+        status: statusFilter,
+        dateRange: dateRangeFilter,
+        search: searchQuery
+      });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [categoryFilter, statusFilter, dateRangeFilter, searchQuery]);
 
   /* ------------------ HANDLERS ------------------ */
   const openViewModal = (task: any) => {
@@ -140,7 +181,12 @@ const ManageTasks = () => {
       setShowEditModal(false);
       
       // Refresh tasks list
-      fetchTasks();
+      fetchTasks({
+        category: categoryFilter,
+        status: statusFilter,
+        dateRange: dateRangeFilter,
+        search: searchQuery
+      });
     } catch (error: any) {
       console.error('Error updating task:', error);
       toast.error(error.message || 'Failed to update task');
@@ -223,7 +269,12 @@ const ManageTasks = () => {
       setShowCreateModal(false);
       
       // Refresh tasks list
-      fetchTasks();
+      fetchTasks({
+        category: categoryFilter,
+        status: statusFilter,
+        dateRange: dateRangeFilter,
+        search: searchQuery
+      });
     } catch (error: any) {
       console.error('Error creating task:', error);
       toast.error(error.message || 'Failed to create task');
@@ -245,11 +296,82 @@ const ManageTasks = () => {
       }
 
       toast.success('Task deleted successfully!');
-      fetchTasks();
+      fetchTasks({
+        category: categoryFilter,
+        status: statusFilter,
+        dateRange: dateRangeFilter,
+        search: searchQuery
+      });
     } catch (error: any) {
       console.error('Error deleting task:', error);
       toast.error(error.message || 'Failed to delete task');
     }
+  };
+
+  const handleBulkAction = async () => {
+    if (!bulkAction || selectedTasks.length === 0) {
+      toast.error('Please select tasks and an action');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to ${bulkAction} ${selectedTasks.length} task(s)?`)) return;
+
+    try {
+      const response = await fetch('/api/admin/tasks/bulk', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          taskIds: selectedTasks,
+          action: bulkAction
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to perform bulk action');
+      }
+
+      const data = await response.json();
+      toast.success(data.message);
+      setSelectedTasks([]);
+      setBulkAction('');
+      
+      fetchTasks({
+        category: categoryFilter,
+        status: statusFilter,
+        dateRange: dateRangeFilter,
+        search: searchQuery
+      });
+    } catch (error: any) {
+      console.error('Error performing bulk action:', error);
+      toast.error(error.message || 'Failed to perform bulk action');
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedTasks(filteredTasks.map(task => task._id));
+    } else {
+      setSelectedTasks([]);
+    }
+  };
+
+  const handleSelectTask = (taskId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedTasks(prev => [...prev, taskId]);
+    } else {
+      setSelectedTasks(prev => prev.filter(id => id !== taskId));
+    }
+  };
+
+  const applyFilters = () => {
+    fetchTasks({
+      category: categoryFilter,
+      status: statusFilter,
+      dateRange: dateRangeFilter,
+      search: searchQuery
+    });
   };
 
   /* ------------------ RENDER ------------------ */
@@ -268,10 +390,110 @@ const ManageTasks = () => {
               <h2 className="text-2xl font-bold">Manage Tasks</h2>
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="bg-gradient-to-r from-green-500 to-purple-500 text-white px-4 py-2 rounded-lg"
+                className="bg-linear-to-r from-green-500 to-purple-500 text-white px-4 py-2 rounded-lg"
               >
                 + Create Task
               </button>
+            </div>
+
+            {/* Filters Section */}
+            <div className="bg-card rounded-2xl border border-border p-4">
+              <div className="flex flex-wrap gap-4 items-end">
+                {/* Category Filter */}
+                <div className="flex-1 min-w-[180px]">
+                  <label className="block text-sm font-medium mb-2 text-muted-foreground">Category</label>
+                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      <SelectItem value="social">Social</SelectItem>
+                      <SelectItem value="content">Content</SelectItem>
+                      <SelectItem value="commerce">Commerce</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Status Filter */}
+                <div className="flex-1 min-w-[180px]">
+                  <label className="block text-sm font-medium mb-2 text-muted-foreground">Status</label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Statuses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="active">Available</SelectItem>
+                      <SelectItem value="expired">In Progress</SelectItem>
+                      <SelectItem value="disabled">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Date Range Filter */}
+                <div className="flex-1 min-w-[180px]">
+                  <label className="block text-sm font-medium mb-2 text-muted-foreground">Date Range</label>
+                  <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Time" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Time</SelectItem>
+                      <SelectItem value="today">Today</SelectItem>
+                      <SelectItem value="7days">Last 7 Days</SelectItem>
+                      <SelectItem value="30days">Last 30 Days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Apply Filters Button */}
+                <Button 
+                  onClick={applyFilters}
+                  className="bg-linear-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700"
+                >
+                  Apply Filters
+                </Button>
+              </div>
+            </div>
+
+            {/* Search & Bulk Actions Row */}
+            <div className="bg-card rounded-2xl border border-border p-4">
+              <div className="flex flex-wrap gap-4 items-center">
+                {/* Search Input */}
+                <div className="flex-1 min-w-[300px]">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <Input
+                      placeholder="Search tasks..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                {/* Bulk Actions */}
+                <div className="flex gap-2 items-center">
+                  <Select value={bulkAction} onValueChange={setBulkAction}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Bulk Actions" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="delete">Delete Selected</SelectItem>
+                      <SelectItem value="approve">Approve Selected</SelectItem>
+                      <SelectItem value="reject">Reject Selected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    onClick={handleBulkAction}
+                    disabled={!bulkAction || selectedTasks.length === 0}
+                    variant="outline"
+                  >
+                    Apply
+                  </Button>
+                </div>
+              </div>
             </div>
 
             {/* Tasks Table */}
@@ -284,6 +506,12 @@ const ManageTasks = () => {
                 <table className="w-full">
                   <thead className="bg-muted/50">
                     <tr>
+                      <th className="px-6 py-3 text-left">
+                        <Checkbox
+                          checked={selectedTasks.length === filteredTasks.length && filteredTasks.length > 0}
+                          onCheckedChange={handleSelectAll}
+                        />
+                      </th>
                       {[
                         "Title",
                         "Category",
@@ -302,8 +530,14 @@ const ManageTasks = () => {
                   </thead>
 
                   <tbody>
-                    {tasks.map((task) => (
+                    {filteredTasks.map((task) => (
                       <tr key={task._id} className="border-t hover:bg-muted/40">
+                        <td className="px-6 py-4">
+                          <Checkbox
+                            checked={selectedTasks.includes(task._id)}
+                            onCheckedChange={(checked) => handleSelectTask(task._id, checked as boolean)}
+                          />
+                        </td>
                         <td className="px-6 py-4 font-medium">{task.title}</td>
                         <td className="px-6 py-4">{task.category}</td>
                         <td className="px-6 py-4">{task.rewardPoints} TP</td>
