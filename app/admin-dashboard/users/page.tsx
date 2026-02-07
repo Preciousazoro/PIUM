@@ -154,16 +154,32 @@ export default function AdminUsersPage() {
     setDetailOpen(true);
   };
 
-  const updatePoints = (id: string, value: number) => {
-    setAllUsers(prev =>
-      prev.map(u => (u._id === id ? { ...u, points: value } : u))
-    );
-    setEditingPoints(prev => {
-      const p = { ...prev };
-      delete p[id];
-      return p;
-    });
-    showToast("Points updated", "success");
+  const updatePoints = async (id: string, value: number) => {
+    try {
+      const response = await fetch(`/api/admin/users/${id}/points`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ points: value })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update points');
+      }
+
+      // Update local state after successful API call
+      setAllUsers(prev =>
+        prev.map(u => (u._id === id ? { ...u, points: value } : u))
+      );
+      setEditingPoints(prev => {
+        const p = { ...prev };
+        delete p[id];
+        return p;
+      });
+      showToast("Points updated successfully", "success");
+    } catch (error) {
+      console.error('Error updating points:', error);
+      showToast("Failed to update points", "error");
+    }
   };
 
   const toggleSuspend = async (u: User) => {

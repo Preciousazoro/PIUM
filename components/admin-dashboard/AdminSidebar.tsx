@@ -72,13 +72,13 @@ const AdminSidebar = () => {
   const inactiveIconClass = "w-4 h-4 text-muted-foreground";
 
   const menuItems = [
-    { icon: <Layout className={iconClass} />, label: "Dashboard", href: "/admin-dashboard/dashboard", color: "text-blue-500" },
+    { icon: <Layout className={iconClass} />, label: "Dashboard", href: "/admin-dashboard/dashboard", color: "text-green-500" },
     { icon: <CheckCircle className={iconClass} />, label: "Manage Tasks", href: "/admin-dashboard/manage-tasks", color: "text-green-500" },
-    { icon: <Users className={iconClass} />, label: "Users", href: "/admin-dashboard/users", color: "text-purple-500" },
-    { icon: <FileText className={iconClass} />, label: "Submissions", href: "/admin-dashboard/submissions", color: "text-orange-500" },
-    { icon: <Award className={iconClass} />, label: "Rewards", href: "/admin-dashboard/rewards", color: "text-yellow-500" },
-    { icon: <BarChart2 className={iconClass} />, label: "Reports & Analytics", href: "/admin-dashboard/reports", color: "text-indigo-500" },
-    { icon: <Settings className={iconClass} />, label: "Settings", href: "/admin-dashboard/settings", color: "text-gray-500" },
+    { icon: <Users className={iconClass} />, label: "Users", href: "/admin-dashboard/users", color: "text-green-500" },
+    { icon: <FileText className={iconClass} />, label: "Submissions", href: "/admin-dashboard/submissions", color: "text-green-500" },
+    { icon: <Award className={iconClass} />, label: "Rewards", href: "/admin-dashboard/rewards", color: "text-green-500" },
+    { icon: <BarChart2 className={iconClass} />, label: "Reports & Analytics", href: "/admin-dashboard/reports", color: "text-green-500" },
+    { icon: <Settings className={iconClass} />, label: "Settings", href: "/admin-dashboard/settings", color: "text-green-500" },
   ];
 
   const bottomMenuItems = [
@@ -155,7 +155,7 @@ const AdminSidebar = () => {
               </div>
             ) : (
               <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                <UserIcon className="w-5 h-5 text-muted-foreground" />
+                <UserIcon className="w-5 h-5 text-green-500" />
               </div>
             )}
             <div className="flex-1 min-w-0">
@@ -262,7 +262,7 @@ const AdminSidebar = () => {
                     </div>
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                      <UserIcon className="w-4 h-4 text-muted-foreground" />
+                      <UserIcon className="w-4 h-4 text-green-500" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">

@@ -129,14 +129,14 @@ function SidebarContent({
     pathname === href || pathname.startsWith(href + "/");
 
   const links = [
-    { href: "/user-dashboard/dashboard", icon: Home, label: "Dashboard", color: "text-blue-500" },
-    { href: "/user-dashboard/profile", icon: Users, label: "Profile", color: "text-purple-500" },
+    { href: "/user-dashboard/dashboard", icon: Home, label: "Dashboard", color: "text-green-500" },
+    { href: "/user-dashboard/profile", icon: Users, label: "Profile", color: "text-green-500" },
     { href: "/user-dashboard/transactions", icon: Edit2, label: "Transactions", color: "text-green-500" },
-    { href: "/user-dashboard/settings", icon: Settings, label: "Settings", color: "text-gray-500" },
-    { href: "#", icon: ShoppingCart, label: "Commerce Tasks", color: "text-orange-500" },
-    { href: "/user-dashboard/leaderboard", icon: Award, label: "Leaderboard", color: "text-yellow-500" },
-    { href: "/user-dashboard/task-verification", icon: CheckSquare, label: "Task Verification", color: "text-indigo-500" },
-    { href: "/user-dashboard/rewards", icon: Gift, label: "Rewards", color: "text-pink-500" },
+    { href: "/user-dashboard/settings", icon: Settings, label: "Settings", color: "text-green-500" },
+    { href: "#", icon: ShoppingCart, label: "Commerce Tasks", color: "text-green-500" },
+    { href: "/user-dashboard/leaderboard", icon: Award, label: "Leaderboard", color: "text-green-500" },
+    { href: "/user-dashboard/task-verification", icon: CheckSquare, label: "Task Verification", color: "text-green-500" },
+    { href: "/user-dashboard/rewards", icon: Gift, label: "Rewards", color: "text-green-500" },
   ];
 
   const streak = userData?.dailyStreak || 0;
@@ -242,7 +242,7 @@ function AdminAndLogoutLinks({ userData, isLoading }: { userData: any; isLoading
           />
         ) : (
           <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-            <User className="w-5 h-5 text-blue-500" />
+            <User className="w-5 h-5 text-green-500" />
           </div>
         )}
         <div>
