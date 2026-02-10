@@ -47,8 +47,11 @@ export default function HomePage() {
     <div className="bg-background text-foreground min-h-screen overflow-x-hidden transition-colors duration-300">
 
       {/* Header */}
-      <header className="container mx-auto px-6 py-6 flex justify-between items-center">
-        <div className="flex items-center space-x-3">
+      <header className="container mx-auto px-6 py-6 flex justify-between items-center md:static md:z-auto sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border md:border-b-0">
+        <div 
+          className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => window.location.href = '/'}
+        >
           <img
             src="/taskkash-logo.png"
             alt="TaskKash Logo"
@@ -60,17 +63,31 @@ export default function HomePage() {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
           {navItems.map((item) => (
-            <button
-              key={item.label}
-              onClick={() => item.href.startsWith('#') ? handleNavClick(item.href) : null}
-              className={`transition-colors ${
-                isActive(item.href)
-                  ? "text-green-400 font-medium"
-                  : "hover:text-green-400"
-              }`}
-            >
-              {item.label}
-            </button>
+            item.href.startsWith('#') ? (
+              <button
+                key={item.label}
+                onClick={() => handleNavClick(item.href)}
+                className={`transition-colors ${
+                  isActive(item.href)
+                    ? "text-green-400 font-medium"
+                    : "hover:text-green-400"
+                }`}
+              >
+                {item.label}
+              </button>
+            ) : (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`transition-colors ${
+                  isActive(item.href)
+                    ? "text-green-400 font-medium"
+                    : "hover:text-green-400"
+                }`}
+              >
+                {item.label}
+              </Link>
+            )
           ))}
         </nav>
 
@@ -88,7 +105,7 @@ export default function HomePage() {
 
             <Link
               href="/auth/signup"
-              className="px-6 py-2 rounded-lg bg-gradient-to-r from-green-400 to-purple-600 text-white font-medium hover:opacity-90 shadow"
+              className="px-6 py-2 rounded-lg bg-linear-to-r from-green-400 to-purple-600 text-white font-medium hover:opacity-90 shadow"
             >
               Sign Up
             </Link>
@@ -116,7 +133,8 @@ export default function HomePage() {
             <div className="flex flex-col h-full">
               {/* Mobile Menu Header */}
               <div className="flex items-center justify-between p-6 border-b border-border">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
+                     onClick={() => window.location.href = '/'}>
                   <img
                     src="/taskkash-logo.png"
                     alt="TaskKash Logo"
@@ -135,22 +153,35 @@ export default function HomePage() {
               {/* Mobile Navigation Links */}
               <nav className="flex-1 p-6 space-y-4">
                 {navItems.map((item) => (
-                  <button
-                    key={item.label}
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      if (item.href.startsWith('#')) {
+                  item.href.startsWith('#') ? (
+                    <button
+                      key={item.label}
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
                         handleNavClick(item.href);
-                      }
-                    }}
-                    className={`block w-full px-4 py-3 rounded-lg transition-colors text-left ${
-                      isActive(item.href)
-                        ? "bg-green-400/10 text-green-400 font-medium dark:bg-green-400/10 dark:text-green-400 light:bg-green-500/20 light:text-green-600"
-                        : "hover:bg-muted text-foreground"
-                    }`}
-                  >
-                    {item.label}
-                  </button>
+                      }}
+                      className={`block w-full px-4 py-3 rounded-lg transition-colors text-left ${
+                        isActive(item.href)
+                          ? "bg-green-400/10 text-green-400 font-medium dark:bg-green-400/10 dark:text-green-400 light:bg-green-500/20 light:text-green-600"
+                          : "hover:bg-muted text-foreground"
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ) : (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`block w-full px-4 py-3 rounded-lg transition-colors text-left ${
+                        isActive(item.href)
+                          ? "bg-green-400/10 text-green-400 font-medium dark:bg-green-400/10 dark:text-green-400 light:bg-green-500/20 light:text-green-600"
+                          : "hover:bg-muted text-foreground"
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  )
                 ))}
               </nav>
 
@@ -167,7 +198,7 @@ export default function HomePage() {
                 <Link
                   href="/auth/signup"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="block w-full px-4 py-3 rounded-lg bg-gradient-to-r from-green-400 to-purple-600 text-white font-medium hover:opacity-90 shadow text-center transition-opacity"
+                  className="block w-full px-4 py-3 rounded-lg bg-linear-to-r from-green-400 to-purple-600 text-white font-medium hover:opacity-90 shadow text-center transition-opacity"
                 >
                   Sign Up
                 </Link>
@@ -338,7 +369,7 @@ export default function HomePage() {
 
       {/* Final CTA */}
       <section className="container mx-auto px-6 py-20 text-center">
-  <div className="max-w-2xl mx-auto bg-gradient-to-br from-green-400/10 to-purple-600/10 p-12 rounded-3xl border border-border">
+  <div className="max-w-2xl mx-auto bg-linear-to-br from-green-400/10 to-purple-600/10 p-12 rounded-3xl border border-border">
     <h2 className="text-3xl md:text-4xl font-bold mb-6 gradient-text">
       Ready to earn or grow with TaskKash?
     </h2>
@@ -350,7 +381,7 @@ export default function HomePage() {
     <div className="flex flex-col sm:flex-row justify-center gap-4">
       <Link
         href="/auth/signup"
-        className="px-8 py-4 rounded-xl bg-gradient-to-r from-green-400 to-purple-600 text-white font-bold text-lg hover:opacity-90 shadow"
+        className="px-8 py-4 rounded-xl bg-linear-to-r from-green-400 to-purple-600 text-white font-bold text-lg hover:opacity-90 shadow"
       >
         Sign Up Now
       </Link>

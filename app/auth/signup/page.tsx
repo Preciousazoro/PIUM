@@ -81,16 +81,18 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center text-foreground px-4 relative overflow-hidden bg-background transition-colors duration-300">
-      <div className="absolute inset-0 bg-gradient-to-tr from-[#00ff9d1a] via-transparent to-[#8a2be21a] blur-3xl opacity-50"></div>
+      <div className="absolute inset-0 bg-linear-to-tr from-[#00ff9d1a] via-transparent to-[#8a2be21a] blur-3xl opacity-50"></div>
       <div className="relative z-10 w-full max-w-md space-y-6">
         
         {/* Header / Logo */}
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-r from-[#00ff9d] to-[#8a2be2] flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-[#00ff9d] to-[#8a2be2] bg-clip-text text-transparent">
+            <img
+              src="/taskkash-logo.png"
+              alt="TaskKash Logo"
+              className="w-12 h-12 object-contain"
+            />
+            <span className="text-xl font-bold bg-linear-to-r from-[#00ff9d] to-[#8a2be2] bg-clip-text text-transparent">
               Taskkash
             </span>
           </div>
@@ -211,7 +213,7 @@ export default function RegisterPage() {
           {/* Submit Button */}
           <Button
             type="submit"
-            className="w-full bg-gradient-to-r from-[#00ff9d] to-[#8a2be2] text-white font-medium hover:opacity-90 transition-all shadow-[0_0_15px_rgba(0,255,157,0.3)]"
+            className="w-full bg-linear-to-r from-[#00ff9d] to-[#8a2be2] text-white font-medium hover:opacity-90 transition-all shadow-[0_0_15px_rgba(0,255,157,0.3)]"
             disabled={isLoading}
           >
             {isLoading ? (

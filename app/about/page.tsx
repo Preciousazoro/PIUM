@@ -32,14 +32,17 @@ export default function AboutPage() {
   return (
     <div className="bg-background text-foreground min-h-screen overflow-x-hidden transition-colors duration-300">
       {/* Header */}
-      <header className="container mx-auto px-6 py-6 flex justify-between items-center">
-        <div className="flex items-center space-x-3">
+      <header className="container mx-auto px-6 py-6 flex justify-between items-center md:static md:z-auto sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border md:border-b-0">
+        <div 
+          className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => window.location.href = '/'}
+        >
           <img
             src="/taskkash-logo.png"
             alt="TaskKash Logo"
             className="w-10 h-10 object-contain"
           />
-          <span className="text-2xl font-bold gradient-text">TaskKash</span>
+          <span className="text-2xl font-bold bg-linear-to-tr">TaskKash</span>
         </div>
 
         {/* Desktop Navigation */}
@@ -73,7 +76,7 @@ export default function AboutPage() {
 
             <Link
               href="/auth/signup"
-              className="px-6 py-2 rounded-lg bg-gradient-to-r from-green-400 to-purple-600 text-white font-medium hover:opacity-90 shadow"
+              className="px-6 py-2 rounded-lg bg-linear-to-r from-green-400 to-purple-600 text-white font-medium hover:opacity-90 shadow"
             >
               Sign Up
             </Link>
@@ -101,13 +104,14 @@ export default function AboutPage() {
             <div className="flex flex-col h-full">
               {/* Mobile Menu Header */}
               <div className="flex items-center justify-between p-6 border-b border-border">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
+                     onClick={() => window.location.href = '/'}>
                   <img
                     src="/taskkash-logo.png"
                     alt="TaskKash Logo"
                     className="w-8 h-8 object-contain"
                   />
-                  <span className="text-xl font-bold gradient-text">TaskKash</span>
+                  <span className="text-xl font-bold bg-linear-to-tr">TaskKash</span>
                 </div>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -148,7 +152,7 @@ export default function AboutPage() {
                 <Link
                   href="/auth/signup"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="block w-full px-4 py-3 rounded-lg bg-gradient-to-r from-green-400 to-purple-600 text-white font-medium hover:opacity-90 shadow text-center transition-opacity"
+                  className="block w-full px-4 py-3 rounded-lg bg-linear-to-r from-green-400 to-purple-600 text-white font-medium hover:opacity-90 shadow text-center transition-opacity"
                 >
                   Sign Up
                 </Link>
@@ -161,7 +165,7 @@ export default function AboutPage() {
       <main className="relative min-h-screen bg-background text-foreground overflow-hidden transition-colors duration-300">
       {/* Background glow */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute top-[-20%] left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-gradient-to-r from-green-400/20 via-cyan-400/10 to-purple-500/20 blur-3xl dark:from-green-400/20 dark:via-cyan-400/10 dark:to-purple-500/20 light:from-green-600/10 light:via-cyan-600/5 light:to-purple-600/10" />
+        <div className="absolute top-[-20%] left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-linear-to-r from-green-400/20 via-cyan-400/10 to-purple-500/20 blur-3xl dark:from-green-400/20 dark:via-cyan-400/10 dark:to-purple-500/20 light:from-green-600/10 light:via-cyan-600/5 light:to-purple-600/10" />
       </div>
 
       {/* Container */}
@@ -169,10 +173,10 @@ export default function AboutPage() {
         {/* HERO */}
         <section className="text-center space-y-6">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-            <span className="bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">
               About
             </span>{" "}
-            <span className="bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
               TaskKash
             </span>
           </h1>
@@ -288,7 +292,7 @@ export default function AboutPage() {
         <section className="text-center">
           <Link
             href="/auth/signup"
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-green-400 to-purple-500 px-8 py-3 font-medium text-foreground transition hover:opacity-90"
+            className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-green-400 to-purple-500 px-8 py-3 font-medium text-foreground transition hover:opacity-90"
           >
             Get Started with TaskKash <ArrowRight size={18} />
           </Link>

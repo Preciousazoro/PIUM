@@ -108,7 +108,10 @@ export default function UserHeader({ title }: { title?: string }) {
   return (
     <nav className="sticky top-0 z-40 py-4 px-6 flex justify-between items-center border-b bg-background text-foreground border-border transition-colors duration-300">
       {/* Logo Section */}
-      <div className="flex items-center space-x-2">
+      <div 
+        className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
+        onClick={() => router.push('/user-dashboard/dashboard')}
+      >
         <img
             src="/taskkash-logo.png"
             alt="TaskKash Logo"

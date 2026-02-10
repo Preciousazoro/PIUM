@@ -55,16 +55,18 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background text-foreground px-4 transition-colors duration-300">
       {/* Background Glow */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-[#00ff9d0a] via-transparent to-[#8a2be20a] pointer-events-none"></div>
+      <div className="absolute inset-0 bg-linear-to-tr from-[#00ff9d0a] via-transparent to-[#8a2be20a] pointer-events-none"></div>
       
       <div className="relative w-full max-w-md space-y-6">
         {/* Logo Section */}
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-r from-[#00ff9d] to-[#8a2be2] flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-[#00ff9d] to-[#8a2be2] bg-clip-text text-transparent">
+            <img
+              src="/taskkash-logo.png"
+              alt="TaskKash Logo"
+              className="w-12 h-12 object-contain"
+            />
+            <span className="text-xl font-bold bg-linear-to-r from-[#00ff9d] to-[#8a2be2] bg-clip-text text-transparent">
               Taskkash
             </span>
           </div>
@@ -130,7 +132,7 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-[#00ff9d] to-[#8a2be2] text-white font-bold hover:opacity-90 transition-all shadow-lg shadow-primary/20 h-11"
+            className="w-full bg-linear-to-r from-[#00ff9d] to-[#8a2be2] text-white font-bold hover:opacity-90 transition-all shadow-lg shadow-primary/20 h-11"
           >
             {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin" />

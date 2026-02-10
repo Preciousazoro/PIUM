@@ -1,21 +1,21 @@
 import { redirect } from 'next/navigation';
-import { isAdmin } from '@/lib/admin-auth';
+import { auth } from '@/lib/auth';
 import { InactivityLogoutProvider } from '@/components/providers/InactivityLogoutProvider';
 
-// Force dynamic rendering for admin routes since they depend on authentication
+// Force dynamic rendering for user dashboard routes since they depend on authentication
 export const dynamic = 'force-dynamic';
 
-export default async function AdminDashboardLayout({
+export default async function UserDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Check if user is authenticated and has admin role
-  const adminCheck = await isAdmin();
+  // Check if user is authenticated
+  const session = await auth();
   
-  if (!adminCheck) {
-    // Redirect to user dashboard if not admin
-    redirect('/user-dashboard/dashboard');
+  if (!session) {
+    // Redirect to login if not authenticated
+    redirect('/login');
   }
 
   return (

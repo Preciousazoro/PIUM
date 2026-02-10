@@ -99,34 +99,34 @@ export function TaskPreviewModal({ task, isOpen, onClose }: TaskPreviewModalProp
               duration: 0.3, 
               ease: [0.4, 0, 0.2, 1]
             }}
-            className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-linear-to-br from-card/95 to-card/90 backdrop-blur-xl border-border rounded-3xl shadow-2xl z-50 overflow-hidden"
+            className="fixed inset-0 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-linear-to-br from-card/95 to-card/90 backdrop-blur-xl border-border rounded-t-3xl md:rounded-3xl shadow-2xl z-50 overflow-hidden flex flex-col"
           >
             {/* Header */}
-            <div className="relative p-6 border-b border-border bg-linear-to-r from-primary/10 to-primary/5">
+            <div className="relative p-4 md:p-6 border-b border-border bg-linear-to-r from-primary/10 to-primary/5 shrink-0">
               <button
                 onClick={onClose}
-                className="absolute top-6 right-6 p-2 rounded-full hover:bg-muted transition-colors"
+                className="absolute top-4 right-4 md:top-6 md:right-6 p-2 rounded-full hover:bg-muted transition-colors"
               >
                 <X className="w-5 h-5 text-muted-foreground" />
               </button>
               
               <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getCategoryColor(task.category)}`}>
+                <div className="flex-1 pr-8">
+                  <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
+                    <span className={`px-2 md:px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getCategoryColor(task.category)}`}>
                       {task.category}
                     </span>
                     <StatusBadge status="available" />
                   </div>
                   
-                  <h2 className="text-2xl font-bold mb-2 text-foreground">{task.title}</h2>
+                  <h2 className="text-lg md:text-2xl font-bold mb-2 text-foreground">{task.title}</h2>
                   
-                  <div className="flex items-center gap-4 text-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm">
                     <div className="flex items-center gap-1 text-chart-1 font-bold">
                       <Trophy className="w-4 h-4" />
                       {task.rewardPoints} TP
                     </div>
-                    <div className="text-muted-foreground">
+                    <div className="text-muted-foreground text-xs sm:text-sm">
                       Task ID: {task._id}
                     </div>
                   </div>
@@ -135,7 +135,7 @@ export function TaskPreviewModal({ task, isOpen, onClose }: TaskPreviewModalProp
             </div>
             
             {/* Content */}
-            <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+            <div className="flex-1 p-4 md:p-6 space-y-4 md:space-y-6 overflow-y-auto min-h-0">
               {/* Description */}
               <div className="space-y-3">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
@@ -182,12 +182,12 @@ export function TaskPreviewModal({ task, isOpen, onClose }: TaskPreviewModalProp
             </div>
             
             {/* Actions */}
-            <div className="p-6 border-t border-border bg-muted/30">
-              <div className="flex gap-3">
+            <div className="p-4 md:p-6 border-t border-border bg-muted/30 shrink-0">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={handleStartTask}
                   disabled={isLoading}
-                  className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98] ${
+                  className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] ${
                     isLoading
                       ? 'bg-muted text-muted-foreground cursor-not-allowed'
                       : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
@@ -205,7 +205,7 @@ export function TaskPreviewModal({ task, isOpen, onClose }: TaskPreviewModalProp
                 
                 <button
                   onClick={handleSubmitProof}
-                  className="flex-1 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98] bg-linear-to-r from-green-500 to-purple-600 text-white hover:from-green-600 hover:to-purple-700 hover:shadow-lg hover:shadow-green-500/25"
+                  className="flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] bg-linear-to-r from-green-500 to-purple-600 text-white hover:from-green-600 hover:to-purple-700 hover:shadow-lg hover:shadow-green-500/25"
                 >
                   Submit Proof
                 </button>

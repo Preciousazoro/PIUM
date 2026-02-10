@@ -5,10 +5,24 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import ModeToggle from "@/components/ui/ModeToggle";
+import BookingModal from "@/components/booking/BookingModal";
+import { toast } from "sonner";
 
 export default function ContactPage() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: '',
+    subscribedToUpdates: false
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const isActive = (path: string) => {
     if (path === "/" && pathname === "/") return true;
@@ -24,6 +38,71 @@ export default function ContactPage() {
     { href: "/contact", label: "Contact" },
   ];
 
+  // Form handlers
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name || !formData.email || !formData.message) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to submit form');
+      }
+
+      toast.success('Message sent successfully! We\'ll get back to you soon.');
+      setIsSubmitted(true);
+      
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        subject: '',
+        message: '',
+        subscribedToUpdates: false
+      });
+      
+    } catch (error) {
+      console.error('Form submission error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to send message. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
+    setIsSubmitted(false);
+    setFormData({
+      name: '',
+      email: '',
+      subject: '',
+      message: '',
+      subscribedToUpdates: false
+    });
+  };
+
   useEffect(() => {
     // Initialize any needed effects
   }, []);
@@ -31,8 +110,11 @@ export default function ContactPage() {
   return (
     <div className="bg-background text-foreground min-h-screen overflow-x-hidden transition-colors duration-300">
       {/* Header */}
-      <header className="container mx-auto px-6 py-6 flex justify-between items-center">
-        <div className="flex items-center space-x-3">
+      <header className="container mx-auto px-6 py-6 flex justify-between items-center md:static md:z-auto sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border md:border-b-0">
+        <div 
+          className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => window.location.href = '/'}
+        >
           <img
             src="/taskkash-logo.png"
             alt="TaskKash Logo"
@@ -72,7 +154,7 @@ export default function ContactPage() {
 
             <Link
               href="/auth/signup"
-              className="px-6 py-2 rounded-lg bg-gradient-to-r from-green-400 to-purple-600 text-white font-medium hover:opacity-90 shadow"
+              className="px-6 py-2 rounded-lg bg-linear-to-r from-green-400 to-purple-600 text-white font-medium hover:opacity-90 shadow"
             >
               Sign Up
             </Link>
@@ -100,7 +182,8 @@ export default function ContactPage() {
             <div className="flex flex-col h-full">
               {/* Mobile Menu Header */}
               <div className="flex items-center justify-between p-6 border-b border-border">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
+                     onClick={() => window.location.href = '/'}>
                   <img
                     src="/taskkash-logo.png"
                     alt="TaskKash Logo"
@@ -147,7 +230,7 @@ export default function ContactPage() {
                 <Link
                   href="/auth/signup"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="block w-full px-4 py-3 rounded-lg bg-gradient-to-r from-green-400 to-purple-600 text-white font-medium hover:opacity-90 shadow text-center transition-opacity"
+                  className="block w-full px-4 py-3 rounded-lg bg-linear-to-r from-green-400 to-purple-600 text-white font-medium hover:opacity-90 shadow text-center transition-opacity"
                 >
                   Sign Up
                 </Link>
@@ -188,12 +271,12 @@ export default function ContactPage() {
                   </li>
                 </ul>
                 
-                <a
-                  href="#"
-                  className="inline-flex items-center px-8 py-3 rounded-lg bg-gradient-to-r from-green-400 to-purple-600 text-white font-medium hover:opacity-90 transition-opacity shadow-lg"
+                <button
+                  onClick={() => setIsBookingModalOpen(true)}
+                  className="inline-flex items-center px-8 py-3 rounded-lg bg-linear-to-r from-green-400 to-purple-600 text-white font-medium hover:opacity-90 transition-opacity shadow-lg"
                 >
                   Book a Session
-                </a>
+                </button>
               </div>
             </div>
 
@@ -258,74 +341,130 @@ export default function ContactPage() {
               </p>
               
               <div className="bg-card/50 backdrop-blur-sm rounded-xl p-8 border border-border max-w-2xl mx-auto">
-                <form className="space-y-6">
-                  <div className="grid sm:grid-cols-2 gap-4">
+                {isSubmitted ? (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2">Message Sent Successfully!</h3>
+                    <p className="text-muted-foreground mb-6">
+                      Thank you for reaching out. We've received your message and will get back to you soon.
+                    </p>
+                    <button
+                      onClick={resetForm}
+                      className="px-6 py-3 rounded-lg border border-green-400 text-green-400 font-medium hover:bg-green-400 hover:text-background transition-colors"
+                    >
+                      Send Another Message
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2 text-left">Name *</label>
+                        <input
+                          type="text"
+                          name="name"
+                          value={formData.name}
+                          onChange={handleInputChange}
+                          required
+                          disabled={isSubmitting}
+                          className="w-full px-4 py-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-green-400 transition-colors disabled:opacity-50"
+                          placeholder="Your name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2 text-left">Email *</label>
+                        <input
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          required
+                          disabled={isSubmitting}
+                          className="w-full px-4 py-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-green-400 transition-colors disabled:opacity-50"
+                          placeholder="your@email.com"
+                        />
+                      </div>
+                    </div>
+                    
                     <div>
-                      <label className="block text-sm font-medium mb-2 text-left">Name *</label>
-                      <input
-                        type="text"
+                      <label className="block text-sm font-medium mb-2 text-left">Subject</label>
+                      <select 
+                        name="subject"
+                        value={formData.subject}
+                        onChange={handleInputChange}
+                        disabled={isSubmitting}
+                        className="w-full px-4 py-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-green-400 transition-colors disabled:opacity-50"
+                      >
+                        <option value="">Select a topic</option>
+                        <option value="general">General Inquiry</option>
+                        <option value="support">Technical Support</option>
+                        <option value="partnership">Partnership</option>
+                        <option value="brand">Brand Collaboration</option>
+                        <option value="feedback">Feedback</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-left">Message *</label>
+                      <textarea
+                        name="message"
+                        value={formData.message}
+                        onChange={handleInputChange}
                         required
-                        className="w-full px-4 py-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-green-400 transition-colors"
-                        placeholder="Your name"
+                        disabled={isSubmitting}
+                        rows={5}
+                        className="w-full px-4 py-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-green-400 transition-colors resize-none disabled:opacity-50"
+                        placeholder="How can we help you? Please provide as much detail as possible..."
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-left">Email *</label>
+                    
+                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                       <input
-                        type="email"
-                        required
-                        className="w-full px-4 py-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-green-400 transition-colors"
-                        placeholder="your@email.com"
+                        type="checkbox"
+                        id="newsletter"
+                        name="subscribedToUpdates"
+                        checked={formData.subscribedToUpdates}
+                        onChange={handleInputChange}
+                        disabled={isSubmitting}
+                        className="rounded border-border bg-background focus:ring-2 focus:ring-green-400 disabled:opacity-50"
                       />
+                      <label htmlFor="newsletter">
+                        I'd like to receive updates about TaskKash features and announcements
+                      </label>
                     </div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium mb-2 text-left">Subject</label>
-                    <select className="w-full px-4 py-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-green-400 transition-colors">
-                      <option value="">Select a topic</option>
-                      <option value="general">General Inquiry</option>
-                      <option value="support">Technical Support</option>
-                      <option value="partnership">Partnership</option>
-                      <option value="brand">Brand Collaboration</option>
-                      <option value="feedback">Feedback</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium mb-2 text-left">Message *</label>
-                    <textarea
-                      required
-                      rows={5}
-                      className="w-full px-4 py-3 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-green-400 transition-colors resize-none"
-                      placeholder="How can we help you? Please provide as much detail as possible..."
-                    />
-                  </div>
-                  
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <input
-                      type="checkbox"
-                      id="newsletter"
-                      className="rounded border-border bg-background focus:ring-2 focus:ring-green-400"
-                    />
-                    <label htmlFor="newsletter">
-                      I'd like to receive updates about TaskKash features and announcements
-                    </label>
-                  </div>
-                  
-                  <button
-                    type="submit"
-                    className="w-full px-8 py-3 rounded-lg bg-gradient-to-r from-green-400 to-purple-600 text-white font-medium hover:opacity-90 transition-opacity shadow-lg"
-                  >
-                    Send Message
-                  </button>
-                </form>
+                    
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full px-8 py-3 rounded-lg bg-linear-to-r from-green-400 to-purple-600 text-white font-medium hover:opacity-90 transition-opacity shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSubmitting ? (
+                        <div className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                          Sending...
+                        </div>
+                      ) : (
+                        'Send Message'
+                      )}
+                    </button>
+                  </form>
+                )}
               </div>
             </div>
           </div>
         </div>
       </main>
+
+      {/* Booking Modal */}
+      <BookingModal 
+        isOpen={isBookingModalOpen} 
+        onClose={() => setIsBookingModalOpen(false)} 
+      />
 
       <style jsx>{`
         .gradient-text {
