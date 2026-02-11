@@ -170,7 +170,7 @@ export default function AdminBookingsPage() {
           <div className="max-w-7xl mx-auto">
             {/* Filters */}
             <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-              <div className="flex flex-wrap gap-2">
+              <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1 sm:pb-0">
                 {["All", "pending", "contacted", "completed"].map((status) => (
                   <button
                     key={status}
@@ -178,7 +178,7 @@ export default function AdminBookingsPage() {
                       setStatusFilter(status as any);
                       setCurrentPage(1);
                     }}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                       statusFilter === status
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground hover:bg-muted/80"

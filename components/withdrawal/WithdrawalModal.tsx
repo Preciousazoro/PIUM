@@ -148,7 +148,7 @@ export default function WithdrawalModal({ isOpen, onClose, taskPoints, onSuccess
               }`}
             >
               <Wallet className="w-6 h-6 mb-2 mx-auto" />
-              <div className="font-semibold">USDT (Crypto)</div>
+              <div className="font-semibold">USDC (Crypto)</div>
               <div className="text-xs text-muted-foreground mt-1">5-30 minutes</div>
             </button>
           </div>
