@@ -11,6 +11,7 @@ import { Input } from "../../../components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
 import { Checkbox } from "../../../components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../../components/ui/dropdown-menu";
+import { AdminDashboardSkeleton } from "@/components/ui/LoadingSkeleton";
 
 interface Task {
   _id: string;
@@ -435,6 +436,10 @@ const ManageTasks = () => {
   };
 
   /* ------------------ RENDER ------------------ */
+  if (isLoading) {
+    return <AdminDashboardSkeleton />;
+  }
+
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <AdminSidebar />
@@ -442,7 +447,7 @@ const ManageTasks = () => {
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <AdminHeader />
 
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-6 animate-in fade-in duration-500">
           <div className="max-w-7xl mx-auto space-y-6">
 
             {/* Header */}

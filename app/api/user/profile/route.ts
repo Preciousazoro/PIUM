@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     const user = await User.findById(session.user.id)
       .select('name username avatarUrl taskPoints tasksCompleted email role')
-      .lean();
+      .lean() as IUser | null;
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });

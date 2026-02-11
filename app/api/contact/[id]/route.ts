@@ -7,7 +7,7 @@ import mongoose from 'mongoose';
 // PATCH - Update contact message status (admin only)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication - should be admin
@@ -19,7 +19,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized - Admin access required' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { status } = body;
 

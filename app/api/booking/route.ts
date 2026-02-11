@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Booking from "@/models/Booking";
 import { getCurrentAdmin } from "@/lib/admin-auth";
+import { AdminNotifications } from "@/lib/adminNotifications";
 
 // GET /api/booking - Fetch all bookings (admin only)
 export async function GET(request: NextRequest) {
@@ -74,6 +75,14 @@ export async function POST(request: NextRequest) {
         ip: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip"),
       },
     });
+
+    // Create admin notification for new booking
+    try {
+      await AdminNotifications.bookingCreated(booking._id.toString(), companyName);
+    } catch (error) {
+      console.error('Failed to create booking notification:', error);
+      // Don't fail the request if notification fails
+    }
 
     // TODO: Send confirmation email
     // TODO: Send notification to admin team

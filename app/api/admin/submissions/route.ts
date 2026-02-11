@@ -6,6 +6,8 @@ import User from '@/models/User';
 import Task from '@/models/Task';
 import Submission from '@/models/Submission';
 import mongoose from 'mongoose';
+import { AdminNotifications } from '@/lib/adminNotifications';
+import { UserNotifications } from '@/lib/userNotifications';
 
 // GET all submissions for admin
 export async function GET(request: NextRequest) {
@@ -155,6 +157,9 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Extract user from populated submission
+    const user = submission.userId as any;
+
     if (submission.status !== 'pending') {
       return NextResponse.json(
         { error: 'Submission has already been reviewed' },
@@ -214,6 +219,32 @@ export async function PUT(request: NextRequest) {
           }
         });
 
+        // Create admin notification for task approval
+        try {
+          await AdminNotifications.taskApproved(
+            submission._id.toString(),
+            (submission.taskId as any)?.title,
+            user.name
+          );
+        } catch (error) {
+          console.error('Failed to create task approval notification:', error);
+          // Don't fail the request if notification fails
+        }
+
+        // Create user notification for task approval
+        try {
+          console.log('🔔 Creating approval notification for user:', user._id.toString());
+          await UserNotifications.taskApproved(
+            user._id.toString(),
+            (submission.taskId as any)?.title,
+            rewardPoints
+          );
+          console.log('✅ Approval notification created successfully');
+        } catch (error) {
+          console.error('❌ Failed to create user task approval notification:', error);
+          // Don't fail the request if notification fails
+        }
+
         awardedPoints = rewardPoints;
       }
     } else if (status.toLowerCase() === 'rejected') {
@@ -233,6 +264,32 @@ export async function PUT(request: NextRequest) {
           submissionId: submission._id
         }
       });
+
+      // Create admin notification for task rejection
+      try {
+        await AdminNotifications.taskRejected(
+          submission._id.toString(),
+          (submission.taskId as any)?.title,
+          user.name
+        );
+      } catch (error) {
+        console.error('Failed to create task rejection notification:', error);
+        // Don't fail the request if notification fails
+      }
+
+      // Create user notification for task rejection
+      try {
+        console.log('🔔 Creating rejection notification for user:', user._id.toString());
+        await UserNotifications.taskRejected(
+          user._id.toString(),
+          (submission.taskId as any)?.title,
+          rejectionReason
+        );
+        console.log('✅ Rejection notification created successfully');
+      } catch (error) {
+        console.error('❌ Failed to create user task rejection notification:', error);
+        // Don't fail the request if notification fails
+      }
     }
 
     return NextResponse.json({

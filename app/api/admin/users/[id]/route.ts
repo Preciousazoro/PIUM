@@ -20,18 +20,18 @@ export async function GET(
     }
 
     const transformedUser = {
-      _id: user._id.toString(),
-      name: user.name,
-      email: user.email,
-      username: user.username || null,
-      avatarUrl: user.avatarUrl || null,
-      role: user.role || 'user',
-      status: user.status || 'active',
-      points: user.taskPoints || 0,
-      tasksCompleted: user.tasksCompleted || 0,
-      createdAt: user.createdAt.toISOString(),
-      updatedAt: user.updatedAt.toISOString(),
-      socialLinks: user.socialLinks || {}
+      _id: (user as any)._id?.toString() || '',
+      name: (user as any).name,
+      email: (user as any).email,
+      username: (user as any).username || null,
+      avatarUrl: (user as any).avatarUrl || null,
+      role: (user as any).role || 'user',
+      status: (user as any).status || 'active',
+      points: (user as any).taskPoints || 0,
+      tasksCompleted: (user as any).tasksCompleted || 0,
+      createdAt: (user as any).createdAt?.toISOString() || new Date().toISOString(),
+      updatedAt: (user as any).updatedAt?.toISOString() || new Date().toISOString(),
+      socialLinks: (user as any).socialLinks || {}
     };
 
     return NextResponse.json(transformedUser);

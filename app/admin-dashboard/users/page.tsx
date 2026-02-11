@@ -10,6 +10,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { UserAvatar } from "../../../components/admin-dashboard/UserAvatar";
 import { UserPreviewModal } from "../../../components/admin-dashboard/UserPreviewModal";
 import { confirmToast } from "../../../components/admin-dashboard/confirmToast";
+import { AdminDashboardSkeleton } from "@/components/ui/LoadingSkeleton";
 
 interface User {
   _id: string;
@@ -283,6 +284,10 @@ export default function AdminUsersPage() {
   };
 
   /* ---------------- UI ---------------- */
+  if (loading) {
+    return <AdminDashboardSkeleton />;
+  }
+
   return (
     <div className="min-h-screen flex bg-background text-foreground">
       <AdminSidebar />
@@ -290,7 +295,7 @@ export default function AdminUsersPage() {
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <AdminHeader />
 
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6 animate-in fade-in duration-500">
           <div className="flex flex-col gap-4 lg:gap-6 min-w-0">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
               <h2 className="text-xl lg:text-2xl font-bold">Users</h2>
@@ -303,7 +308,7 @@ export default function AdminUsersPage() {
           <div className="flex flex-wrap gap-2 p-1 bg-muted rounded-lg">
             <button
               onClick={() => handleFilterChange('all')}
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex-shrink-0 ${
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-all shrink-0 ${
                 activeFilter === 'all'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
@@ -313,7 +318,7 @@ export default function AdminUsersPage() {
             </button>
             <button
               onClick={() => handleFilterChange('admins')}
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex-shrink-0 ${
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-all shrink-0 ${
                 activeFilter === 'admins'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
@@ -323,7 +328,7 @@ export default function AdminUsersPage() {
             </button>
             <button
               onClick={() => handleFilterChange('suspended')}
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex-shrink-0 ${
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-all shrink-0 ${
                 activeFilter === 'suspended'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground hover:bg-background/50'

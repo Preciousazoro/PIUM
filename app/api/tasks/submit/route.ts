@@ -4,6 +4,8 @@ import Activity from '@/models/Activity';
 import Task from '@/models/Task';
 import Submission from '@/models/Submission';
 import mongoose from 'mongoose';
+import { AdminNotifications } from '@/lib/adminNotifications';
+import { UserNotifications } from '@/lib/userNotifications';
 
 export async function POST(request: NextRequest) {
   try {
@@ -90,6 +92,24 @@ export async function POST(request: NextRequest) {
         startedAt: new Date().toISOString()
       }
     });
+
+    // Create admin notification for task submission
+    try {
+      await AdminNotifications.taskSubmitted(task._id.toString(), task.title, user.name);
+    } catch (error) {
+      console.error('Failed to create task submission notification:', error);
+      // Don't fail the request if notification fails
+    }
+
+    // Create user notification for task submission
+    try {
+      console.log('🔔 Creating submission notification for user:', user._id.toString());
+      await UserNotifications.submissionReceived(user._id.toString(), task.title);
+      console.log('✅ Submission notification created successfully');
+    } catch (error) {
+      console.error('❌ Failed to create user task submission notification:', error);
+      // Don't fail the request if notification fails
+    }
 
     return NextResponse.json({
       success: true,

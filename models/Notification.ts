@@ -4,7 +4,7 @@ export interface INotification extends Document {
   userId: mongoose.Types.ObjectId;
   title: string;
   message: string;
-  type: 'task' | 'system' | 'reward' | 'profile' | 'alert';
+  type: 'task' | 'system' | 'reward' | 'profile' | 'alert' | 'task_approved' | 'task_rejected' | 'new_task' | 'submission_received' | 'points_earned' | 'welcome_bonus';
   isRead: boolean;
   actionUrl?: string;
   createdAt: Date;
@@ -32,7 +32,7 @@ const NotificationSchema: Schema<INotification> = new Schema({
   },
   type: {
     type: String,
-    enum: ['task', 'system', 'reward', 'profile', 'alert'],
+    enum: ['task', 'system', 'reward', 'profile', 'alert', 'task_approved', 'task_rejected', 'new_task', 'submission_received', 'points_earned', 'welcome_bonus'],
     default: 'system'
   },
   isRead: {

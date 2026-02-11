@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { isAdmin } from '@/lib/admin-auth';
 import ContactMessage, { ContactStatus } from '@/models/ContactMessage';
 import mongoose from 'mongoose';
+import { AdminNotifications } from '@/lib/adminNotifications';
 
 // POST - Create new contact message (public)
 export async function POST(request: NextRequest) {
@@ -63,6 +64,18 @@ export async function POST(request: NextRequest) {
       subscribedToUpdates: Boolean(subscribedToUpdates),
       status: ContactStatus.NEW
     });
+
+    // Create admin notification for new contact message
+    try {
+      await AdminNotifications.contactMessageReceived(
+        contactMessage._id.toString(),
+        name,
+        subject
+      );
+    } catch (error) {
+      console.error('Failed to create contact message notification:', error);
+      // Don't fail the request if notification fails
+    }
 
     return NextResponse.json({
       success: true,

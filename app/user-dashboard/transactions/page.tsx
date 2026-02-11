@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { FormEvent, JSX } from "react";
-import { ArrowUp, ArrowDown, Gift, ShoppingCart, Search, X, CheckCircle, Loader2 } from "lucide-react";
+import { ArrowUp, ArrowDown, Gift, ShoppingCart, Search, CheckCircle, Loader2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown";
 import { toast } from "sonner";
 
@@ -10,12 +9,13 @@ import { toast } from "sonner";
 import UserSidebar from "@/components/user-dashboard/UserSidebar";
 import UserHeader from "@/components/user-dashboard/UserHeader";
 import TransactionCard, { Transaction } from "@/components/transactions/TransactionCard";
+import { UserDashboardSkeleton } from "@/components/ui/LoadingSkeleton";
+import WithdrawalModal from "@/components/withdrawal/WithdrawalModal";
 
 
 export default function TransactionsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [taskPoints, setTaskPoints] = useState<number>(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState(true);
@@ -79,23 +79,30 @@ export default function TransactionsPage() {
     t.type.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleWithdrawalSuccess = () => {
+    // Refresh user balance and transactions
+    const fetchData = async () => {
+      try {
+        // Fetch updated balance
+        const balanceResponse = await fetch('/api/user/balance');
+        if (balanceResponse.ok) {
+          const balanceData = await balanceResponse.json();
+          setTaskPoints(balanceData.taskPoints || 0);
+        }
 
-  const handleWithdraw = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
-      setShowModal(false);
-      toast.success('Withdrawal request submitted successfully!');
-    }, 1500);
+        // Refresh transactions
+        await fetchTransactions();
+      } catch (error) {
+        console.error('Error refreshing data:', error);
+      }
+    };
+
+    fetchData();
+    toast.success('Withdrawal request submitted successfully!');
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="w-10 h-10 animate-spin text-primary" />
-      </div>
-    );
+    return <UserDashboardSkeleton />;
   }
 
   return (
@@ -124,7 +131,7 @@ export default function TransactionsPage() {
                 <div className="flex gap-4">
                   <button 
                     onClick={() => setShowModal(true)} 
-                    className="px-8 py-3 bg-gradient-to-r from-green-500 to-purple-600 text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all active:scale-95"
+                    className="px-8 py-3 bg-linear-to-r from-green-500 to-purple-600 text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all active:scale-95"
                   >
                     Withdraw TP
                   </button>
@@ -193,35 +200,13 @@ export default function TransactionsPage() {
         </main>
       </div>
 
-      {/* Withdraw Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-background border border-border rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-8">
-              <h3 className="text-2xl font-bold">Withdraw TP</h3>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-muted rounded-full transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleWithdraw} className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground">Amount (TP)</label>
-                <input required min="500" type="number" placeholder="Min 500 TP" className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 ring-primary/20" />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground">Wallet Address</label>
-                <input required type="text" placeholder="Enter Address" className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 ring-primary/20" />
-              </div>
-
-              <button type="submit" disabled={isProcessing} className="w-full py-4 bg-gradient-to-r from-green-500 to-purple-600 text-white font-bold rounded-xl shadow-lg shadow-primary/20 active:scale-95 transition-all">
-                {isProcessing ? "Processing..." : "Confirm Withdrawal"}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Withdrawal Modal */}
+      <WithdrawalModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        taskPoints={taskPoints}
+        onSuccess={handleWithdrawalSuccess}
+      />
 
     </div>
   );

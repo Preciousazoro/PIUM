@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Search, Loader2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown";
 import { PodiumPosition } from "@/components/user-dashboard/PodiumPosition";
+import { UserDashboardSkeleton } from "@/components/ui/LoadingSkeleton";
 
 // Navigation Imports
 import UserSidebar from "@/components/user-dashboard/UserSidebar";
@@ -71,14 +72,7 @@ export default function LeaderboardPage() {
   }, []);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading leaderboard...</p>
-        </div>
-      </div>
-    );
+    return <UserDashboardSkeleton />;
   }
 
   if (error || !leaderboardData) {
@@ -123,7 +117,7 @@ export default function LeaderboardPage() {
             {/* Header Controls */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
               <div>
-                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-500 to-purple-600">
+                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-green-500 to-purple-600">
                   Global Leaderboard
                 </h1>
                 <p className="text-muted-foreground mt-1">Check how you stack up against the top earners.</p>
@@ -154,7 +148,7 @@ export default function LeaderboardPage() {
                 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="px-4 py-2 rounded-xl bg-gradient-to-r from-green-600 to-purple-600 text-white font-bold text-sm hover:opacity-90">
+                    <button className="px-4 py-2 rounded-xl bg-linear-to-r from-green-600 to-purple-600 text-white font-bold text-sm hover:opacity-90">
                       {level === "All" ? "All Levels" : level}
                     </button>
                   </DropdownMenuTrigger>
@@ -202,7 +196,7 @@ export default function LeaderboardPage() {
                   <PodiumPosition user={top[2]} rank={3} isFirst={false} />
                 </motion.div>
               </div>
-              <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gradient-to-r from-transparent via-primary/20 to-transparent rounded-full" />
+              <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-linear-to-r from-transparent via-primary/20 to-transparent rounded-full" />
             </section>
 
             {/* Table Section */}
@@ -232,7 +226,7 @@ export default function LeaderboardPage() {
                           </td>
                           <td className="py-4">
                             <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 bg-muted rounded-full overflow-hidden border border-border flex-shrink-0">
+                              <div className="w-10 h-10 bg-muted rounded-full overflow-hidden border border-border shrink-0">
                                 {user.avatar ? (
                                   <img src={user.avatar} alt={user.username} className="w-full h-full object-cover" />
                                 ) : (
@@ -252,10 +246,10 @@ export default function LeaderboardPage() {
                           </td>
                           <td className="py-4 text-right">
                             <span className={`px-2 py-1 rounded-md bg-muted text-[10px] font-bold uppercase ${
-                              user.level === 'Expert' ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border border-yellow-500/30' :
-                              user.level === 'Advanced' ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-400 border border-purple-500/30' :
-                              user.level === 'Intermediate' ? 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-400 border border-blue-500/30' :
-                              'bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-400 border border-green-500/30'
+                              user.level === 'Expert' ? 'bg-linear-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border border-yellow-500/30' :
+                              user.level === 'Advanced' ? 'bg-linear-to-r from-purple-500/20 to-pink-500/20 text-purple-400 border border-purple-500/30' :
+                              user.level === 'Intermediate' ? 'bg-linear-to-r from-blue-500/20 to-cyan-500/20 text-blue-400 border border-blue-500/30' :
+                              'bg-linear-to-r from-green-500/20 to-emerald-500/20 text-green-400 border border-green-500/30'
                             }`}>
                               {user.level}
                             </span>
@@ -281,10 +275,10 @@ export default function LeaderboardPage() {
                       {/* Rank and User Row */}
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <span className={`font-black ${user.rank <= 3 ? 'text-primary text-lg' : 'text-muted-foreground'} flex-shrink-0`}>
+                          <span className={`font-black ${user.rank <= 3 ? 'text-primary text-lg' : 'text-muted-foreground'} shrink-0`}>
                             #{user.rank}
                           </span>
-                          <div className="w-10 h-10 bg-muted rounded-full overflow-hidden border border-border flex-shrink-0">
+                          <div className="w-10 h-10 bg-muted rounded-full overflow-hidden border border-border shrink-0">
                             {user.avatar ? (
                               <img src={user.avatar} alt={user.username} className="w-full h-full object-cover" />
                             ) : (
@@ -297,11 +291,11 @@ export default function LeaderboardPage() {
                         </div>
                         
                         {/* Level Badge */}
-                        <span className={`px-2 py-1 rounded-md bg-muted text-[10px] font-bold uppercase flex-shrink-0 ${
-                          user.level === 'Expert' ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border border-yellow-500/30' :
-                          user.level === 'Advanced' ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-400 border border-purple-500/30' :
-                          user.level === 'Intermediate' ? 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-400 border border-blue-500/30' :
-                          'bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-400 border border-green-500/30'
+                        <span className={`px-2 py-1 rounded-md bg-muted text-[10px] font-bold uppercase shrink-0 ${
+                          user.level === 'Expert' ? 'bg-linear-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border border-yellow-500/30' :
+                          user.level === 'Advanced' ? 'bg-linear-to-r from-purple-500/20 to-pink-500/20 text-purple-400 border border-purple-500/30' :
+                          user.level === 'Intermediate' ? 'bg-linear-to-r from-blue-500/20 to-cyan-500/20 text-blue-400 border border-blue-500/30' :
+                          'bg-linear-to-r from-green-500/20 to-emerald-500/20 text-green-400 border border-green-500/30'
                         }`}>
                           {user.level}
                         </span>

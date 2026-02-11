@@ -4,6 +4,7 @@ import connectDB from '@/lib/mongodb';
 import Task from '@/models/Task';
 import User from '@/models/User';
 import { validateTaskData } from '@/lib/validation';
+import { UserNotifications } from '@/lib/userNotifications';
 
 // GET /api/admin/tasks - Fetch all tasks for admin panel
 export const runtime = "nodejs";
@@ -265,6 +266,30 @@ export async function POST(request: NextRequest) {
 
     await task.save();
     console.log('Task saved successfully:', task);
+
+    // Notify all users about the new task (if task is active)
+    if (task.status === 'active') {
+      try {
+        // Get all regular users (not admins)
+        const allUsers = await User.find({ role: 'user' }).select('_id');
+        
+        // Create notifications for all users
+        const notificationPromises = allUsers.map(user => 
+          UserNotifications.newTaskAvailable(
+            user._id.toString(),
+            task.title,
+            task.category,
+            task.rewardPoints
+          )
+        );
+        
+        await Promise.allSettled(notificationPromises);
+        console.log(`Notified ${allUsers.length} users about new task: ${task.title}`);
+      } catch (error) {
+        console.error('Failed to create user notifications for new task:', error);
+        // Don't fail the request if notifications fail
+      }
+    }
 
     return NextResponse.json(
       { 

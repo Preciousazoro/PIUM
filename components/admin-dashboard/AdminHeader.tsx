@@ -8,9 +8,11 @@ import { toast } from "sonner";
 
 interface Notification {
   id: string;
+  type: 'task_submission' | 'booking' | 'contact_message' | 'new_user' | 'task_approved' | 'task_rejected' | 'system';
   title: string;
   message: string;
-  type: 'task' | 'system' | 'reward' | 'profile' | 'alert';
+  referenceId?: string;
+  referenceType?: 'task' | 'booking' | 'user' | 'contact' | 'submission' | 'activity';
   link?: string;
   createdAt: string;
   read: boolean;
@@ -115,10 +117,8 @@ const AdminHeader = () => {
   // Mark notification as read
   const markAsRead = async (notificationId: string) => {
     try {
-      const response = await fetch('/api/admin/notifications/read', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: notificationId })
+      const response = await fetch(`/api/admin/notifications?id=${notificationId}`, {
+        method: 'PATCH'
       });
 
       if (response.ok) {
@@ -135,10 +135,8 @@ const AdminHeader = () => {
   // Mark all notifications as read
   const markAllAsRead = async () => {
     try {
-      const response = await fetch('/api/admin/notifications/read', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ all: true })
+      const response = await fetch('/api/admin/notifications?readAll=true', {
+        method: 'PATCH'
       });
 
       if (response.ok) {

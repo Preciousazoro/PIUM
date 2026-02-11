@@ -29,7 +29,7 @@ export default function UserHeader({ title }: { title?: string }) {
       
       try {
         // Fetch user profile
-        const profileResponse = await fetch('/api/user/profile');
+        const profileResponse = await fetch('/api/profile');
         if (profileResponse.ok) {
           const profileData = await profileResponse.json();
           setUserData(profileData);
@@ -52,8 +52,8 @@ export default function UserHeader({ title }: { title?: string }) {
 
     fetchData();
 
-    // Set up periodic updates
-    const interval = setInterval(fetchData, 30000);
+    // Set up periodic updates (reduced from 30s to 3 minutes)
+    const interval = setInterval(fetchData, 3 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, [session]);
@@ -73,22 +73,51 @@ export default function UserHeader({ title }: { title?: string }) {
     setNotifOpen((v) => !v);
     if (unreadCount > 0) {
       try {
-        await fetch('/api/notifications', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ markAllAsRead: true })
+        await fetch('/api/notifications?readAll=true', {
+          method: 'PATCH'
         });
         setUnreadCount(0);
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       } catch (error) {
         console.error('Error marking notifications as read:', error);
       }
     }
   };
 
+  const handleIndividualNotificationClick = async (notif: any) => {
+    // Mark notification as read if unread
+    if (!notif.isRead) {
+      try {
+        await fetch(`/api/notifications?id=${notif._id}`, {
+          method: 'PATCH'
+        });
+        setNotifications(prev => 
+          prev.map(n => n._id === notif._id ? { ...n, isRead: true } : n)
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    }
+
+    // Navigate to action URL if available
+    if (notif.actionUrl) {
+      router.push(notif.actionUrl);
+    }
+    setNotifOpen(false);
+  };
+
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'task': return <CheckSquare className="w-4 h-4 text-blue-500" />;
+      case 'task_approved': return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'task_rejected': return <AlertCircle className="w-4 h-4 text-red-500" />;
+      case 'new_task': return <Gift className="w-4 h-4 text-purple-500" />;
+      case 'submission_received': return <CheckSquare className="w-4 h-4 text-blue-500" />;
+      case 'points_earned': return <Gift className="w-4 h-4 text-yellow-500" />;
+      case 'welcome_bonus': return <Gift className="w-4 h-4 text-green-500" />;
       case 'reward': return <Gift className="w-4 h-4 text-green-500" />;
+      case 'profile': return <User className="w-4 h-4 text-gray-500" />;
       case 'alert': return <AlertCircle className="w-4 h-4 text-red-500" />;
       default: return <CheckCircle className="w-4 h-4 text-gray-500" />;
     }
@@ -117,7 +146,7 @@ export default function UserHeader({ title }: { title?: string }) {
             alt="TaskKash Logo"
             className="w-12 h-12 object-contain"
           />
-        <span className="hidden sm:block text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-500 to-purple-600 ml-2 tracking-tight">
+        <span className="hidden sm:block text-2xl font-bold bg-clip-text text-transparent bg-linear-to-r from-green-500 to-purple-600 ml-2 tracking-tight">
           TASKKASH
         </span>
       </div>
@@ -161,12 +190,7 @@ export default function UserHeader({ title }: { title?: string }) {
                       className={`p-4 border-b border-border hover:bg-muted/50 transition-colors cursor-pointer ${
                         !notif.isRead ? 'bg-blue-500/5' : ''
                       }`}
-                      onClick={() => {
-                        if (notif.actionUrl) {
-                          router.push(notif.actionUrl);
-                        }
-                        setNotifOpen(false);
-                      }}
+                      onClick={() => handleIndividualNotificationClick(notif)}
                     >
                       <div className="flex items-start gap-3">
                         <div className="mt-1">
@@ -176,7 +200,7 @@ export default function UserHeader({ title }: { title?: string }) {
                           <div className="flex items-center justify-between gap-2 mb-1">
                             <p className="text-sm font-medium truncate">{notif.title}</p>
                             {!notif.isRead && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
+                              <div className="w-2 h-2 bg-blue-500 rounded-full shrink-0" />
                             )}
                           </div>
                           <p className="text-xs text-muted-foreground line-clamp-2 mb-1">

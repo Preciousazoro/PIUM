@@ -19,6 +19,9 @@ export async function GET(request: NextRequest) {
     const unreadOnly = searchParams.get('unreadOnly') === 'true';
 
     const query: any = { userId: session.user.id };
+    
+    // Debug: Log the query to see what userId we're using
+    console.log('Fetching notifications for userId:', session.user.id);
     if (unreadOnly) {
       query.isRead = false;
     }
@@ -90,6 +93,67 @@ export async function POST(request: NextRequest) {
     console.error('Error updating notifications:', error);
     return NextResponse.json(
       { error: 'Failed to update notifications' },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH /api/notifications - Mark single notification as read
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await auth();
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await connectDB();
+
+    const { searchParams } = new URL(request.url);
+    const notificationId = searchParams.get('id');
+    const markAllAsRead = searchParams.get('readAll') === 'true';
+
+    if (markAllAsRead) {
+      // Mark all notifications as read
+      await Notification.updateMany(
+        { userId: session.user.id, isRead: false },
+        { isRead: true }
+      );
+
+      return NextResponse.json({
+        success: true,
+        message: 'All notifications marked as read'
+      });
+    } else if (notificationId) {
+      // Mark specific notification as read
+      const notification = await Notification.findOneAndUpdate(
+        { _id: notificationId, userId: session.user.id },
+        { isRead: true },
+        { new: true }
+      );
+
+      if (!notification) {
+        return NextResponse.json(
+          { error: 'Notification not found' },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Notification marked as read'
+      });
+    } else {
+      return NextResponse.json(
+        { error: 'Missing notification ID or readAll parameter' },
+        { status: 400 }
+      );
+    }
+
+  } catch (error) {
+    console.error('Error updating notification:', error);
+    return NextResponse.json(
+      { error: 'Failed to update notification' },
       { status: 500 }
     );
   }

@@ -11,6 +11,7 @@ import {
 // Navigation Imports
 import UserSidebar from "@/components/user-dashboard/UserSidebar";
 import UserHeader from "@/components/user-dashboard/UserHeader";
+import { UserDashboardSkeleton } from "@/components/ui/LoadingSkeleton";
 
 export default function EnhancedRewardsPage() {
   const [perf, setPerf] = useState<any>(null);
@@ -209,6 +210,10 @@ export default function EnhancedRewardsPage() {
     fetchUserData();
   }, []);
 
+  if (loading) {
+    return <UserDashboardSkeleton />;
+  }
+
   return (
     <div className="flex min-h-screen bg-background text-foreground transition-colors duration-300">
       <UserSidebar />
@@ -216,7 +221,7 @@ export default function EnhancedRewardsPage() {
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <UserHeader />
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 space-y-10">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 space-y-10 animate-in fade-in duration-500">
           
           {/* HERO SECTION: USER PROGRESS */}
           <section className="relative overflow-hidden rounded-[2.5rem] bg-card border border-border p-8 md:p-12">
@@ -246,7 +251,7 @@ export default function EnhancedRewardsPage() {
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: `${perf?.progress}%` }}
-                      className="h-full bg-gradient-to-r from-primary via-purple-500 to-primary rounded-full relative"
+                      className="h-full bg-linear-to-r from-primary via-purple-500 to-primary rounded-full relative"
                     >
                       <div className="absolute top-0 right-0 w-2 h-2 bg-white rounded-full m-0.5 shadow-sm animate-pulse" />
                     </motion.div>
@@ -328,8 +333,8 @@ function RewardCard({ reward, onClaim, isClaiming }: { reward: any, onClaim: any
       </div>
 
       {/* Reward Icon/Art Placeholder */}
-      <div className="aspect-[4/3] rounded-3xl bg-muted mb-6 flex items-center justify-center relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary via-transparent to-transparent" />
+      <div className="aspect-4/3 rounded-3xl bg-muted mb-6 flex items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-primary via-transparent to-transparent" />
         {isLocked ? (
           <Lock className="w-12 h-12 text-muted-foreground animate-pulse" />
         ) : reward.claimed ? (

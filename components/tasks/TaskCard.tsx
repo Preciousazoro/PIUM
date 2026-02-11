@@ -5,6 +5,8 @@ import { Trophy } from "lucide-react";
 import { StatusBadge } from "./StatusBadge";
 import { Button } from "@/components/ui/button";
 import { TaskDocument } from "@/types/shared-task";
+import { TaskStateManager } from "@/lib/taskState";
+import { toast } from "sonner";
 
 interface TaskCardProps {
   task: TaskDocument;
@@ -94,7 +96,12 @@ export function TaskCard({
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onSubmitProof(task);
+                  // Check if task is started before allowing submission
+                  if (TaskStateManager.isTaskStarted(task._id)) {
+                    onSubmitProof(task);
+                  } else {
+                    toast.error("Please start the task first before submitting proof.");
+                  }
                 }}
                 className="font-semibold bg-gradient-to-r from-green-500 to-purple-600 hover:from-green-600 hover:to-purple-700"
               >

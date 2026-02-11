@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import { createWelcomeBonus } from '@/lib/transactions';
+import { AdminNotifications } from '@/lib/adminNotifications';
+import { UserNotifications } from '@/lib/userNotifications';
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,9 +45,20 @@ export async function POST(request: NextRequest) {
     // Create welcome bonus transaction
     try {
       await createWelcomeBonus(user._id.toString());
+      
+      // Create user notification for welcome bonus
+      await UserNotifications.welcomeBonus(user._id.toString(), 100); // Assuming 100 TP welcome bonus
     } catch (error) {
       console.error('Error creating welcome bonus:', error);
       // Don't fail registration if bonus creation fails
+    }
+
+    // Create admin notification for new user registration
+    try {
+      await AdminNotifications.userSignedUp(user._id.toString(), name, email);
+    } catch (error) {
+      console.error('Failed to create user registration notification:', error);
+      // Don't fail registration if notification fails
     }
 
     return NextResponse.json(

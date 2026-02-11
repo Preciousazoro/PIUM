@@ -135,7 +135,6 @@ function SidebarContent({
     { href: "/user-dashboard/settings", icon: Settings, label: "Settings", color: "text-green-500" },
     { href: "#", icon: ShoppingCart, label: "Commerce Tasks", color: "text-green-500" },
     { href: "/user-dashboard/leaderboard", icon: Award, label: "Leaderboard", color: "text-green-500" },
-    { href: "/user-dashboard/task-verification", icon: CheckSquare, label: "Task Verification", color: "text-green-500" },
     { href: "/user-dashboard/rewards", icon: Gift, label: "Rewards", color: "text-green-500" },
   ];
 
@@ -151,7 +150,7 @@ function SidebarContent({
         </div>
         <div className="h-2 bg-muted rounded-full">
           <div
-            className="h-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all duration-500"
+            className="h-2 bg-linear-to-r from-green-500 to-emerald-500 rounded-full transition-all duration-500"
             style={{ width: `${Math.min((streak / 7) * 100, 100)}%` }}
           />
         </div>

@@ -6,6 +6,7 @@ import feather from "feather-icons";
 import AdminHeader from "../../../components/admin-dashboard/AdminHeader";
 import AdminSidebar from "../../../components/admin-dashboard/AdminSidebar";
 import { Pagination } from "@/components/ui/Pagination";
+import { AdminDashboardSkeleton } from "@/components/ui/LoadingSkeleton";
 import { toast } from "sonner";
 
 /* ---------------- TYPES ---------------- */
@@ -41,6 +42,51 @@ interface Submission {
 }
 
 /* ---------------- COMPONENT ---------------- */
+
+// Helper function to generate initials from name
+const getInitials = (name: string): string => {
+  if (!name) return '?';
+  
+  const parts = name.trim().split(/\s+/);
+  
+  if (parts.length >= 2) {
+    // Take first letter of first and last name
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  } else {
+    // Only one name, take first two letters
+    const nameOnly = parts[0];
+    return nameOnly.length >= 2 
+      ? nameOnly.substring(0, 2).toUpperCase()
+      : nameOnly.toUpperCase();
+  }
+};
+
+// Avatar component that handles both image and initials fallback
+const UserAvatar = ({ user, size = 'small' }: { user: UserSnapshot; size?: 'small' | 'medium' }) => {
+  const sizeClasses = size === 'small' ? 'w-8 h-8 text-xs' : 'w-10 h-10 text-sm';
+  
+  if (user.avatarUrl) {
+    return (
+      <img
+        src={user.avatarUrl}
+        alt={user.name}
+        className={`${sizeClasses} rounded-full object-cover shrink-0`}
+        onError={(e) => {
+          // Fallback to initials if image fails to load
+          const target = e.target as HTMLImageElement;
+          target.style.display = 'none';
+          target.nextElementSibling?.classList.remove('hidden');
+        }}
+      />
+    );
+  }
+  
+  return (
+    <div className={`${sizeClasses} rounded-full bg-linear-to-br from-purple-600 to-green-500 flex items-center justify-center text-white font-semibold shrink-0`}>
+      {getInitials(user.name)}
+    </div>
+  );
+};
 
 export default function AdminSubmissionsPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -145,6 +191,10 @@ export default function AdminSubmissionsPage() {
 
   /* ---------------- RENDER ---------------- */
 
+  if (loading) {
+    return <AdminDashboardSkeleton />;
+  }
+
   return (
     <div className="min-h-screen flex bg-background text-foreground overflow-hidden">
       <AdminSidebar />
@@ -152,7 +202,7 @@ export default function AdminSubmissionsPage() {
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <AdminHeader />
 
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-6 animate-in fade-in duration-500">
           <h2 className="text-2xl font-bold mb-4">Submissions</h2>
 
           {/* Filters */}
@@ -199,20 +249,16 @@ export default function AdminSubmissionsPage() {
                         <div key={submission._id} className="p-4 space-y-3">
                           {/* User Info */}
                           <div className="flex items-center gap-3">
-                            {submission.userSnapshot.avatarUrl && (
-                              <img
-                                src={submission.userSnapshot.avatarUrl}
-                                alt={submission.userSnapshot.name}
-                                className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                              />
-                            )}
+                            <div className="relative">
+                              <UserAvatar user={submission.userSnapshot} size="medium" />
+                            </div>
                             <div className="min-w-0 flex-1">
                               <div className="font-medium truncate">{submission.userSnapshot.name}</div>
                               <div className="text-xs text-muted-foreground truncate">
                                 {submission.userSnapshot.email}
                               </div>
                             </div>
-                            <span className={`inline-flex px-2 py-1 text-xs rounded-full font-medium flex-shrink-0 ${
+                            <span className={`inline-flex px-2 py-1 text-xs rounded-full font-medium shrink-0 ${
                               submission.status === 'approved' ? 'bg-green-100 text-green-800' :
                               submission.status === 'rejected' ? 'bg-red-100 text-red-800' :
                               'bg-yellow-100 text-yellow-800'
@@ -406,13 +452,7 @@ export default function AdminSubmissionsPage() {
                             <tr className="border-t hover:bg-muted/30 transition-colors">
                               <td className="px-6 py-4">
                                 <div className="flex items-center gap-3">
-                                  {submission.userSnapshot.avatarUrl && (
-                                    <img
-                                      src={submission.userSnapshot.avatarUrl}
-                                      alt={submission.userSnapshot.name}
-                                      className="w-8 h-8 rounded-full object-cover"
-                                    />
-                                  )}
+                                  <UserAvatar user={submission.userSnapshot} size="small" />
                                   <div>
                                     <div className="font-medium">{submission.userSnapshot.name}</div>
                                     <div className="text-xs text-muted-foreground">

@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import AdminHeader from "@/components/admin-dashboard/AdminHeader";
 import AdminSidebar from "@/components/admin-dashboard/AdminSidebar";
+import { AdminDashboardSkeleton } from "@/components/ui/LoadingSkeleton";
 import Chart from "chart.js/auto";
 import {
   Users,
@@ -57,6 +58,12 @@ const Dashboard = () => {
   const [activitiesError, setActivitiesError] = useState<string | null>(null);
   const [activitiesPage, setActivitiesPage] = useState(1);
   const [activitiesTotalPages, setActivitiesTotalPages] = useState(1);
+  
+  // Chart refs
+  const userGrowthChartRef = useRef<HTMLCanvasElement>(null);
+  const taskCompletionChartRef = useRef<HTMLCanvasElement>(null);
+  const userGrowthChartInstance = useRef<Chart | null>(null);
+  const taskCompletionChartInstance = useRef<Chart | null>(null);
 
   /* ---------- FETCH METRICS ---------- */
   const fetchMetrics = async () => {
@@ -87,7 +94,7 @@ const Dashboard = () => {
       setActivitiesLoading(true);
       setActivitiesError(null);
       
-      const response = await fetch(`/api/admin/activities?page=${page}&limit=5`);
+      const response = await fetch(`/api/admin/activities?page=${page}&limit=10`);
       const data = await response.json();
       
       if (data.activities) {
@@ -135,82 +142,118 @@ const Dashboard = () => {
 
   /* ---------- CHARTS ---------- */
   useEffect(() => {
-    const line = document.getElementById(
-      "userGrowthChart"
-    ) as HTMLCanvasElement;
-    const donut = document.getElementById(
-      "taskCompletionChart"
-    ) as HTMLCanvasElement;
+    // Only initialize charts after component is mounted and metrics are loaded
+    if (metricsLoading || metricsError) return;
 
-    if (!line || !donut) return;
+    // Small delay to ensure DOM is fully rendered
+    const timer = setTimeout(() => {
+      const userGrowthCanvas = userGrowthChartRef.current;
+      const taskCompletionCanvas = taskCompletionChartRef.current;
 
-    const userGrowth = new Chart(line, {
-      type: "line",
-      data: {
-        labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-        datasets: [
-          {
-            data: [120, 240, 380, 540, 690, 820],
-            borderColor: "#a855f7",
-            backgroundColor: "rgba(168,85,247,.15)",
-            borderWidth: 2,
-            pointRadius: 3,
-            pointHoverRadius: 4,
-            fill: true,
-            tension: 0.35,
-          },
-        ],
-      },
-      options: {
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: {
-            grid: { display: false },
-            ticks: { color: "#6b7280", font: { size: 11 } },
-          },
-          y: {
-            grid: { color: "rgba(255,255,255,0.05)" },
-            ticks: { color: "#6b7280", font: { size: 11 } },
-          },
+      if (!userGrowthCanvas || !taskCompletionCanvas) {
+        console.warn('Chart canvas elements not found');
+        return;
+      }
+
+      // Destroy existing chart instances if they exist
+      if (userGrowthChartInstance.current) {
+        userGrowthChartInstance.current.destroy();
+      }
+      if (taskCompletionChartInstance.current) {
+        taskCompletionChartInstance.current.destroy();
+      }
+
+      // Create User Growth Chart
+      const userGrowthCtx = userGrowthCanvas.getContext('2d');
+      if (userGrowthCtx) {
+        userGrowthChartInstance.current = new Chart(userGrowthCtx, {
+        type: "line",
+        data: {
+          labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+          datasets: [
+            {
+              label: "Users",
+              data: metrics ? 
+                [Math.floor(metrics.totalUsers * 0.15), Math.floor(metrics.totalUsers * 0.30), 
+                 Math.floor(metrics.totalUsers * 0.45), Math.floor(metrics.totalUsers * 0.60), 
+                 Math.floor(metrics.totalUsers * 0.80), metrics.totalUsers] :
+                [120, 240, 380, 540, 690, 820],
+              borderColor: "#a855f7",
+              backgroundColor: "rgba(168,85,247,.15)",
+              borderWidth: 2,
+              pointRadius: 3,
+              pointHoverRadius: 4,
+              fill: true,
+              tension: 0.35,
+            },
+          ],
         },
-      },
-    });
-
-    const taskCompletion = new Chart(donut, {
-      type: "doughnut",
-      data: {
-        labels: ["Completed", "Pending"],
-        datasets: [
-          {
-            data: [70, 30],
-            backgroundColor: ["#22c55e", "#facc15"],
-            borderWidth: 0,
-          },
-        ],
-      },
-      options: {
-        maintainAspectRatio: false,
-        cutout: "70%",
-        plugins: {
-          legend: {
-            position: "bottom",
-            labels: {
-              color: "#9ca3af",
-              boxWidth: 10,
-              padding: 12,
-              font: { size: 11 },
+        options: {
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: "#6b7280", font: { size: 11 } },
+            },
+            y: {
+              grid: { color: "rgba(255,255,255,0.05)" },
+              ticks: { color: "#6b7280", font: { size: 11 } },
             },
           },
         },
-      },
-    });
+      });
+    }
 
+    // Create Task Completion Chart
+    const taskCompletionCtx = taskCompletionCanvas.getContext('2d');
+    if (taskCompletionCtx) {
+      taskCompletionChartInstance.current = new Chart(taskCompletionCtx, {
+        type: "doughnut",
+        data: {
+          labels: ["Completed", "Pending"],
+          datasets: [
+            {
+              data: metrics ? 
+                [metrics.tasksCompleted, metrics.pendingReviews] :
+                [70, 30],
+              backgroundColor: ["#22c55e", "#facc15"],
+              borderWidth: 0,
+            },
+          ],
+        },
+        options: {
+          maintainAspectRatio: false,
+          cutout: "70%",
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: {
+                color: "#9ca3af",
+                boxWidth: 10,
+                padding: 12,
+                font: { size: 11 },
+              },
+            },
+          },
+        },
+      });
+      }
+    }, 100); // 100ms delay
+
+    // Cleanup function
     return () => {
-      userGrowth.destroy();
-      taskCompletion.destroy();
+      clearTimeout(timer);
+      if (userGrowthChartInstance.current) {
+        userGrowthChartInstance.current.destroy();
+        userGrowthChartInstance.current = null;
+      }
+      if (taskCompletionChartInstance.current) {
+        taskCompletionChartInstance.current.destroy();
+        taskCompletionChartInstance.current = null;
+      }
     };
-  }, []);
+  }, [metricsLoading, metricsError, metrics]);
 
   /* ---------- CREATE TASK ---------- */
   const handleCreateTask = async (e: React.FormEvent) => {
@@ -290,6 +333,10 @@ const Dashboard = () => {
   };
 
   /* ---------- UI ---------- */
+  if (metricsLoading || activitiesLoading) {
+    return <AdminDashboardSkeleton />;
+  }
+
   return (
     <div className="min-h-screen flex bg-background text-foreground overflow-hidden">
       <AdminSidebar />
@@ -297,7 +344,7 @@ const Dashboard = () => {
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <AdminHeader />
 
-        <main className="flex-1 overflow-y-auto p-6 space-y-8">
+        <main className="flex-1 overflow-y-auto p-6 space-y-8 animate-in fade-in duration-500">
           {/* HEADER */}
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">
@@ -351,7 +398,12 @@ const Dashboard = () => {
                 </span>
               </div>
               <div className="flex-1">
-                <canvas id="userGrowthChart" />
+                <canvas 
+                  ref={userGrowthChartRef}
+                  width={400}
+                  height={300}
+                  style={{ width: '100%', height: '100%' }}
+                />
               </div>
             </div>
 
@@ -366,7 +418,9 @@ const Dashboard = () => {
               </div>
               <div className="flex-1 flex items-center justify-center">
                 <canvas
-                  id="taskCompletionChart"
+                  ref={taskCompletionChartRef}
+                  width={260}
+                  height={260}
                   className="max-w-[260px] max-h-[260px]"
                 />
               </div>
@@ -375,7 +429,7 @@ const Dashboard = () => {
 
           {/* RECENT ACTIVITY */}
           <div className="bg-card border rounded-2xl overflow-hidden">
-            <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 px-6 py-4 border-b">
+            <div className="bg-linear-to-r from-purple-500/10 to-blue-500/10 px-6 py-4 border-b">
               <h3 className="font-semibold text-lg flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 Recent Activity
@@ -384,17 +438,17 @@ const Dashboard = () => {
 
             <div className="p-6">
               {activitiesLoading ? (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {[...Array(5)].map((_, i) => (
-                    <div key={i} className="bg-muted/30 rounded-xl p-4 border border-border/50">
-                      <div className="flex items-start gap-4">
-                        <div className="w-10 h-10 rounded-full bg-muted animate-pulse" />
-                        <div className="flex-1 space-y-2">
-                          <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
-                          <div className="h-3 bg-muted rounded animate-pulse w-1/2" />
-                          <div className="h-3 bg-muted rounded animate-pulse w-2/3" />
+                    <div key={i} className="bg-muted/30 rounded-lg p-4 border border-border/50">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-muted animate-pulse shrink-0" />
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
+                          <div className="h-4 bg-muted rounded animate-pulse" />
+                          <div className="h-4 bg-muted rounded animate-pulse" />
+                          <div className="h-4 bg-muted rounded animate-pulse" />
+                          <div className="h-4 bg-muted rounded animate-pulse" />
                         </div>
-                        <div className="h-6 bg-muted rounded-full animate-pulse w-20" />
                       </div>
                     </div>
                   ))}
@@ -423,67 +477,93 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <>
-                  <div className="space-y-4">
+                  {/* Table Header */}
+                  <div className="hidden md:flex items-center gap-4 px-4 py-3 bg-muted/20 rounded-lg border border-border/30 mb-3">
+                    <div className="w-10"></div>
+                    <div className="flex-1 grid grid-cols-4 gap-4 text-xs font-medium text-muted-foreground">
+                      <div>Activity</div>
+                      <div>User</div>
+                      <div>Date & Time</div>
+                      <div>Status</div>
+                    </div>
+                  </div>
+
+                  {/* Table Rows */}
+                  <div className="space-y-2">
                     {activities.map((activity) => (
                       <div
                         key={activity._id}
-                        className="bg-muted/30 rounded-xl p-4 border border-border/50 hover:bg-muted/50 transition-all duration-200 hover:shadow-sm hover:border-border"
+                        className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg border border-border/50 hover:bg-muted/50 transition-all duration-200 hover:shadow-sm hover:border-border"
                       >
-                        <div className="flex items-start gap-4">
-                          <div className="relative">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
-                              {activity.user?.avatarUrl ? (
-                                <img 
-                                  src={activity.user.avatarUrl} 
-                                  alt={activity.user.name}
-                                  className="w-10 h-10 rounded-full object-cover border-2 border-background"
-                                />
-                              ) : (
-                                <span className="text-sm font-semibold text-white">
-                                  {activity.user?.name?.charAt(0) || 'U'}
-                                </span>
-                              )}
-                            </div>
-                            <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-background ${
-                              activity.type === 'task_approved' ? 'bg-green-500' :
-                              activity.type === 'task_rejected' ? 'bg-red-500' :
-                              activity.type === 'task_submitted' ? 'bg-blue-500' :
-                              'bg-gray-500'
-                            }`}></div>
+                        <div className="relative shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-linear-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                            {activity.user?.avatarUrl ? (
+                              <img 
+                                src={activity.user.avatarUrl} 
+                                alt={activity.user.name}
+                                className="w-10 h-10 rounded-full object-cover border-2 border-background"
+                              />
+                            ) : (
+                              <span className="text-sm font-semibold text-white">
+                                {activity.user?.name?.charAt(0) || 'U'}
+                              </span>
+                            )}
+                          </div>
+                          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-background ${
+                            activity.type === 'task_approved' ? 'bg-green-500' :
+                            activity.type === 'task_rejected' ? 'bg-red-500' :
+                            activity.type === 'task_submitted' ? 'bg-blue-500' :
+                            'bg-gray-500'
+                          }`}></div>
+                        </div>
+                        
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4">
+                          {/* Activity Column */}
+                          <div className="min-w-0">
+                            <p className="font-medium text-sm leading-tight">
+                              {activity.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground md:hidden mt-1">
+                              {activity.user?.name || 'Unknown User'}
+                            </p>
                           </div>
                           
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-3 mb-2">
-                              <div className="flex-1">
-                                <p className="font-medium text-sm mb-1 leading-tight">
-                                  {activity.title}
-                                </p>
-                                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                  <span>{activity.user?.name || 'Unknown User'}</span>
-                                  <span>•</span>
-                                  <span>{new Date(activity.createdAt).toLocaleDateString()}</span>
-                                  <span>•</span>
-                                  <span>{new Date(activity.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                </p>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center justify-between">
-                              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
-                                activity.type === 'task_approved' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800' :
-                                activity.type === 'task_rejected' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800' :
-                                activity.type === 'task_submitted' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800' :
-                                'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800'
-                              }`}>
-                                <span className={`w-2 h-2 rounded-full mr-2 ${
-                                  activity.type === 'task_approved' ? 'bg-green-500' :
-                                  activity.type === 'task_rejected' ? 'bg-red-500' :
-                                  activity.type === 'task_submitted' ? 'bg-blue-500' :
-                                  'bg-gray-500'
-                                }`}></span>
-                                {activity.type.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
-                              </span>
-                            </div>
+                          {/* User Column */}
+                          <div className="hidden md:block min-w-0">
+                            <p className="text-sm text-muted-foreground truncate">
+                              {activity.user?.name || 'Unknown User'}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {activity.user?.email || 'No email'}
+                            </p>
+                          </div>
+                          
+                          {/* Date & Time Column */}
+                          <div className="hidden md:block min-w-0">
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(activity.createdAt).toLocaleDateString()}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(activity.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                          
+                          {/* Status Column */}
+                          <div className="flex items-center">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
+                              activity.type === 'task_approved' ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800' :
+                              activity.type === 'task_rejected' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800' :
+                              activity.type === 'task_submitted' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800' :
+                              'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800'
+                            }`}>
+                              <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                                activity.type === 'task_approved' ? 'bg-green-500' :
+                                activity.type === 'task_rejected' ? 'bg-red-500' :
+                                activity.type === 'task_submitted' ? 'bg-blue-500' :
+                                'bg-gray-500'
+                              }`}></span>
+                              {activity.type.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -501,8 +581,18 @@ const Dashboard = () => {
                         ← Previous
                       </button>
                       <div className="flex items-center gap-1">
-                        {[...Array(Math.min(3, activitiesTotalPages))].map((_, i) => {
-                          const pageNum = i + 1;
+                        {[...Array(Math.min(5, activitiesTotalPages))].map((_, i) => {
+                          let pageNum;
+                          if (activitiesTotalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (activitiesPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (activitiesPage >= activitiesTotalPages - 2) {
+                            pageNum = activitiesTotalPages - 4 + i;
+                          } else {
+                            pageNum = activitiesPage - 2 + i;
+                          }
+                          
                           const isActive = pageNum === activitiesPage;
                           return (
                             <button
@@ -518,21 +608,6 @@ const Dashboard = () => {
                             </button>
                           );
                         })}
-                        {activitiesTotalPages > 3 && (
-                          <>
-                            <span className="text-muted-foreground">...</span>
-                            <button
-                              onClick={() => fetchActivities(activitiesTotalPages)}
-                              className={`w-8 h-8 text-sm font-medium rounded-md transition-colors ${
-                                activitiesTotalPages === activitiesPage 
-                                  ? 'bg-primary text-primary-foreground' 
-                                  : 'hover:bg-muted'
-                              }`}
-                            >
-                              {activitiesTotalPages}
-                            </button>
-                          </>
-                        )}
                       </div>
                       <button
                         onClick={() => fetchActivities(activitiesPage + 1)}

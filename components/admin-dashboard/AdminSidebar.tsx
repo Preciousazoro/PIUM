@@ -17,6 +17,7 @@ import {
   X,
   Calendar,
   MessageSquare,
+  DollarSign,
 } from "lucide-react";
 
 interface AdminUser {
@@ -78,6 +79,7 @@ const AdminSidebar = () => {
     { icon: <CheckCircle className={iconClass} />, label: "Manage Tasks", href: "/admin-dashboard/manage-tasks", color: "text-green-500" },
     { icon: <Users className={iconClass} />, label: "Users", href: "/admin-dashboard/users", color: "text-green-500" },
     { icon: <FileText className={iconClass} />, label: "Submissions", href: "/admin-dashboard/submissions", color: "text-green-500" },
+    { icon: <DollarSign className={iconClass} />, label: "Payments", href: "/admin-dashboard/payments", color: "text-green-500" },
     { icon: <MessageSquare className={iconClass} />, label: "Contact Messages", href: "/admin-dashboard/contact-messages", color: "text-green-500" },
     { icon: <Calendar className={iconClass} />, label: "Bookings", href: "/admin-dashboard/bookings", color: "text-green-500" },
     { icon: <Award className={iconClass} />, label: "Rewards", href: "/admin-dashboard/rewards", color: "text-green-500" },

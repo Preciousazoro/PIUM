@@ -7,9 +7,10 @@ import { Upload, CheckCircle2, Loader2, Info, ArrowLeft } from "lucide-react";
 import { TaskStateManager } from "@/lib/taskState";
 import { toast } from "sonner";
 
-// Navigation Imports
+// Navigation Import
 import UserSidebar from "@/components/user-dashboard/UserSidebar";
 import UserHeader from "@/components/user-dashboard/UserHeader";
+import { UserDashboardSkeleton } from "@/components/ui/LoadingSkeleton";
 
 export default function TaskVerificationPage() {
   const { taskId } = useParams<{ taskId: string }>();
@@ -35,9 +36,25 @@ export default function TaskVerificationPage() {
 
   // Check if task is started
   useEffect(() => {
-    if (taskId && !TaskStateManager.isTaskStarted(taskId as string)) {
-      toast.error("You must start the task first before submitting proof.");
-      router.push("/user-dashboard/dashboard");
+    if (taskId) {
+      const isStarted = TaskStateManager.isTaskStarted(taskId as string);
+      
+      if (!isStarted) {
+        toast.error("You must start the task first before submitting proof.", {
+          duration: 3000,
+          action: {
+            label: "Go to Dashboard",
+            onClick: () => router.push("/user-dashboard/dashboard")
+          }
+        });
+        
+        // Redirect after a short delay to allow user to see the toast
+        const redirectTimer = setTimeout(() => {
+          router.push("/user-dashboard/dashboard");
+        }, 1000);
+        
+        return () => clearTimeout(redirectTimer);
+      }
     }
   }, [taskId, router]);
 
@@ -52,6 +69,13 @@ export default function TaskVerificationPage() {
     e.preventDefault();
     
     if (!taskId) return;
+    
+    // Double-check that task is still started before submission
+    if (!TaskStateManager.isTaskStarted(taskId as string)) {
+      toast.error("Task must be started before submitting proof.");
+      router.push("/user-dashboard/dashboard");
+      return;
+    }
     
     setIsSubmitting(true);
     
@@ -123,11 +147,7 @@ export default function TaskVerificationPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="w-10 h-10 animate-spin text-primary" />
-      </div>
-    );
+    return <UserDashboardSkeleton />;
   }
 
   return (

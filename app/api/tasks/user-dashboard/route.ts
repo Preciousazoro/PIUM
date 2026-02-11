@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
 
     // Combine tasks with submission data and derive userTaskStatus
     const tasksWithStatus = tasks.map(task => {
-      const taskId = task._id.toString();
+      const taskId = (task._id as mongoose.Types.ObjectId).toString();
       const latestSubmission = submissionMap.get(taskId);
       
       let userTaskStatus: 'pending' | 'approved' | 'rejected' | 'available';

@@ -32,12 +32,27 @@ export async function GET(request: NextRequest) {
     const totalUsers = await User.countDocuments();
     
     // Get paginated users
+    type LeanUser = { 
+      _id: any;
+      name: string;
+      email: string;
+      username?: string;
+      avatarUrl?: string;
+      role?: string;
+      status?: string;
+      taskPoints?: number;
+      tasksCompleted?: number;
+      createdAt: Date;
+      updatedAt: Date;
+      socialLinks?: any;
+    };
+
     const users = await User.find({})
       .select('-password') // Exclude password field
       .sort({ createdAt: -1 }) // Sort by newest first
       .skip(skip)
       .limit(limit)
-      .lean(); // Convert to plain JavaScript objects
+      .lean<LeanUser[]>(); // Convert to plain JavaScript objects with proper typing
     
     // Transform users to match expected format
     const transformedUsers = users.map(user => ({

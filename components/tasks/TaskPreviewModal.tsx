@@ -58,6 +58,12 @@ export function TaskPreviewModal({ task, isOpen, onClose }: TaskPreviewModalProp
   };
 
   const handleSubmitProof = () => {
+    // Check if task is started before allowing submission
+    if (!TaskStateManager.isTaskStarted(task._id)) {
+      toast.error("Please start the task first before submitting proof.");
+      return;
+    }
+    
     // Redirect to task verification page with task details
     const params = new URLSearchParams({
       taskId: task._id,

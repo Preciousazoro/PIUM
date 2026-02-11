@@ -6,14 +6,22 @@ import { usePathname } from "next/navigation";
 import feather from "feather-icons";
 import { Menu, X } from "lucide-react";
 import ModeToggle from "@/components/ui/ModeToggle";
+import { HomepageSkeleton } from "@/components/ui/LoadingSkeleton";
 
 export default function HomePage() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     feather.replace();
+    const timer = setTimeout(() => setIsLoading(false), 500);
+    return () => clearTimeout(timer);
   }, []);
+
+  if (isLoading) {
+    return <HomepageSkeleton />;
+  }
 
   const navItems = [
     { href: "/", label: "Home" },
