@@ -14,8 +14,8 @@ interface InactivityLogoutProviderProps {
 
 export function InactivityLogoutProvider({
   children,
-  timeoutMinutes = 10,
-  warningMinutes = 9,
+  timeoutMinutes = 15, // Increased from 10 to 15 minutes
+  warningMinutes = 14,  // Increased from 9 to 14 minutes
   enabled = true,
 }: InactivityLogoutProviderProps) {
   const { data: session, status } = useSession();
@@ -102,6 +102,11 @@ export function InactivityLogoutProvider({
 
   const handleActivity = useCallback(() => {
     if (!enabled || status !== 'authenticated') return;
+    
+    // Throttle activity handling to prevent excessive calls
+    const now = Date.now();
+    if (now - lastActivityRef.current < 1000) return; // Ignore if less than 1 second since last activity
+    
     resetTimers();
   }, [enabled, status, resetTimers]);
 

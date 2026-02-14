@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log('Withdrawal request body:', body);
     const {
       amount,
       withdrawalType,
@@ -88,9 +89,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    console.log('User balance check:', {
+      userId: session.user.id,
+      currentBalance: user.taskPoints,
+      requestedAmount: amount,
+      isSufficient: user.taskPoints >= amount
+    });
+
     if (user.taskPoints < amount) {
       return NextResponse.json(
-        { error: 'Insufficient balance' },
+        { error: 'Insufficient balance', details: `Current balance: ${user.taskPoints} TP, Requested: ${amount} TP` },
         { status: 400 }
       );
     }
@@ -137,8 +145,13 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error creating withdrawal:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace',
+      name: error instanceof Error ? error.name : 'Unknown error type'
+    });
     return NextResponse.json(
-      { error: 'Failed to create withdrawal' },
+      { error: 'Failed to create withdrawal', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

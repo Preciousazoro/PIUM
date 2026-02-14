@@ -65,16 +65,18 @@ export default function LoginPage() {
       <div className="relative w-full max-w-md space-y-6">
         {/* Logo Section */}
         <div className="text-center mb-6">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <img
-              src="/taskkash-logo.png"
-              alt="TaskKash Logo"
-              className="w-12 h-12 object-contain"
-            />
-            <span className="text-xl font-bold bg-linear-to-r from-[#00ff9d] to-[#8a2be2] bg-clip-text text-transparent">
-              Taskkash
-            </span>
-          </div>
+          <Link href="/" className="inline-block">
+            <div className="flex items-center justify-center gap-2 mb-4 hover:opacity-80 transition-opacity cursor-pointer">
+              <img
+                src="/taskkash-logo.png"
+                alt="TaskKash Logo"
+                className="w-12 h-12 object-contain"
+              />
+              <span className="text-xl font-bold bg-linear-to-r from-[#00ff9d] to-[#8a2be2] bg-clip-text text-transparent">
+                Taskkash
+              </span>
+            </div>
+          </Link>
           <h1 className="text-2xl font-semibold mb-1">Welcome Back</h1>
           <p className="text-muted-foreground text-sm">
             Login to access your account and continue earning rewards
@@ -125,7 +127,7 @@ export default function LoginPage() {
 
             <div className="flex justify-end mt-2">
               <Link
-                href="#"
+                href="/auth/forgot-password"
                 className="text-sm text-muted-foreground hover:text-primary transition"
               >
                 Forgot password?

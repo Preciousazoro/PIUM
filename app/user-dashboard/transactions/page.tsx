@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import UserSidebar from "@/components/user-dashboard/UserSidebar";
 import UserHeader from "@/components/user-dashboard/UserHeader";
 import TransactionCard, { Transaction } from "@/components/transactions/TransactionCard";
+import WithdrawalCard, { Withdrawal } from "@/components/withdrawal/WithdrawalCard";
 import { UserDashboardSkeleton } from "@/components/ui/LoadingSkeleton";
 import WithdrawalModal from "@/components/withdrawal/WithdrawalModal";
 
@@ -18,6 +19,7 @@ export default function TransactionsPage() {
   const [showModal, setShowModal] = useState(false);
   const [taskPoints, setTaskPoints] = useState<number>(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -34,8 +36,9 @@ export default function TransactionsPage() {
           setTaskPoints(balanceData.taskPoints || 0);
         }
 
-        // Fetch transactions
+        // Fetch transactions and withdrawals
         await fetchTransactions();
+        await fetchWithdrawals();
       } catch (error) {
         console.error('Error fetching data:', error);
         toast.error('Failed to load data');
@@ -68,6 +71,23 @@ export default function TransactionsPage() {
     }
   };
 
+  const fetchWithdrawals = async () => {
+    try {
+      const response = await fetch('/api/withdrawal');
+      
+      if (response.ok) {
+        const data = await response.json();
+        setWithdrawals(data.withdrawals || []);
+      } else {
+        console.error('Failed to fetch withdrawals');
+        toast.error('Failed to load withdrawals');
+      }
+    } catch (error) {
+      console.error('Error fetching withdrawals:', error);
+      toast.error('Failed to load withdrawals');
+    }
+  };
+
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
@@ -80,7 +100,7 @@ export default function TransactionsPage() {
   );
 
   const handleWithdrawalSuccess = () => {
-    // Refresh user balance and transactions
+    // Refresh user balance, transactions and withdrawals
     const fetchData = async () => {
       try {
         // Fetch updated balance
@@ -90,8 +110,9 @@ export default function TransactionsPage() {
           setTaskPoints(balanceData.taskPoints || 0);
         }
 
-        // Refresh transactions
+        // Refresh transactions and withdrawals
         await fetchTransactions();
+        await fetchWithdrawals();
       } catch (error) {
         console.error('Error refreshing data:', error);
       }
@@ -99,6 +120,10 @@ export default function TransactionsPage() {
 
     fetchData();
     toast.success('Withdrawal request submitted successfully!');
+  };
+
+  const handleWithdrawalError = (error: string) => {
+    toast.error(error || 'Failed to process withdrawal');
   };
 
   if (isLoading) {
@@ -135,9 +160,6 @@ export default function TransactionsPage() {
                   >
                     Withdraw TP
                   </button>
-                  <button className="px-8 py-3 bg-muted text-foreground font-bold rounded-xl hover:bg-muted/80 transition-all">
-                    Export
-                  </button>
                 </div>
               </div>
             </div>
@@ -157,7 +179,21 @@ export default function TransactionsPage() {
                 </div>
               </div>
 
+              {/* Withdrawals Section */}
+              {withdrawals.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-bold text-red-500 uppercase tracking-wider">Withdrawal Requests</h4>
+                  {withdrawals.map((withdrawal) => (
+                    <WithdrawalCard key={withdrawal._id} withdrawal={withdrawal} />
+                  ))}
+                </div>
+              )}
+
+              {/* Transactions Section */}
               <div className="space-y-3">
+                <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
+                  {withdrawals.length > 0 ? 'Other Transactions' : 'All Transactions'}
+                </h4>
                 {transactionsLoading ? (
                   <div className="flex justify-center py-8">
                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -206,6 +242,7 @@ export default function TransactionsPage() {
         onClose={() => setShowModal(false)}
         taskPoints={taskPoints}
         onSuccess={handleWithdrawalSuccess}
+        onError={handleWithdrawalError}
       />
 
     </div>

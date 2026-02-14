@@ -14,9 +14,21 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    feather.replace();
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
+    // Initialize feather icons
+    const initFeatherIcons = () => {
+      feather.replace();
+    };
+
+    // Initialize immediately and also after a short delay to ensure DOM is ready
+    initFeatherIcons();
+    const timer = setTimeout(initFeatherIcons, 100);
+    
+    const loadingTimer = setTimeout(() => setIsLoading(false), 500);
+    
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(loadingTimer);
+    };
   }, []);
 
   if (isLoading) {
@@ -242,8 +254,14 @@ export default function HomePage() {
           </Link>
         </div>
 
-        <div className="mt-12 bg-card border border-border rounded-2xl h-64 flex items-center justify-center text-muted-foreground">
-          Hero Mockup Image
+        <div className="mt-12 container mx-auto px-6">
+          <div className="rounded-2xl overflow-hidden shadow-xl w-full bg-card">
+            <img
+              src="/Hero-banner.jpg"
+              alt="TaskKash - Get Paid To Engage Online"
+              className="w-full h-120 object-cover"
+            />
+          </div>
         </div>
       </section>
 
@@ -275,8 +293,12 @@ export default function HomePage() {
             </ul>
           </div>
 
-          <div className="bg-card border border-border rounded-xl h-72 flex items-center justify-center text-muted-foreground">
-            Platform Mockup
+          <div className="bg-card border border-border rounded-xl h-72 overflow-hidden">
+            <img
+              src="/Platform Mockup.JPG"
+              alt="TaskKash Platform Interface"
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
       </section>
@@ -312,8 +334,12 @@ export default function HomePage() {
             </ul>
           </div>
 
-          <div className="bg-card border border-border rounded-xl h-72 flex items-center justify-center text-muted-foreground">
-            User Mockup
+          <div className="bg-card border border-border rounded-xl h-72 overflow-hidden">
+            <img
+              src="/User Mockup.JPG"
+              alt="TaskKash User Dashboard"
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
       </section>
@@ -350,7 +376,11 @@ export default function HomePage() {
           </div>
 
           <div className="bg-card border border-border rounded-xl h-72 flex items-center justify-center text-muted-foreground">
-            Projects Mockup
+              <img
+              src="/Projects Mockup.JPG"
+              alt="TaskKash User Dashboard"
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
       </section>

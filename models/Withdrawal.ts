@@ -6,8 +6,7 @@ export enum WithdrawalType {
 }
 
 export enum CryptoNetwork {
-  TRC20 = 'TRC20',
-  ERC20 = 'ERC20'
+  SOL = 'SOL'
 }
 
 export enum WithdrawalStatus {
@@ -44,23 +43,17 @@ export interface IWithdrawal extends Document {
 const BankDetailsSchema: Schema<BankDetails> = new Schema({
   bankName: {
     type: String,
-    required: function(this: BankDetails & { withdrawalType?: WithdrawalType }) {
-      return this.withdrawalType === WithdrawalType.BANK_TRANSFER;
-    },
+    required: true,
     trim: true
   },
   accountName: {
     type: String,
-    required: function(this: BankDetails & { withdrawalType?: WithdrawalType }) {
-      return this.withdrawalType === WithdrawalType.BANK_TRANSFER;
-    },
+    required: true,
     trim: true
   },
   accountNumber: {
     type: String,
-    required: function(this: BankDetails & { withdrawalType?: WithdrawalType }) {
-      return this.withdrawalType === WithdrawalType.BANK_TRANSFER;
-    },
+    required: true,
     trim: true
   }
 });
@@ -69,23 +62,16 @@ const CryptoDetailsSchema: Schema<CryptoDetails> = new Schema({
   network: {
     type: String,
     enum: Object.values(CryptoNetwork),
-    required: function(this: CryptoDetails & { withdrawalType?: WithdrawalType }) {
-      return this.withdrawalType === WithdrawalType.USDT_CRYPTO;
-    }
+    required: true
   },
   walletAddress: {
     type: String,
-    required: function(this: CryptoDetails & { withdrawalType?: WithdrawalType }) {
-      return this.withdrawalType === WithdrawalType.USDT_CRYPTO;
-    },
+    required: true,
     trim: true,
     validate: {
-      validator: function(this: CryptoDetails & { withdrawalType?: WithdrawalType }, address: string) {
-        if (this.withdrawalType === WithdrawalType.USDT_CRYPTO) {
-          // Basic validation for crypto addresses
-          return !!(address && address.length >= 10);
-        }
-        return true;
+      validator: function(address: string) {
+        // Basic validation for crypto addresses
+        return !!(address && address.length >= 10);
       },
       message: 'Please enter a valid wallet address'
     }
@@ -134,6 +120,22 @@ const WithdrawalSchema: Schema<IWithdrawal> = new Schema({
   }
 }, {
   timestamps: true
+});
+
+// Custom validation to ensure correct details are provided based on withdrawal type
+WithdrawalSchema.pre('save', function(next) {
+  if (this.withdrawalType === WithdrawalType.BANK_TRANSFER) {
+    if (!this.bankDetails?.bankName || !this.bankDetails?.accountName || !this.bankDetails?.accountNumber) {
+      return next(new Error('Bank name, account name, and account number are required for bank transfer'));
+    }
+    this.cryptoDetails = undefined; // Clear crypto details for bank transfer
+  } else if (this.withdrawalType === WithdrawalType.USDT_CRYPTO) {
+    if (!this.cryptoDetails?.network || !this.cryptoDetails?.walletAddress) {
+      return next(new Error('Network and wallet address are required for USDT withdrawal'));
+    }
+    this.bankDetails = undefined; // Clear bank details for crypto withdrawal
+  }
+  next();
 });
 
 // Index for user queries

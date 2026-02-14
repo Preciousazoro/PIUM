@@ -10,12 +10,13 @@ interface WithdrawalModalProps {
   onClose: () => void;
   taskPoints: number;
   onSuccess: () => void;
+  onError?: (error: string) => void;
 }
 
-export default function WithdrawalModal({ isOpen, onClose, taskPoints, onSuccess }: WithdrawalModalProps) {
+export default function WithdrawalModal({ isOpen, onClose, taskPoints, onSuccess, onError }: WithdrawalModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [withdrawalType, setWithdrawalType] = useState<WithdrawalType>(WithdrawalType.BANK_TRANSFER);
-  const [cryptoNetwork, setCryptoNetwork] = useState<CryptoNetwork>(CryptoNetwork.TRC20);
+  const [cryptoNetwork, setCryptoNetwork] = useState<CryptoNetwork>(CryptoNetwork.SOL);
   
   // Form states
   const [amount, setAmount] = useState("");
@@ -34,7 +35,7 @@ export default function WithdrawalModal({ isOpen, onClose, taskPoints, onSuccess
     setAccountName("");
     setAccountNumber("");
     setWalletAddress("");
-    setCryptoNetwork(CryptoNetwork.TRC20);
+    setCryptoNetwork(CryptoNetwork.SOL);
     setWithdrawalType(WithdrawalType.BANK_TRANSFER);
   };
 
@@ -83,11 +84,14 @@ export default function WithdrawalModal({ isOpen, onClose, taskPoints, onSuccess
         handleClose();
         // Toast will be handled by the parent component
       } else {
-        throw new Error(data.error || "Failed to process withdrawal");
+        throw new Error(data.details || data.error || "Failed to process withdrawal");
       }
     } catch (error) {
       console.error("Withdrawal error:", error);
-      // Error toast will be handled by the parent component
+      const errorMessage = error instanceof Error ? error.message : "Failed to process withdrawal";
+      if (onError) {
+        onError(errorMessage);
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -260,33 +264,19 @@ export default function WithdrawalModal({ isOpen, onClose, taskPoints, onSuccess
             <>
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground">Network</label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   <button
                     type="button"
-                    onClick={() => setCryptoNetwork(CryptoNetwork.TRC20)}
+                    onClick={() => setCryptoNetwork(CryptoNetwork.SOL)}
                     className={`p-3 rounded-xl border-2 transition-all ${
-                      cryptoNetwork === CryptoNetwork.TRC20
+                      cryptoNetwork === CryptoNetwork.SOL
                         ? "border-primary bg-primary/10 text-primary"
                         : "border-border bg-muted/50 hover:bg-muted"
                     }`}
                     disabled={isProcessing}
                   >
-                    <div className="font-semibold">TRC20</div>
-                    <div className="text-xs text-muted-foreground">Low fees</div>
-                  </button>
-                  
-                  <button
-                    type="button"
-                    onClick={() => setCryptoNetwork(CryptoNetwork.ERC20)}
-                    className={`p-3 rounded-xl border-2 transition-all ${
-                      cryptoNetwork === CryptoNetwork.ERC20
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border bg-muted/50 hover:bg-muted"
-                    }`}
-                    disabled={isProcessing}
-                  >
-                    <div className="font-semibold">ERC20</div>
-                    <div className="text-xs text-muted-foreground">Ethereum</div>
+                    <div className="font-semibold">SOL</div>
+                    <div className="text-xs text-muted-foreground">Solana Network</div>
                   </button>
                 </div>
               </div>

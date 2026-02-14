@@ -27,7 +27,7 @@ const TransactionSchema: Schema<ITransaction> = new Schema({
   amount: {
     type: Number,
     required: [true, 'Please provide an amount'],
-    min: 0
+    min: -1000000
   },
   type: {
     type: String,

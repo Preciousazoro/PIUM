@@ -24,6 +24,8 @@ export interface IUser extends Document {
   socialLinks?: SocialMedia;
   dailyStreak: number;
   lastStreakDate?: Date;
+  passwordResetToken?: string | null;
+  passwordResetExpires?: Date | null;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -139,6 +141,16 @@ const UserSchema = new Schema<IUser>({
   lastStreakDate: {
     type: Date,
     default: null
+  },
+  passwordResetToken: {
+    type: String,
+    default: null,
+    select: false
+  },
+  passwordResetExpires: {
+    type: Date,
+    default: null,
+    select: false
   }
 }, {
   timestamps: true

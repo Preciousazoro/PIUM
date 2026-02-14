@@ -66,7 +66,7 @@ const AdminHeader = () => {
 
     fetchData();
 
-    // Refresh notifications every 30 seconds
+    // Refresh notifications every 60 seconds (reduced frequency)
     const interval = setInterval(() => {
       fetch('/api/admin/notifications?limit=10')
         .then(res => res.json())
@@ -75,7 +75,7 @@ const AdminHeader = () => {
           setUnreadCount(data.unreadCount);
         })
         .catch(console.error);
-    }, 30000);
+    }, 60000);
 
     return () => clearInterval(interval);
   }, []);
