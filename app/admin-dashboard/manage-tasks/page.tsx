@@ -96,7 +96,9 @@ const ManageTasks = () => {
       if (filters?.limit) params.append('limit', filters.limit.toString());
       
       const url = params.toString() ? `/api/admin/tasks?${params.toString()}` : '/api/admin/tasks';
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        cache: 'no-store', // Prevent caching to get fresh data
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch tasks');
       }
@@ -150,15 +152,7 @@ const ManageTasks = () => {
   // Handle items per page change
   const handleItemsPerPageChange = (newLimit: number) => {
     setItemsPerPage(newLimit);
-    setCurrentPage(1); // Reset to first page
-    fetchTasks({
-      category: categoryFilter,
-      status: statusFilter,
-      dateRange: dateRangeFilter,
-      search: searchQuery,
-      page: 1,
-      limit: newLimit
-    });
+    setCurrentPage(1); // Reset to first page - the useEffect will handle the fetch
   };
 
   /* ------------------ HANDLERS ------------------ */
@@ -423,18 +417,7 @@ const ManageTasks = () => {
     }
   };
 
-  const applyFilters = () => {
-    setCurrentPage(1); // Reset to first page when applying filters
-    fetchTasks({
-      category: categoryFilter,
-      status: statusFilter,
-      dateRange: dateRangeFilter,
-      search: searchQuery,
-      page: 1,
-      limit: itemsPerPage
-    });
-  };
-
+  
   /* ------------------ RENDER ------------------ */
   if (isLoading) {
     return <AdminDashboardSkeleton />;
@@ -511,14 +494,6 @@ const ManageTasks = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
-                {/* Apply Filters Button */}
-                <Button 
-                  onClick={applyFilters}
-                  className="bg-linear-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700"
-                >
-                  Apply Filters
-                </Button>
               </div>
             </div>
 

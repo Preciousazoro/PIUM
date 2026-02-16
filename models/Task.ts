@@ -100,5 +100,6 @@ const TaskSchema: Schema<ITask> = new Schema({
 TaskSchema.index({ status: 1, deadline: 1, createdAt: -1 });
 TaskSchema.index({ category: 1 });
 TaskSchema.index({ createdBy: 1 });
+TaskSchema.index({ title: 'text', description: 'text' }); // For search functionality
 
 export default mongoose.models.Task || mongoose.model<ITask>('Task', TaskSchema);

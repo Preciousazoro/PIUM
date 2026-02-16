@@ -87,7 +87,9 @@ export default function AdminUsersPage() {
   const fetchUsers = async (page: number, limit: number) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/admin/users?page=${page}&limit=${limit}`);
+      const response = await fetch(`/api/admin/users?page=${page}&limit=${limit}`, {
+        cache: 'no-store', // Prevent caching to get fresh data
+      });
       
       if (!response.ok) {
         throw new Error('Failed to fetch users');

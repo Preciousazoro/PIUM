@@ -6,32 +6,16 @@ export async function GET(request: NextRequest) {
   try {
     await connectDB();
     
-    // Ensure all users have role and status fields (migration)
-    await User.updateMany(
-      { 
-        $or: [
-          { role: { $exists: false } },
-          { status: { $exists: false } }
-        ]
-      },
-      { 
-        $set: { 
-          role: 'user',
-          status: 'active'
-        }
-      }
-    );
-    
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     
     const skip = (page - 1) * limit;
     
-    // Get total count of users
-    const totalUsers = await User.countDocuments();
+    // Get total count of users - use lean() for better performance
+    const totalUsers = await User.countDocuments().lean();
     
-    // Get paginated users
+    // Get paginated users with optimized query
     type LeanUser = { 
       _id: any;
       name: string;
@@ -48,11 +32,12 @@ export async function GET(request: NextRequest) {
     };
 
     const users = await User.find({})
-      .select('-password') // Exclude password field
-      .sort({ createdAt: -1 }) // Sort by newest first
+      .select('-password -passwordResetToken -passwordResetExpires') // Exclude sensitive fields
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .lean<LeanUser[]>(); // Convert to plain JavaScript objects with proper typing
+      .lean<LeanUser[]>()
+      .maxTimeMS(5000); // Add timeout to prevent hanging
     
     // Transform users to match expected format
     const transformedUsers = users.map(user => ({

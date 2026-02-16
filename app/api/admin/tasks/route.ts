@@ -77,26 +77,24 @@ export async function GET(request: NextRequest) {
       filter.createdAt = { $gte: startDate };
     }
 
-    // Search filter (title and description)
+    // Search filter (title and description) - use text search for better performance
     if (search && search.trim()) {
-      const searchRegex = new RegExp(search.trim(), 'i');
-      filter.$or = [
-        { title: searchRegex },
-        { description: searchRegex }
-      ];
+      filter.$text = { $search: search.trim() };
     }
 
-    // Fetch tasks with filters and pagination
+    // Fetch tasks with filters and pagination - optimized query
     const skip = (page - 1) * limit;
     
-    // Get total count for pagination
-    const totalTasks = await Task.countDocuments(filter);
-    
-    // Get paginated tasks
-    const tasks = await Task.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    // Use lean() for better performance and add timeout
+    const [totalTasks, tasks] = await Promise.all([
+      Task.countDocuments(filter).lean().maxTimeMS(3000),
+      Task.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .maxTimeMS(5000)
+    ]);
 
     return NextResponse.json({ 
       tasks, 
@@ -267,24 +265,33 @@ export async function POST(request: NextRequest) {
     await task.save();
     console.log('Task saved successfully:', task);
 
-    // Notify all users about the new task (if task is active)
+    // Notify all users about the new task (if task is active) - optimized
     if (task.status === 'active') {
       try {
-        // Get all regular users (not admins)
-        const allUsers = await User.find({ role: 'user' }).select('_id');
+        // Use lean query and limit fields for better performance
+        const allUsers = await User.find({ role: 'user' })
+          .select('_id')
+          .lean()
+          .maxTimeMS(3000);
         
-        // Create notifications for all users
-        const notificationPromises = allUsers.map(user => 
-          UserNotifications.newTaskAvailable(
-            user._id.toString(),
-            task.title,
-            task.category,
-            task.rewardPoints
-          )
-        );
-        
-        await Promise.allSettled(notificationPromises);
-        console.log(`Notified ${allUsers.length} users about new task: ${task.title}`);
+        if (allUsers.length > 0) {
+          // Process notifications in batches to avoid overwhelming the database
+          const batchSize = 100;
+          for (let i = 0; i < allUsers.length; i += batchSize) {
+            const batch = allUsers.slice(i, i + batchSize);
+            const notificationPromises = batch.map((user: any) => 
+              UserNotifications.newTaskAvailable(
+                user._id.toString(),
+                task.title,
+                task.category,
+                task.rewardPoints
+              )
+            );
+            
+            await Promise.allSettled(notificationPromises);
+          }
+          console.log(`Notified ${allUsers.length} users about new task: ${task.title}`);
+        }
       } catch (error) {
         console.error('Failed to create user notifications for new task:', error);
         // Don't fail the request if notifications fail
