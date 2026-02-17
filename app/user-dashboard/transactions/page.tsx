@@ -151,7 +151,7 @@ export default function TransactionsPage() {
                 <div className="text-center lg:text-left">
                   <h2 className="text-sm font-medium text-muted-foreground mb-1 uppercase tracking-wider">Total TaskPoints</h2>
                   <div className="text-4xl font-black text-primary mb-2">{taskPoints.toLocaleString()} TP</div>
-                  <div className="text-sm text-muted-foreground">≈ ${(taskPoints * 0.0006).toFixed(2)} USD (1 TP = $0.0006)</div>
+                  <div className="text-sm text-muted-foreground">≈ ${(taskPoints * 0.06).toFixed(2)} USD (1 TP = $0.0006)</div>
                 </div>
                 <div className="flex gap-4">
                   <button 
