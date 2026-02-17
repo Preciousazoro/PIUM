@@ -96,9 +96,7 @@ const ManageTasks = () => {
       if (filters?.limit) params.append('limit', filters.limit.toString());
       
       const url = params.toString() ? `/api/admin/tasks?${params.toString()}` : '/api/admin/tasks';
-      const response = await fetch(url, {
-        cache: 'no-store', // Prevent caching to get fresh data
-      });
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Failed to fetch tasks');
       }

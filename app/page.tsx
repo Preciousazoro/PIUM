@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import feather from "feather-icons";
 import { Menu, X } from "lucide-react";
 import ModeToggle from "@/components/ui/ModeToggle";
 import { HomepageSkeleton } from "@/components/ui/LoadingSkeleton";
@@ -14,21 +13,8 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Initialize feather icons
-    const initFeatherIcons = () => {
-      feather.replace();
-    };
-
-    // Initialize immediately and also after a short delay to ensure DOM is ready
-    initFeatherIcons();
-    const timer = setTimeout(initFeatherIcons, 100);
-    
     const loadingTimer = setTimeout(() => setIsLoading(false), 500);
-    
-    return () => {
-      clearTimeout(timer);
-      clearTimeout(loadingTimer);
-    };
+    return () => clearTimeout(loadingTimer);
   }, []);
 
   if (isLoading) {
@@ -67,7 +53,7 @@ export default function HomePage() {
     <div className="bg-background text-foreground min-h-screen overflow-x-hidden transition-colors duration-300">
 
       {/* Header */}
-      <header className="container mx-auto px-6 py-6 flex justify-between items-center md:static md:z-auto sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border md:border-b-0">
+      <header className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 flex justify-between items-center md:static md:z-auto sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border md:border-b-0">
         <div 
           className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
           onClick={() => window.location.href = '/'}
@@ -75,9 +61,9 @@ export default function HomePage() {
           <img
             src="/taskkash-logo.png"
             alt="TaskKash Logo"
-            className="w-10 h-10 object-contain"
+            className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
           />
-          <span className="text-2xl font-bold gradient-text">TaskKash</span>
+          <span className="text-lg sm:text-2xl font-bold gradient-text">TaskKash</span>
         </div>
 
         {/* Desktop Navigation */}
@@ -158,9 +144,9 @@ export default function HomePage() {
                   <img
                     src="/taskkash-logo.png"
                     alt="TaskKash Logo"
-                    className="w-8 h-8 object-contain"
+                    className="w-6 h-6 sm:w-8 sm:h-8 object-contain"
                   />
-                  <span className="text-xl font-bold gradient-text">TaskKash</span>
+                  <span className="text-lg sm:text-xl font-bold gradient-text">TaskKash</span>
                 </div>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -229,47 +215,47 @@ export default function HomePage() {
       )}
 
       {/* Hero Section */}
-      <section className="container mx-auto px-6 py-20 text-center">
-        <h1 className="text-4xl md:text-6xl font-bold mb-6">
+      <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-20 text-center">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6">
           <span className="gradient-text">TaskKash - Rewards</span>
         </h1>
 
-        <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
+        <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto px-4">
           Earn rewards for engaging, sharing, and completing simple tasks. Fun. Flexible. Web3-powered.
         </p>
 
-        <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+        <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 px-4">
           <Link
             href="/auth/signup"
-            className="px-8 py-4 rounded-xl bg-linear-to-r from-green-400 to-purple-600 text-white font-bold text-lg hover:opacity-90 shadow"
+            className="px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-linear-to-r from-green-400 to-purple-600 text-white font-bold text-base sm:text-lg hover:opacity-90 shadow"
           >
             Start Earning
           </Link>
 
           <Link
             href="/contact"
-            className="px-8 py-4 rounded-xl border border-border text-foreground font-bold text-lg hover:bg-muted transition-colors"
+            className="px-6 sm:px-8 py-3 sm:py-4 rounded-xl border border-border text-foreground font-bold text-base sm:text-lg hover:bg-muted transition-colors"
           >
             Promote with TaskKash
           </Link>
         </div>
 
-        <div className="mt-12 container mx-auto px-6">
-          <div className="rounded-2xl overflow-hidden shadow-xl w-full bg-card">
+        <div className="mt-8 sm:mt-12">
+          <div className="relative w-full rounded-2xl overflow-hidden shadow-xl bg-card">
             <img
               src="/Hero-banner.jpg"
               alt="TaskKash - Get Paid To Engage Online"
-              className="w-full h-120 object-cover"
+              className="w-full h-auto max-h-[300px] sm:max-h-[400px] md:max-h-[500px] lg:max-h-[600px] object-cover"
             />
           </div>
         </div>
       </section>
 
       {/* What is TaskKash */}
-      <section className="container mx-auto px-6 py-20">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+      <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-20">
+        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8 sm:gap-12 items-center">
           <div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 gradient-text">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 gradient-text">
               What is TaskKash?
             </h2>
             <p className="text-lg text-muted-foreground mb-6">
@@ -279,35 +265,35 @@ export default function HomePage() {
 
             <ul className="space-y-4 text-muted-foreground">
               <li className="flex items-start space-x-3">
-                <i data-feather="check-circle" className="text-green-400"></i>
+                <svg className="text-green-400 w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 <span>Earn crypto for simple social tasks</span>
               </li>
               <li className="flex items-start space-x-3">
-                <i data-feather="check-circle" className="text-green-400"></i>
+                <svg className="text-green-400 w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 <span>Verified human engagement only</span>
               </li>
               <li className="flex items-start space-x-3">
-                <i data-feather="check-circle" className="text-green-400"></i>
+                <svg className="text-green-400 w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 <span>Instant withdrawals to your wallet</span>
               </li>
             </ul>
           </div>
 
-          <div className="bg-card border border-border rounded-xl h-72 overflow-hidden">
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
             <img
               src="/Platform Mockup.JPG"
               alt="TaskKash Platform Interface"
-              className="w-full h-full object-cover"
+              className="w-full h-auto max-h-[300px] md:max-h-[350px] lg:max-h-[400px] object-cover"
             />
           </div>
         </div>
       </section>
 
       {/* For Users */}
-      <section id="users" className="container mx-auto px-6 py-20">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+      <section id="users" className="container mx-auto px-4 sm:px-6 py-12 sm:py-20">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 sm:gap-12 items-center">
           <div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 gradient-text">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 gradient-text">
               For Users 🚀
             </h2>
             <p className="text-lg text-muted-foreground mb-6">
@@ -316,39 +302,39 @@ export default function HomePage() {
 
             <ul className="space-y-4 text-muted-foreground">
               <li className="flex items-start space-x-3">
-                <i data-feather="zap" className="text-green-400"></i>
+                <svg className="text-green-400 w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                 <span>Earn crypto for everyday activities</span>
               </li>
               <li className="flex items-start space-x-3">
-                <i data-feather="smile" className="text-green-400"></i>
+                <svg className="text-green-400 w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
                 <span>Fun & flexible side income</span>
               </li>
               <li className="flex items-start space-x-3">
-                <i data-feather="gift" className="text-green-400"></i>
+                <svg className="text-green-400 w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7V2l4 3-4 3z"></path></svg>
                 <span>Instant redeemable rewards</span>
               </li>
               <li className="flex items-start space-x-3">
-                <i data-feather="users" className="text-green-400"></i>
+                <svg className="text-green-400 w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 <span>Be part of a global community</span>
               </li>
             </ul>
           </div>
 
-          <div className="bg-card border border-border rounded-xl h-72 overflow-hidden">
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
             <img
               src="/User Mockup.JPG"
               alt="TaskKash User Dashboard"
-              className="w-full h-full object-cover"
+              className="w-full h-auto max-h-[300px] md:max-h-[350px] lg:max-h-[400px] object-cover"
             />
           </div>
         </div>
       </section>
 
       {/* For Projects */}
-      <section id="projects" className="container mx-auto px-6 py-20">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+      <section id="projects" className="container mx-auto px-4 sm:px-6 py-12 sm:py-20">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 sm:gap-12 items-center">
           <div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 gradient-text">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 gradient-text">
               For Projects 🏢
             </h2>
             <p className="text-lg text-muted-foreground mb-6">
@@ -357,45 +343,59 @@ export default function HomePage() {
 
             <ul className="space-y-4 text-muted-foreground">
               <li className="flex items-start space-x-3">
-                <i data-feather="target" className="text-green-400"></i>
+                <svg className="text-green-400 w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
                 <span>Reach your target audience effectively</span>
               </li>
               <li className="flex items-start space-x-3">
-                <i data-feather="trending-up" className="text-green-400"></i>
+                <svg className="text-green-400 w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5"></polyline><polyline points="1 6 10.5 15.5 15.5 10.5"></polyline></svg>
                 <span>Track real-time campaign performance</span>
               </li>
               <li className="flex items-start space-x-3">
-                <i data-feather="shield" className="text-green-400"></i>
+                <svg className="text-green-400 w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                 <span>Verified engagement and fraud protection</span>
               </li>
               <li className="flex items-start space-x-3">
-                <i data-feather="dollar-sign" className="text-green-400"></i>
+                <svg className="text-green-400 w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
                 <span>Cost-effective marketing solutions</span>
               </li>
             </ul>
           </div>
 
-          <div className="bg-card border border-border rounded-xl h-72 flex items-center justify-center text-muted-foreground">
-              <img
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <img
               src="/Projects Mockup.JPG"
-              alt="TaskKash User Dashboard"
-              className="w-full h-full object-cover"
+              alt="TaskKash Projects Dashboard"
+              className="w-full h-auto max-h-[300px] md:max-h-[350px] lg:max-h-[400px] object-cover"
             />
           </div>
         </div>
       </section>
 
-      <section className="container mx-auto px-6 py-20 text-center">
-        <h2 className="text-3xl md:text-4xl font-bold mb-12 gradient-text">How It Works</h2>
-        <div className="grid md:grid-cols-3 gap-12">
+      <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-20 text-center">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-8 sm:mb-12 gradient-text">How It Works</h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-12">
           {[
-            { icon: "user", title: "1. Sign Up", text: "Join with your wallet or email in seconds" },
-            { icon: "check-square", title: "2. Complete Tasks", text: "Engage, share, or shop to earn TaskPoints" },
-            { icon: "dollar-sign", title: "3. Get Paid", text: "Redeem instantly — cash, cards, or crypto" },
+            { 
+              icon: <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>,
+              title: "1. Sign Up", 
+              text: "Join with your wallet or email in seconds" 
+            },
+            { 
+              icon: <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>,
+              title: "2. Complete Tasks", 
+              text: "Engage, share, or shop to earn TaskPoints" 
+            },
+            { 
+              icon: <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>,
+              title: "3. Get Paid", 
+              text: "Redeem instantly — cash, cards, or crypto" 
+            },
           ].map((step, i) => (
             <div key={i}>
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-400/10 flex items-center justify-center">
-                <i data-feather={step.icon} className="text-green-400 w-8 h-8"></i>
+              <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-full bg-green-400/10 flex items-center justify-center">
+                <div className="text-green-400">
+                  {step.icon}
+                </div>
               </div>
               <h3 className="text-xl font-bold mb-2">{step.title}</h3>
               <p className="text-muted-foreground">{step.text}</p>
@@ -406,27 +406,27 @@ export default function HomePage() {
 
 
       {/* Final CTA */}
-      <section className="container mx-auto px-6 py-20 text-center">
-  <div className="max-w-2xl mx-auto bg-linear-to-br from-green-400/10 to-purple-600/10 p-12 rounded-3xl border border-border">
-    <h2 className="text-3xl md:text-4xl font-bold mb-6 gradient-text">
+      <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-20 text-center">
+  <div className="max-w-2xl mx-auto bg-linear-to-br from-green-400/10 to-purple-600/10 p-8 sm:p-12 rounded-2xl sm:rounded-3xl border border-border">
+    <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 gradient-text">
       Ready to earn or grow with TaskKash?
     </h2>
 
-    <p className="text-lg text-muted-foreground mb-8">
+    <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 px-4">
       Join thousands of users and projects already benefiting from our platform.
     </p>
 
-    <div className="flex flex-col sm:flex-row justify-center gap-4">
+    <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 px-4">
       <Link
         href="/auth/signup"
-        className="px-8 py-4 rounded-xl bg-linear-to-r from-green-400 to-purple-600 text-white font-bold text-lg hover:opacity-90 shadow"
+        className="px-6 sm:px-8 py-3 sm:py-4 rounded-xl bg-linear-to-r from-green-400 to-purple-600 text-white font-bold text-base sm:text-lg hover:opacity-90 shadow"
       >
         Sign Up Now
       </Link>
 
       <Link
         href="/about"
-        className="px-8 py-4 rounded-xl border border-border text-foreground font-bold text-lg hover:bg-muted transition-colors"
+        className="px-6 sm:px-8 py-3 sm:py-4 rounded-xl border border-border text-foreground font-bold text-base sm:text-lg hover:bg-muted transition-colors"
       >
         Learn More
       </Link>
