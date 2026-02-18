@@ -15,14 +15,11 @@ interface WithdrawalModalProps {
 
 export default function WithdrawalModal({ isOpen, onClose, taskPoints, onSuccess, onError }: WithdrawalModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [withdrawalType, setWithdrawalType] = useState<WithdrawalType>(WithdrawalType.BANK_TRANSFER);
+  const [withdrawalType, setWithdrawalType] = useState<WithdrawalType>(WithdrawalType.USDT_CRYPTO);
   const [cryptoNetwork, setCryptoNetwork] = useState<CryptoNetwork>(CryptoNetwork.SOL);
   
   // Form states
   const [amount, setAmount] = useState("");
-  const [bankName, setBankName] = useState("");
-  const [accountName, setAccountName] = useState("");
-  const [accountNumber, setAccountNumber] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
 
   // Conversion rates
@@ -31,12 +28,9 @@ export default function WithdrawalModal({ isOpen, onClose, taskPoints, onSuccess
 
   const resetForm = () => {
     setAmount("");
-    setBankName("");
-    setAccountName("");
-    setAccountNumber("");
     setWalletAddress("");
     setCryptoNetwork(CryptoNetwork.SOL);
-    setWithdrawalType(WithdrawalType.BANK_TRANSFER);
+    setWithdrawalType(WithdrawalType.USDT_CRYPTO);
   };
 
   const handleClose = () => {
@@ -56,18 +50,11 @@ export default function WithdrawalModal({ isOpen, onClose, taskPoints, onSuccess
         withdrawalType,
       };
 
-      if (withdrawalType === WithdrawalType.BANK_TRANSFER) {
-        payload.bankDetails = {
-          bankName,
-          accountName,
-          accountNumber,
-        };
-      } else {
-        payload.cryptoDetails = {
-          network: cryptoNetwork,
-          walletAddress,
-        };
-      }
+      payload.cryptoDetails = {
+        network: cryptoNetwork,
+        walletAddress,
+      };
+
 
       const response = await fetch("/api/withdrawal", {
         method: "POST",
@@ -100,11 +87,7 @@ export default function WithdrawalModal({ isOpen, onClose, taskPoints, onSuccess
   const isFormValid = () => {
     const amountValid = parseFloat(amount) >= 500 && parseFloat(amount) <= taskPoints;
     
-    if (withdrawalType === WithdrawalType.BANK_TRANSFER) {
-      return amountValid && bankName && accountName && accountNumber;
-    } else {
-      return amountValid && walletAddress && walletAddress.length >= 10;
-    }
+    return amountValid && walletAddress && walletAddress.length >= 10;
   };
 
   if (!isOpen) return null;
@@ -124,39 +107,6 @@ export default function WithdrawalModal({ isOpen, onClose, taskPoints, onSuccess
           </button>
         </div>
 
-        {/* Method Selector */}
-        <div className="mb-8">
-          <label className="text-xs font-bold uppercase text-muted-foreground mb-3 block">Withdrawal Method</label>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setWithdrawalType(WithdrawalType.BANK_TRANSFER)}
-              className={`p-4 rounded-xl border-2 transition-all ${
-                withdrawalType === WithdrawalType.BANK_TRANSFER
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-muted/50 hover:bg-muted"
-              }`}
-            >
-              <Building2 className="w-6 h-6 mb-2 mx-auto" />
-              <div className="font-semibold">Bank Transfer</div>
-              <div className="text-xs text-muted-foreground mt-1">24-48 hours</div>
-            </button>
-            
-            <button
-              type="button"
-              onClick={() => setWithdrawalType(WithdrawalType.USDT_CRYPTO)}
-              className={`p-4 rounded-xl border-2 transition-all ${
-                withdrawalType === WithdrawalType.USDT_CRYPTO
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-muted/50 hover:bg-muted"
-              }`}
-            >
-              <Wallet className="w-6 h-6 mb-2 mx-auto" />
-              <div className="font-semibold">USDC (Crypto)</div>
-              <div className="text-xs text-muted-foreground mt-1">5-30 minutes</div>
-            </button>
-          </div>
-        </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -197,72 +147,10 @@ export default function WithdrawalModal({ isOpen, onClose, taskPoints, onSuccess
             )}
           </div>
 
-          {/* Bank Transfer Fields */}
-          {withdrawalType === WithdrawalType.BANK_TRANSFER && (
-            <>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground">Bank Name</label>
-                <input
-                  required
-                  type="text"
-                  placeholder="Enter bank name"
-                  value={bankName}
-                  onChange={(e) => setBankName(e.target.value)}
-                  className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 ring-primary/20"
-                  disabled={isProcessing}
-                />
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground">Account Name</label>
-                <input
-                  required
-                  type="text"
-                  placeholder="Enter account name"
-                  value={accountName}
-                  onChange={(e) => setAccountName(e.target.value)}
-                  className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 ring-primary/20"
-                  disabled={isProcessing}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground">Account Number</label>
-                <input
-                  required
-                  type="text"
-                  placeholder="Enter account number"
-                  value={accountNumber}
-                  onChange={(e) => setAccountNumber(e.target.value)}
-                  className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 ring-primary/20"
-                  disabled={isProcessing}
-                />
-              </div>
-
-              <div className="bg-muted/30 border border-border rounded-xl p-4">
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
-                  <div className="text-sm">
-                    <div className="font-medium text-green-500">Local Currency Conversion</div>
-                    <div className="text-muted-foreground mt-1">
-                      {amount && (
-                        <>
-                          {parseFloat(amount).toLocaleString()} TP = ${convertedAmount.toFixed(2)} USD
-                          <br />
-                          <span className="text-xs">Will be converted to your local currency at current exchange rate</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* USDT Fields */}
-          {withdrawalType === WithdrawalType.USDT_CRYPTO && (
-            <>
-              <div className="space-y-2">
+          {/* USDC Fields */}
+          <>
+            <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-muted-foreground">Network</label>
                 <div className="grid grid-cols-1 gap-3">
                   <button
@@ -330,7 +218,6 @@ export default function WithdrawalModal({ isOpen, onClose, taskPoints, onSuccess
                 </div>
               </div>
             </>
-          )}
 
           {/* Processing Time Info */}
           <div className="bg-muted/30 border border-border rounded-xl p-4">
@@ -339,7 +226,7 @@ export default function WithdrawalModal({ isOpen, onClose, taskPoints, onSuccess
               <div className="text-sm">
                 <div className="font-medium">Estimated Processing Time</div>
                 <div className="text-muted-foreground">
-                  {withdrawalType === WithdrawalType.BANK_TRANSFER ? "24-48 hours" : "5-30 minutes"}
+                  24 Hours
                 </div>
               </div>
             </div>

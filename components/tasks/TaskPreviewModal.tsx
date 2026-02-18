@@ -151,6 +151,34 @@ export function TaskPreviewModal({ task, isOpen, onClose }: TaskPreviewModalProp
                   {task.description}
                 </p>
               </div>
+
+              {/* Instructions */}
+              {task.instructions && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                    Instructions
+                  </h3>
+                  <div className="p-4 bg-muted/50 rounded-2xl border border-border">
+                    <p className="text-foreground leading-relaxed text-sm">
+                      {task.instructions}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Validation Type */}
+              {task.validationType && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                    Validation Type
+                  </h3>
+                  <div className="p-3 bg-chart-1/10 border border-chart-1/20 rounded-xl">
+                    <p className="text-chart-1 text-sm font-medium">
+                      {task.validationType}
+                    </p>
+                  </div>
+                </div>
+              )}
               
               {/* Task URL */}
               <div className="space-y-3">
@@ -170,6 +198,34 @@ export function TaskPreviewModal({ task, isOpen, onClose }: TaskPreviewModalProp
                   </button>
                 </div>
               </div>
+
+              {/* Deadline */}
+              {task.deadline && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                    Deadline
+                  </h3>
+                  <div className="flex items-center gap-3 p-4 bg-chart-3/10 border border-chart-3/20 rounded-2xl">
+                    <Clock className="w-5 h-5 text-chart-3 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-chart-3 text-sm font-medium">
+                        {new Date(task.deadline).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                      <p className="text-chart-3/70 text-xs mt-1">
+                        {new Date(task.deadline).toLocaleTimeString('en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               {/* Instructions */}
               <div className="flex items-start gap-3 p-4 bg-chart-2/10 border border-chart-2/20 rounded-2xl">

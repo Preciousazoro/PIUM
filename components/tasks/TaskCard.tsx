@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Trophy } from "lucide-react";
+import { Trophy, Clock, ExternalLink, Info } from "lucide-react";
 import { StatusBadge } from "./StatusBadge";
 import { Button } from "@/components/ui/button";
 import { TaskDocument } from "@/types/shared-task";
@@ -36,7 +36,7 @@ export function TaskCard({
       whileHover={{ y: isPending || isApproved ? 0 : -4 }}
       whileTap={{ scale: isPending || isApproved ? 1 : 0.98 }}
       onClick={() => !isPending && !isApproved && onClick(task)}
-      className={`relative rounded-2xl border border-border/60 bg-card/70 backdrop-blur-xl shadow-sm hover:shadow-xl transition-all overflow-hidden ${
+      className={`relative rounded-2xl border border-border/60 bg-card/70 backdrop-blur-xl shadow-sm hover:shadow-xl transition-all overflow-hidden flex flex-col h-full min-h-[320px] ${
         isPending ? 'opacity-50 cursor-not-allowed' : ''
       } ${isApproved ? 'opacity-60 cursor-not-allowed' : ''}`}
     >
@@ -47,9 +47,9 @@ export function TaskCard({
         }`}
       />
 
-      <div className="relative p-6 space-y-4">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4">
+      <div className="relative p-6 space-y-4 flex flex-col h-full">
+        {/* Header - Fixed */}
+        <div className="flex items-start justify-between gap-4 shrink-0">
           <div className="space-y-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               {task.category}
@@ -62,13 +62,48 @@ export function TaskCard({
           <StatusBadge status={task.userTaskStatus || 'available'} />
         </div>
 
-        {/* Description */}
-        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
-          {task.description}
-        </p>
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto space-y-4 min-h-0">
+          {/* Description */}
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+            {task.description}
+          </p>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between gap-4 pt-2">
+          {/* Instructions */}
+          {task.instructions && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                <Info className="w-3 h-3" />
+                Instructions
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {task.instructions}
+              </p>
+            </div>
+          )}
+
+          {/* Additional Info */}
+          <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+            {/* URL Indicator */}
+            {(task.taskLink || task.alternateUrl) && (
+              <div className="flex items-center gap-1">
+                <ExternalLink className="w-3 h-3" />
+                <span>Task URL available</span>
+              </div>
+            )}
+            
+            {/* Deadline */}
+            {task.deadline && (
+              <div className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                <span>Due: {new Date(task.deadline).toLocaleDateString()}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer - Fixed */}
+        <div className="flex items-center justify-between gap-4 pt-2 shrink-0">
           {/* Reward */}
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-bold text-primary">
             <Trophy className="h-4 w-4" />
