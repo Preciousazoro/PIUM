@@ -132,7 +132,7 @@ function SidebarContent({
   const links = [
     { href: "/user-dashboard/dashboard", icon: Home, label: "Dashboard", color: "text-green-500" },
     { href: "/user-dashboard/profile", icon: Users, label: "Profile", color: "text-green-500" },
-    { href: "/user-dashboard/transactions", icon: Edit2, label: "Transactions", color: "text-green-500", isComingSoon: true },
+    { href: "/user-dashboard/transactions", icon: Edit2, label: "Transactions", color: "text-green-500" },
     { href: "/user-dashboard/settings", icon: Settings, label: "Settings", color: "text-green-500" },
     { href: "#", icon: ShoppingCart, label: "Commerce Tasks", color: "text-green-500" },
     { href: "/user-dashboard/leaderboard", icon: Award, label: "Leaderboard", color: "text-green-500" },
@@ -175,25 +175,6 @@ function SidebarContent({
       <nav className="space-y-1 flex-1">
         {links.map((link, i) => {
           const active = isActive(link.href);
-          
-          if (link.isComingSoon) {
-            return (
-              <button
-                key={i}
-                onClick={() => toast.info("Transactions page coming soon!")}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition w-full text-left
-                  ${
-                    active
-                      ? "bg-linear-to-r from-green-500 to-purple-500 text-white"
-                      : "text-muted-foreground hover:bg-muted"
-                  }`}
-              >
-                <link.icon className={`w-5 ${active ? "text-white" : link.color}`} />
-                {link.label}
-              </button>
-            );
-          }
-          
           return (
             <Link
               key={i}

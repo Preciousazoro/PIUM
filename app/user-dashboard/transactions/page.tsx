@@ -168,7 +168,7 @@ export default function TransactionsPage() {
                                   </div>
                 <div className="flex gap-4">
                   <button 
-                    onClick={() => setShowModal(true)} 
+                    onClick={() => toast.info("Withdrawal coming soon!")} 
                     className="px-8 py-3 bg-linear-to-r from-green-500 to-purple-600 text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all active:scale-95"
                   >
                     Withdraw TP
