@@ -11,7 +11,7 @@ import {
 // Navigation Imports
 import UserSidebar from "@/components/user-dashboard/UserSidebar";
 import UserHeader from "@/components/user-dashboard/UserHeader";
-import { UserDashboardSkeleton } from "@/components/ui/LoadingSkeleton";
+import { ContentOnlySkeleton } from "@/components/ui/LoadingSkeleton";
 
 export default function EnhancedRewardsPage() {
   const [perf, setPerf] = useState<any>(null);
@@ -211,7 +211,20 @@ export default function EnhancedRewardsPage() {
   }, []);
 
   if (loading) {
-    return <UserDashboardSkeleton />;
+    return (
+      <div className="flex min-h-screen bg-background text-foreground transition-colors duration-300">
+        {/* Sidebar */}
+        <UserSidebar />
+
+        <div className="flex-1 flex flex-col h-screen overflow-hidden">
+          {/* Header */}
+          <UserHeader />
+
+          {/* Content Skeleton */}
+          <ContentOnlySkeleton />
+        </div>
+      </div>
+    );
   }
 
   return (

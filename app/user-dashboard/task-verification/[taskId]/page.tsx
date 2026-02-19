@@ -10,7 +10,7 @@ import { toast } from "sonner";
 // Navigation Import
 import UserSidebar from "@/components/user-dashboard/UserSidebar";
 import UserHeader from "@/components/user-dashboard/UserHeader";
-import { UserDashboardSkeleton } from "@/components/ui/LoadingSkeleton";
+import { ContentOnlySkeleton } from "@/components/ui/LoadingSkeleton";
 
 export default function TaskVerificationPage() {
   const { taskId } = useParams<{ taskId: string }>();
@@ -27,6 +27,7 @@ export default function TaskVerificationPage() {
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<{description?: string; file?: string}>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -63,12 +64,36 @@ export default function TaskVerificationPage() {
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
     setFile(f);
+    // Clear file error when file is selected
+    if (f && errors.file) {
+      setErrors(prev => ({ ...prev, file: undefined }));
+    }
   };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!taskId) return;
+    
+    // Validate required fields
+    const newErrors: {description?: string; file?: string} = {};
+    
+    if (!description.trim()) {
+      newErrors.description = "Proof details & context is required";
+    }
+    
+    if (!file) {
+      newErrors.file = "Screenshot / image proof is required";
+    }
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    
+    // Clear errors if validation passes
+    setErrors({});
     
     // Double-check that task is still started before submission
     if (!TaskStateManager.isTaskStarted(taskId as string)) {
@@ -147,7 +172,20 @@ export default function TaskVerificationPage() {
   };
 
   if (isLoading) {
-    return <UserDashboardSkeleton />;
+    return (
+      <div className="flex min-h-screen bg-background text-foreground transition-colors duration-300">
+        {/* Sidebar */}
+        <UserSidebar />
+
+        <div className="flex-1 flex flex-col h-screen overflow-hidden">
+          {/* Header */}
+          <UserHeader />
+
+          {/* Content Skeleton */}
+          <ContentOnlySkeleton />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -201,14 +239,25 @@ export default function TaskVerificationPage() {
               {/* Description Field */}
               <div className="space-y-3">
                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
-                  Proof Details & Context
+                  Proof Details & Context <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                    // Clear description error when user starts typing
+                    if (errors.description && e.target.value.trim()) {
+                      setErrors(prev => ({ ...prev, description: undefined }));
+                    }
+                  }}
                   placeholder="Paste links, transaction IDs, or describe how you completed the task..."
-                  className="w-full h-40 resize-none bg-muted/30 border border-border rounded-2xl p-4 text-foreground placeholder:text-muted-foreground focus:ring-2 ring-primary/20 outline-none transition-all"
+                  className={`w-full h-40 resize-none bg-muted/30 border rounded-2xl p-4 text-foreground placeholder:text-muted-foreground focus:ring-2 ring-primary/20 outline-none transition-all ${
+                    errors.description ? 'border-red-500 ring-red-500/20' : 'border-border'
+                  }`}
                 />
+                {errors.description && (
+                  <p className="text-xs text-red-500 font-medium">{errors.description}</p>
+                )}
                 <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/20 p-3 rounded-xl border border-border/50">
                     <Info className="w-4 h-4 text-primary shrink-0" />
                     <p>Make sure to provide clear evidence. Incorrect or fake submissions may lead to account suspension.</p>
@@ -218,12 +267,14 @@ export default function TaskVerificationPage() {
               {/* File Upload Field */}
               <div className="space-y-3">
                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
-                  Screenshot / Image Proof
+                  Screenshot / Image Proof <span className="text-red-500">*</span>
                 </label>
                 <div
                   className={`relative group rounded-2xl border-2 border-dashed transition-all duration-200 flex flex-col items-center justify-center p-8 cursor-pointer ${
                     file 
                     ? "border-green-500/50 bg-green-500/5" 
+                    : errors.file
+                    ? "border-red-500/50 bg-red-500/5"
                     : "border-border bg-muted/20 hover:border-primary/50 hover:bg-muted/40"
                   }`}
                   onClick={onChooseFile}
@@ -255,6 +306,9 @@ export default function TaskVerificationPage() {
                     onChange={onFileChange}
                   />
                 </div>
+                {errors.file && (
+                  <p className="text-xs text-red-500 font-medium mt-2">{errors.file}</p>
+                )}
               </div>
 
               {/* Submit Button */}

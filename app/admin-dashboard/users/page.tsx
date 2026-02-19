@@ -10,7 +10,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { UserAvatar } from "../../../components/admin-dashboard/UserAvatar";
 import { UserPreviewModal } from "../../../components/admin-dashboard/UserPreviewModal";
 import { confirmToast } from "../../../components/admin-dashboard/confirmToast";
-import { AdminDashboardSkeleton } from "@/components/ui/LoadingSkeleton";
+import { AdminContentOnlySkeleton } from "@/components/ui/LoadingSkeleton";
 
 interface User {
   _id: string;
@@ -285,7 +285,17 @@ export default function AdminUsersPage() {
 
   /* ---------------- UI ---------------- */
   if (loading) {
-    return <AdminDashboardSkeleton />;
+    return (
+      <div className="min-h-screen flex bg-background text-foreground overflow-hidden">
+        <AdminSidebar />
+
+        <div className="flex-1 flex flex-col h-screen overflow-hidden">
+          <AdminHeader />
+
+          <AdminContentOnlySkeleton />
+        </div>
+      </div>
+    );
   }
 
   return (

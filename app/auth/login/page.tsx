@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { Lock, CheckCircle2, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { AuthSkeleton } from "@/components/ui/LoadingSkeleton";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -53,9 +52,6 @@ export default function LoginPage() {
     }
   };
 
-  if (isLoading) {
-    return <AuthSkeleton />;
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background text-foreground px-4 transition-colors duration-300">

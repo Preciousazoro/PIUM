@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import AdminHeader from "@/components/admin-dashboard/AdminHeader";
 import AdminSidebar from "@/components/admin-dashboard/AdminSidebar";
-import { AdminDashboardSkeleton } from "@/components/ui/LoadingSkeleton";
+import { AdminContentOnlySkeleton } from "@/components/ui/LoadingSkeleton";
 import Chart from "chart.js/auto";
 import {
   Users,
@@ -334,7 +334,17 @@ const Dashboard = () => {
 
   /* ---------- UI ---------- */
   if (metricsLoading || activitiesLoading) {
-    return <AdminDashboardSkeleton />;
+    return (
+      <div className="min-h-screen flex bg-background text-foreground overflow-hidden">
+        <AdminSidebar />
+
+        <div className="flex-1 flex flex-col h-screen overflow-hidden">
+          <AdminHeader />
+
+          <AdminContentOnlySkeleton />
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -8,7 +8,7 @@ import { Task } from "@/lib/taskState";
 import { TaskCard as TaskCardComponent } from "@/components/tasks/TaskCard";
 import { TaskPreviewModal } from "@/components/tasks/TaskPreviewModal";
 import { RecentActivity } from "@/components/user-dashboard/RecentActivity";
-import { UserDashboardSkeleton } from "@/components/ui/LoadingSkeleton";
+import { ContentOnlySkeleton } from "@/components/ui/LoadingSkeleton";
 import { Button } from "@/components/ui/button";
 
 // Directly import the Sidebar and Header here
@@ -169,7 +169,20 @@ export default function DashboardPage() {
   const tabs: Array<typeof activeTab> = ['All', 'Pending', 'Approved', 'Rejected'];
 
   if (isLoading || tasksLoading) {
-    return <UserDashboardSkeleton />;
+    return (
+      <div className="flex min-h-screen bg-background text-foreground transition-colors duration-300">
+        {/* Sidebar */}
+        <UserSidebar />
+
+        <div className="flex-1 flex flex-col h-screen overflow-hidden">
+          {/* Header */}
+          <UserHeader />
+
+          {/* Content Skeleton */}
+          <ContentOnlySkeleton />
+        </div>
+      </div>
+    );
   }
 
   return (

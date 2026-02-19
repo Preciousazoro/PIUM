@@ -6,7 +6,7 @@ import feather from "feather-icons";
 import AdminHeader from "../../../components/admin-dashboard/AdminHeader";
 import AdminSidebar from "../../../components/admin-dashboard/AdminSidebar";
 import { Pagination } from "@/components/ui/Pagination";
-import { AdminDashboardSkeleton } from "@/components/ui/LoadingSkeleton";
+import { AdminContentOnlySkeleton } from "@/components/ui/LoadingSkeleton";
 import { toast } from "sonner";
 
 /* ---------------- TYPES ---------------- */
@@ -192,7 +192,17 @@ export default function AdminSubmissionsPage() {
   /* ---------------- RENDER ---------------- */
 
   if (loading) {
-    return <AdminDashboardSkeleton />;
+    return (
+      <div className="min-h-screen flex bg-background text-foreground overflow-hidden">
+        <AdminSidebar />
+
+        <div className="flex-1 flex flex-col h-screen overflow-hidden">
+          <AdminHeader />
+
+          <AdminContentOnlySkeleton />
+        </div>
+      </div>
+    );
   }
 
   return (

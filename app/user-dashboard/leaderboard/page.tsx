@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Search, Loader2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown";
 import { PodiumPosition } from "@/components/user-dashboard/PodiumPosition";
-import { UserDashboardSkeleton } from "@/components/ui/LoadingSkeleton";
+import { ContentOnlySkeleton } from "@/components/ui/LoadingSkeleton";
 
 // Navigation Imports
 import UserSidebar from "@/components/user-dashboard/UserSidebar";
@@ -72,7 +72,20 @@ export default function LeaderboardPage() {
   }, []);
 
   if (isLoading) {
-    return <UserDashboardSkeleton />;
+    return (
+      <div className="flex min-h-screen bg-background text-foreground transition-colors duration-300">
+        {/* Sidebar */}
+        <UserSidebar />
+
+        <div className="flex-1 flex flex-col h-screen overflow-hidden">
+          {/* Header */}
+          <UserHeader />
+
+          {/* Content Skeleton */}
+          <ContentOnlySkeleton />
+        </div>
+      </div>
+    );
   }
 
   if (error || !leaderboardData) {

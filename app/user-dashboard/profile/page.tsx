@@ -19,7 +19,7 @@ import { toast } from "sonner";
 // Import your navigation components
 import UserSidebar from "@/components/user-dashboard/UserSidebar";
 import UserHeader from "@/components/user-dashboard/UserHeader";
-import { ProfileSkeleton } from "@/components/ui/LoadingSkeleton";
+import { ContentOnlySkeleton } from "@/components/ui/LoadingSkeleton";
 
 type SocialMedia = {
   twitter?: string | null;
@@ -257,7 +257,20 @@ export default function ProfilePage() {
   };
 
   if (isLoading) {
-    return <ProfileSkeleton />;
+    return (
+      <div className="flex min-h-screen bg-background text-foreground transition-colors duration-300">
+        {/* Sidebar */}
+        <UserSidebar />
+
+        <div className="flex-1 flex flex-col h-screen overflow-hidden">
+          {/* Header */}
+          <UserHeader />
+
+          {/* Content Skeleton */}
+          <ContentOnlySkeleton />
+        </div>
+      </div>
+    );
   }
 
   return (

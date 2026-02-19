@@ -105,7 +105,7 @@ export function TaskPreviewModal({ task, isOpen, onClose }: TaskPreviewModalProp
               duration: 0.3, 
               ease: [0.4, 0, 0.2, 1]
             }}
-            className="fixed inset-0 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-linear-to-br from-card/95 to-card/90 backdrop-blur-xl border-border rounded-t-3xl md:rounded-3xl shadow-2xl z-50 overflow-hidden flex flex-col"
+            className="fixed inset-0 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl md:max-h-[85vh] bg-linear-to-br from-card/95 to-card/90 backdrop-blur-xl border-border rounded-t-3xl md:rounded-3xl shadow-2xl z-50 overflow-hidden flex flex-col"
           >
             {/* Header */}
             <div className="relative p-4 md:p-6 border-b border-border bg-linear-to-r from-primary/10 to-primary/5 shrink-0">
@@ -141,25 +141,44 @@ export function TaskPreviewModal({ task, isOpen, onClose }: TaskPreviewModalProp
             </div>
             
             {/* Content */}
-            <div className="flex-1 p-4 md:p-6 space-y-4 md:space-y-6 overflow-y-auto min-h-0">
+            <div className="flex-1 p-4 md:p-6 space-y-4 md:space-y-6 overflow-y-auto overflow-x-hidden min-h-0 max-h-[50vh] md:max-h-[60vh]">
+              {/* Custom scrollbar styles */}
+              <style jsx>{`
+                div::-webkit-scrollbar {
+                  width: 6px;
+                }
+                div::-webkit-scrollbar-track {
+                  background: rgba(0, 0, 0, 0.1);
+                  border-radius: 3px;
+                }
+                div::-webkit-scrollbar-thumb {
+                  background: rgba(0, 0, 0, 0.3);
+                  border-radius: 3px;
+                }
+                div::-webkit-scrollbar-thumb:hover {
+                  background: rgba(0, 0, 0, 0.5);
+                }
+              `}</style>
               {/* Description */}
               <div className="space-y-3">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                  Task Description
+                <h3 className="text-sm font-semibold text-foreground">
+                  Description
                 </h3>
-                <p className="text-foreground leading-relaxed">
-                  {task.description}
-                </p>
+                <div className="p-4 bg-card rounded-xl border border-border">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {task.description}
+                  </p>
+                </div>
               </div>
 
               {/* Instructions */}
               {task.instructions && (
                 <div className="space-y-3">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                  <h3 className="text-sm font-semibold text-foreground">
                     Instructions
                   </h3>
-                  <div className="p-4 bg-muted/50 rounded-2xl border border-border">
-                    <p className="text-foreground leading-relaxed text-sm">
+                  <div className="p-4 bg-card rounded-xl border border-border">
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       {task.instructions}
                     </p>
                   </div>
@@ -169,11 +188,11 @@ export function TaskPreviewModal({ task, isOpen, onClose }: TaskPreviewModalProp
               {/* Validation Type */}
               {task.validationType && (
                 <div className="space-y-3">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                  <h3 className="text-sm font-semibold text-foreground">
                     Validation Type
                   </h3>
-                  <div className="p-3 bg-chart-1/10 border border-chart-1/20 rounded-xl">
-                    <p className="text-chart-1 text-sm font-medium">
+                  <div className="p-4 bg-card rounded-xl border border-border">
+                    <p className="text-sm text-muted-foreground font-medium">
                       {task.validationType}
                     </p>
                   </div>
@@ -182,74 +201,80 @@ export function TaskPreviewModal({ task, isOpen, onClose }: TaskPreviewModalProp
               
               {/* Task URL */}
               <div className="space-y-3">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                <h3 className="text-sm font-semibold text-foreground">
                   Task Link
                 </h3>
-                <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-2xl border border-border">
-                  <ExternalLink className="w-5 h-5 text-primary shrink-0" />
-                  <span className="text-sm text-foreground truncate flex-1">
-                    {task.taskLink || task.alternateUrl || 'No URL provided'}
-                  </span>
-                  <button
-                    onClick={() => window.open(task.taskLink || task.alternateUrl || '', "_blank")}
-                    className="text-primary hover:text-primary/80 text-sm font-medium transition-colors"
-                  >
-                    Visit
-                  </button>
+                <div className="p-4 bg-card rounded-xl border border-border">
+                  <div className="flex items-center gap-3">
+                    <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span className="text-sm text-muted-foreground truncate flex-1">
+                      {task.taskLink || task.alternateUrl || 'No URL provided'}
+                    </span>
+                    <button
+                      onClick={() => window.open(task.taskLink || task.alternateUrl || '', "_blank")}
+                      className="text-primary hover:text-primary/80 text-sm font-medium transition-colors"
+                    >
+                      Visit
+                    </button>
+                  </div>
                 </div>
               </div>
 
               {/* Deadline */}
               {task.deadline && (
                 <div className="space-y-3">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                  <h3 className="text-sm font-semibold text-foreground">
                     Deadline
                   </h3>
-                  <div className="flex items-center gap-3 p-4 bg-chart-3/10 border border-chart-3/20 rounded-2xl">
-                    <Clock className="w-5 h-5 text-chart-3 shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-chart-3 text-sm font-medium">
-                        {new Date(task.deadline).toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </p>
-                      <p className="text-chart-3/70 text-xs mt-1">
-                        {new Date(task.deadline).toLocaleTimeString('en-US', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </p>
+                  <div className="p-4 bg-card rounded-xl border border-border">
+                    <div className="flex items-center gap-3">
+                      <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm text-foreground font-medium">
+                          {new Date(task.deadline).toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(task.deadline).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
               
-              {/* Instructions */}
-              <div className="flex items-start gap-3 p-4 bg-chart-2/10 border border-chart-2/20 rounded-2xl">
-                <Info className="w-5 h-5 text-chart-2 shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-chart-2 mb-2">
-                    How to Complete
-                  </h3>
-                  <ol className="list-decimal list-inside space-y-1 text-chart-2/80">
-                    <li>Click "Start Task" to begin</li>
-                    <li>Complete the task on the external website</li>
-                    <li>Return here and submit your proof</li>
-                  </ol>
+              {/* How to Complete */}
+              <div className="p-4 bg-card rounded-xl border border-border">
+                <div className="flex items-start gap-3">
+                  <Info className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-foreground mb-3">
+                      How to Complete
+                    </h3>
+                    <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+                      <li>Click "Start Task" to begin</li>
+                      <li>Complete the task on the external website</li>
+                      <li>Return here and submit your proof</li>
+                    </ol>
+                  </div>
                 </div>
               </div>
             </div>
             
             {/* Actions */}
-            <div className="p-4 md:p-6 border-t border-border bg-muted/30 shrink-0">
+            <div className="p-4 md:p-6 border-t border-border bg-card shrink-0">
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={handleStartTask}
                   disabled={isLoading}
-                  className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] ${
+                  className={`flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-all ${
                     isLoading
                       ? 'bg-muted text-muted-foreground cursor-not-allowed'
                       : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
@@ -267,7 +292,7 @@ export function TaskPreviewModal({ task, isOpen, onClose }: TaskPreviewModalProp
                 
                 <button
                   onClick={handleSubmitProof}
-                  className="flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all active:scale-[0.98] bg-linear-to-r from-green-500 to-purple-600 text-white hover:from-green-600 hover:to-purple-700 hover:shadow-lg hover:shadow-green-500/25"
+                  className="flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-all bg-gradient-to-r from-green-500 to-purple-500 text-white hover:from-green-600 hover:to-purple-600"
                 >
                   Submit Proof
                 </button>

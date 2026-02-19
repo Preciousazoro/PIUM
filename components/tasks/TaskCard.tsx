@@ -37,8 +37,8 @@ export function TaskCard({
       whileTap={{ scale: isPending || isApproved ? 1 : 0.98 }}
       onClick={() => !isPending && !isApproved && onClick(task)}
       className={`relative rounded-2xl border border-border/60 bg-card/70 backdrop-blur-xl shadow-sm hover:shadow-xl transition-all overflow-hidden flex flex-col h-full min-h-[320px] ${
-        isPending ? 'opacity-50 cursor-not-allowed' : ''
-      } ${isApproved ? 'opacity-60 cursor-not-allowed' : ''}`}
+        isPending ? 'opacity-50 cursor-not-allowed' : isApproved ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+      }`}
     >
       {/* Accent gradient strip */}
       <div

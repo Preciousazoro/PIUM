@@ -10,7 +10,7 @@ import UserSidebar from "@/components/user-dashboard/UserSidebar";
 import UserHeader from "@/components/user-dashboard/UserHeader";
 import TransactionCard, { Transaction } from "@/components/transactions/TransactionCard";
 import WithdrawalCard, { Withdrawal } from "@/components/withdrawal/WithdrawalCard";
-import { UserDashboardSkeleton } from "@/components/ui/LoadingSkeleton";
+import { ContentOnlySkeleton } from "@/components/ui/LoadingSkeleton";
 import WithdrawalModal from "@/components/withdrawal/WithdrawalModal";
 
 
@@ -127,7 +127,20 @@ export default function TransactionsPage() {
   };
 
   if (isLoading) {
-    return <UserDashboardSkeleton />;
+    return (
+      <div className="flex min-h-screen bg-background text-foreground transition-colors duration-300">
+        {/* Sidebar */}
+        <UserSidebar />
+
+        <div className="flex-1 flex flex-col h-screen overflow-hidden">
+          {/* Header */}
+          <UserHeader />
+
+          {/* Content Skeleton */}
+          <ContentOnlySkeleton />
+        </div>
+      </div>
+    );
   }
 
   return (

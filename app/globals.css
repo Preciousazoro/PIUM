@@ -123,3 +123,45 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* Global cursor styles for interactive elements */
+  a, 
+  [role="button"],
+  button:not([disabled]),
+  input[type="button"]:not([disabled]),
+  input[type="submit"]:not([disabled]),
+  .cursor-pointer {
+    @apply cursor-pointer;
+  }
+  
+  /* Enhanced hover effects for links */
+  a {
+    @apply transition-all duration-200;
+  }
+  
+  a:not(.no-hover):hover {
+    @apply opacity-80;
+  }
+  
+  /* Interactive elements with hover effects */
+  [role="button"]:not(.no-hover):hover,
+  button:not(.no-hover):not([disabled]):hover,
+  input[type="button"]:not(.no-hover):not([disabled]):hover,
+  input[type="submit"]:not(.no-hover):not([disabled]):hover {
+    @apply transition-all duration-200;
+  }
+  
+  /* Enhanced hover effects for common interactive patterns */
+  .hover-scale:hover:not(.no-hover):not([disabled]) {
+    @apply scale-105;
+  }
+  
+  .hover-lift:hover:not(.no-hover):not([disabled]) {
+    @apply -translate-y-1;
+  }
+  
+  .hover-glow:hover:not(.no-hover):not([disabled]) {
+    @apply shadow-lg;
+  }
+}

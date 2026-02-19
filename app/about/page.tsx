@@ -6,12 +6,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import ModeToggle from "@/components/ui/ModeToggle";
-import { StaticPageSkeleton } from "@/components/ui/LoadingSkeleton";
+import Footer from "@/components/ui/Footer";
 
 export default function AboutPage() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   const isActive = (path: string) => {
     if (path === "/" && pathname === "/") return true;
@@ -26,16 +25,6 @@ export default function AboutPage() {
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
   ];
-
-  useEffect(() => {
-    // Initialize feather icons if needed
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    return <StaticPageSkeleton />;
-  }
 
   return (
     <div className="bg-background text-foreground min-h-screen overflow-x-hidden transition-colors duration-300">
@@ -307,6 +296,7 @@ export default function AboutPage() {
         </section>
       </div>
     </main>
+    <Footer />
     </div>
   );
 }

@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle2, Eye, EyeOff, Lock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { AuthSkeleton } from "@/components/ui/LoadingSkeleton";
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -80,9 +79,6 @@ export default function RegisterPage() {
     }
   };
 
-  if (isLoading) {
-    return <AuthSkeleton />;
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center text-foreground px-4 relative overflow-hidden bg-background transition-colors duration-300">

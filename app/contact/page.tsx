@@ -7,14 +7,13 @@ import { Menu, X } from "lucide-react";
 import ModeToggle from "@/components/ui/ModeToggle";
 import BookingModal from "@/components/booking/BookingModal";
 import { toast } from "sonner";
-import { StaticPageSkeleton } from "@/components/ui/LoadingSkeleton";
+import Footer from "@/components/ui/Footer";
 
 export default function ContactPage() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -104,16 +103,6 @@ export default function ContactPage() {
       subscribedToUpdates: false
     });
   };
-
-  useEffect(() => {
-    // Initialize any needed effects
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    return <StaticPageSkeleton />;
-  }
 
   return (
     <div className="bg-background text-foreground min-h-screen overflow-x-hidden transition-colors duration-300">
@@ -473,6 +462,7 @@ export default function ContactPage() {
         isOpen={isBookingModalOpen} 
         onClose={() => setIsBookingModalOpen(false)} 
       />
+      <Footer />
 
       <style jsx>{`
         .gradient-text {

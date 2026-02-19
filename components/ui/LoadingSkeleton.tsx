@@ -297,6 +297,112 @@ export function StaticPageSkeleton() {
   );
 }
 
+// Content Only Skeleton (for main content area while header/sidebar remain visible)
+export function ContentOnlySkeleton() {
+  return (
+    <main className="flex-1 overflow-y-auto p-6 md:p-10">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Welcome Section Skeleton */}
+        <div className="space-y-2">
+          <div className="h-10 bg-muted rounded-lg w-48 animate-pulse" />
+          <div className="h-6 bg-muted rounded-lg w-96 animate-pulse" />
+        </div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="bg-card border border-border rounded-xl p-6 shadow-sm">
+              <div className="h-4 bg-muted rounded w-20 animate-pulse mb-2" />
+              <div className="h-8 bg-muted rounded w-16 animate-pulse" />
+            </div>
+          ))}
+        </div>
+
+        {/* Tasks Section Skeleton */}
+        <div className="space-y-4">
+          <div className="h-6 bg-muted rounded w-32 animate-pulse" />
+          <div className="flex gap-2 p-1 bg-muted/50 rounded-lg w-fit">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-8 bg-muted rounded-md w-16 animate-pulse" />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                <div className="space-y-3">
+                  <div className="h-4 bg-muted rounded w-3/4 animate-pulse" />
+                  <div className="h-3 bg-muted rounded w-1/2 animate-pulse" />
+                  <div className="h-8 bg-muted rounded-lg w-full animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+// Admin Content Only Skeleton
+export function AdminContentOnlySkeleton() {
+  return (
+    <main className="flex-1 overflow-y-auto p-6 space-y-8">
+      {/* Header Skeleton */}
+      <div className="flex justify-between items-center">
+        <div className="h-8 bg-muted rounded-lg w-48 animate-pulse" />
+        <div className="h-10 bg-muted rounded-lg w-32 animate-pulse" />
+      </div>
+
+      {/* Stats Cards Skeleton */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="bg-card border rounded-2xl p-5">
+            <div className="h-4 bg-muted rounded w-20 animate-pulse mb-2" />
+            <div className="h-8 bg-muted rounded w-16 animate-pulse" />
+          </div>
+        ))}
+      </div>
+
+      {/* Charts Skeleton */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {[...Array(2)].map((_, i) => (
+          <div key={i} className="bg-card border rounded-2xl p-5 h-[360px]">
+            <div className="flex justify-between mb-3">
+              <div className="h-4 bg-muted rounded w-24 animate-pulse" />
+              <div className="h-3 bg-muted rounded w-20 animate-pulse" />
+            </div>
+            <div className="h-80 bg-muted rounded-lg animate-pulse" />
+          </div>
+        ))}
+      </div>
+
+      {/* Recent Activity Skeleton */}
+      <div className="bg-card border rounded-2xl overflow-hidden">
+        <div className="bg-linear-to-r from-purple-500/10 to-blue-500/10 px-6 py-4 border-b">
+          <div className="h-6 bg-muted rounded w-32 animate-pulse" />
+        </div>
+        <div className="p-6">
+          <div className="space-y-3">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="bg-muted/30 rounded-lg p-4 border border-border/50">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-muted animate-pulse shrink-0" />
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="h-4 bg-muted rounded animate-pulse" />
+                    <div className="h-4 bg-muted rounded animate-pulse" />
+                    <div className="h-4 bg-muted rounded animate-pulse" />
+                    <div className="h-4 bg-muted rounded animate-pulse" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
 // Homepage Skeleton
 export function HomepageSkeleton() {
   return (
