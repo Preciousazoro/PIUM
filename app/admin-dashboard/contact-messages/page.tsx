@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import React from "react";
-import feather from "feather-icons";
 import AdminHeader from "../../../components/admin-dashboard/AdminHeader";
 import AdminSidebar from "../../../components/admin-dashboard/AdminSidebar";
 import { Pagination } from "@/components/ui/Pagination";
 import { toast } from "sonner";
+import ContactReplyModal from "../../../components/admin-dashboard/ContactReplyModal";
 
 /* ---------------- TYPES ---------------- */
 
@@ -33,6 +33,8 @@ export default function AdminContactMessagesPage() {
 
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [replyModalOpen, setReplyModalOpen] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
 
   const [pagination, setPagination] = useState({
     page: 1,
@@ -42,7 +44,6 @@ export default function AdminContactMessagesPage() {
   });
 
   useEffect(() => {
-    feather.replace();
     fetchMessages();
   }, [statusFilter, pagination.page, pagination.limit]);
 
@@ -114,6 +115,34 @@ export default function AdminContactMessagesPage() {
     }
   };
 
+  /* ---------------- REPLY HANDLING ---------------- */
+
+  const handleReplyClick = (message: ContactMessage) => {
+    setSelectedMessage(message);
+    setReplyModalOpen(true);
+  };
+
+  const handleReplySent = (messageId: string) => {
+    // Update the message in local state
+    setMessages(prev => prev.map(msg => 
+      msg._id === messageId 
+        ? { ...msg, status: 'responded', updatedAt: new Date().toISOString() }
+        : msg
+    ));
+    
+    // Close modal and clear selection
+    setReplyModalOpen(false);
+    setSelectedMessage(null);
+    
+    // Refresh messages to get latest data
+    fetchMessages();
+  };
+
+  const handleCloseReplyModal = () => {
+    setReplyModalOpen(false);
+    setSelectedMessage(null);
+  };
+
   /* ---------------- RENDER ---------------- */
 
   const getStatusBadge = (status: string) => {
@@ -182,7 +211,7 @@ export default function AdminContactMessagesPage() {
                   <table className="w-full">
                     <thead className="bg-muted/50 border-b">
                       <tr>
-                        <th className="text-left p-4 font-medium">Name</th>
+                        <th className="text-left p-4 font-medium min-w-[180px]">Name</th>
                         <th className="text-left p-4 font-medium">Email</th>
                         <th className="text-left p-4 font-medium">Subject</th>
                         <th className="text-left p-4 font-medium">Message</th>
@@ -203,7 +232,7 @@ export default function AdminContactMessagesPage() {
                         messages.map((message) => (
                           <React.Fragment key={message._id}>
                             <tr className="border-b hover:bg-muted/30 transition-colors">
-                              <td className="p-4 font-medium">{message.name}</td>
+                              <td className="p-4 font-medium min-w-[180px]">{message.name}</td>
                               <td className="p-4 text-sm">{message.email}</td>
                               <td className="p-4 text-sm">{message.subject}</td>
                               <td className="p-4 text-sm">
@@ -233,20 +262,35 @@ export default function AdminContactMessagesPage() {
                                     onClick={() => setExpandedMessage(
                                       expandedMessage === message._id ? null : message._id
                                     )}
-                                    className="text-blue-500 hover:text-blue-700 transition-colors"
+                                    className="text-blue-500 hover:text-blue-700 transition-colors p-1"
                                     title={expandedMessage === message._id ? "Hide message" : "View full message"}
                                   >
-                                    <i data-feather="eye" className="w-4 h-4"></i>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                  </button>
+                                  
+                                  <button
+                                    onClick={() => handleReplyClick(message)}
+                                    className="text-purple-500 hover:text-purple-700 transition-colors p-1"
+                                    title="Reply to message"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                    </svg>
                                   </button>
                                   
                                   {message.status !== 'read' && (
                                     <button
                                       onClick={() => updateMessageStatus(message._id, 'read')}
                                       disabled={updating === message._id}
-                                      className="text-yellow-500 hover:text-yellow-700 transition-colors disabled:opacity-50"
+                                      className="text-yellow-500 hover:text-yellow-700 transition-colors disabled:opacity-50 p-1"
                                       title="Mark as read"
                                     >
-                                      <i data-feather="check" className="w-4 h-4"></i>
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                      </svg>
                                     </button>
                                   )}
                                   
@@ -254,10 +298,12 @@ export default function AdminContactMessagesPage() {
                                     <button
                                       onClick={() => updateMessageStatus(message._id, 'responded')}
                                       disabled={updating === message._id}
-                                      className="text-green-500 hover:text-green-700 transition-colors disabled:opacity-50"
+                                      className="text-green-500 hover:text-green-700 transition-colors disabled:opacity-50 p-1"
                                       title="Mark as responded"
                                     >
-                                      <i data-feather="check-circle" className="w-4 h-4"></i>
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                      </svg>
                                     </button>
                                   )}
                                 </div>
@@ -350,6 +396,13 @@ export default function AdminContactMessagesPage() {
                               {expandedMessage === message._id ? 'Hide' : 'View'}
                             </button>
                             
+                            <button
+                              onClick={() => handleReplyClick(message)}
+                              className="flex-1 text-purple-500 text-sm hover:text-purple-700 transition-colors py-2 px-3 border border-purple-200 rounded-lg hover:bg-purple-50"
+                            >
+                              Reply
+                            </button>
+                            
                             {message.status !== 'read' && (
                               <button
                                 onClick={() => updateMessageStatus(message._id, 'read')}
@@ -408,6 +461,14 @@ export default function AdminContactMessagesPage() {
           </div>
         </main>
       </div>
+      
+      {/* Reply Modal */}
+      <ContactReplyModal
+        isOpen={replyModalOpen}
+        onClose={handleCloseReplyModal}
+        message={selectedMessage}
+        onReplySent={handleReplySent}
+      />
     </div>
   );
 }

@@ -123,7 +123,11 @@ export default function TransactionsPage() {
   };
 
   const handleWithdrawalError = (error: string) => {
-    toast.error(error || 'Failed to process withdrawal');
+    if (error === "Withdrawal coming soon!") {
+      toast.info(error);
+    } else {
+      toast.error(error || 'Failed to process withdrawal');
+    }
   };
 
   if (isLoading) {
@@ -168,7 +172,7 @@ export default function TransactionsPage() {
                                   </div>
                 <div className="flex gap-4">
                   <button 
-                    onClick={() => toast.info("Withdrawal coming soon!")} 
+                    onClick={() => setShowModal(true)} 
                     className="px-8 py-3 bg-linear-to-r from-green-500 to-purple-600 text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all active:scale-95"
                   >
                     Withdraw TP

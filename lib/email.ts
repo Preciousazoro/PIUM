@@ -9,11 +9,22 @@ interface EmailOptions {
 
 // Create transporter using Gmail
 const createTransporter = () => {
+  const emailUser = process.env.EMAIL_USER || 'taskkash.web3@gmail.com';
+  const emailPassword = process.env.EMAIL_PASSWORD;
+
+  console.log('Email configuration check:');
+  console.log('- Email user:', emailUser);
+  console.log('- Email password configured:', emailPassword ? 'Yes' : 'No');
+
+  if (!emailPassword) {
+    throw new Error('EMAIL_PASSWORD environment variable is not configured. Please set up email credentials.');
+  }
+
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.EMAIL_USER || 'taskkash.web3@gmail.com',
-      pass: process.env.EMAIL_PASSWORD, // Use app password for Gmail
+      user: emailUser,
+      pass: emailPassword, // Use app password for Gmail
     },
   });
 };
@@ -21,6 +32,10 @@ const createTransporter = () => {
 // Send email function
 export async function sendEmail({ to, subject, html, text }: EmailOptions): Promise<boolean> {
   try {
+    console.log('=== EMAIL SEND ATTEMPT ===');
+    console.log('To:', to);
+    console.log('Subject:', subject);
+    
     const transporter = createTransporter();
 
     const mailOptions = {
@@ -31,11 +46,21 @@ export async function sendEmail({ to, subject, html, text }: EmailOptions): Prom
       text,
     };
 
+    console.log('Sending mail with options:', { ...mailOptions, html: '[HTML CONTENT]', text: '[TEXT CONTENT]' });
+
     const result = await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully:', result.messageId);
+    console.log('✅ Email sent successfully:', result.messageId);
+    console.log('=== EMAIL SEND SUCCESS ===');
     return true;
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error('❌ Error sending email:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      code: (error as any)?.code,
+      command: (error as any)?.command,
+      response: (error as any)?.response
+    });
+    console.log('=== EMAIL SEND FAILED ===');
     return false;
   }
 }
@@ -73,8 +98,17 @@ export function createPasswordResetEmail(resetUrl: string, userName?: string): {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 10px;
+          gap: 12px;
           margin-bottom: 20px;
+        }
+        .logo img {
+          width: 40px;
+          height: 40px;
+          border-radius: 8px;
+          object-fit: contain;
+          background: #f8f9fa;
+          padding: 4px;
+          border: 1px solid #e9ecef;
         }
         .logo-text {
           font-size: 24px;
@@ -127,7 +161,7 @@ export function createPasswordResetEmail(resetUrl: string, userName?: string): {
       <div class="container">
         <div class="header">
           <div class="logo">
-            <img src="${process.env.NODE_ENV === 'production' ? 'https://taskkash.xyz/taskkash-logo.png' : 'http://localhost:3000/taskkash-logo.png'}" alt="TaskKash Logo" style="width: 40px; height: 40px;" />
+            <img src="https://taskkash.xyz/taskkash-logo.png" alt="TaskKash Logo" onerror="this.src='http://localhost:3000/taskkash-logo.png'" />
             <span class="logo-text">TaskKash</span>
           </div>
           <h1 class="title">Reset Your Password</h1>

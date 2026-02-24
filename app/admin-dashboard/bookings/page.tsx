@@ -7,6 +7,8 @@ import AdminHeader from "../../../components/admin-dashboard/AdminHeader";
 import AdminSidebar from "../../../components/admin-dashboard/AdminSidebar";
 import { Pagination } from "@/components/ui/Pagination";
 import { toast } from "sonner";
+import { sanitizePhone } from "@/lib/utils/phoneSanitizer";
+import Modal from "@/components/ui/Modal";
 
 /* ---------------- TYPES ---------------- */
 
@@ -38,6 +40,13 @@ export default function AdminBookingsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalFilteredItems, setTotalFilteredItems] = useState(0);
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
+  
+  // Reply modal state
+  const [isReplyModalOpen, setIsReplyModalOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [replySubject, setReplySubject] = useState("");
+  const [replyMessage, setReplyMessage] = useState("");
+  const [isSendingReply, setIsSendingReply] = useState(false);
 
   const itemsPerPage = 10;
 
@@ -47,7 +56,7 @@ export default function AdminBookingsPage() {
 
   useEffect(() => {
     feather.replace();
-  }, []);
+  }, [bookings]); // Re-initialize icons when bookings data changes
 
   const fetchBookings = async () => {
     try {
@@ -122,6 +131,67 @@ export default function AdminBookingsPage() {
       toast.error("Failed to update booking status");
     } finally {
       setIsUpdating(null);
+    }
+  };
+
+  const openReplyModal = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setReplySubject("Regarding Your Booking");
+    setReplyMessage("");
+    setIsReplyModalOpen(true);
+  };
+
+  const closeReplyModal = () => {
+    setIsReplyModalOpen(false);
+    setSelectedBooking(null);
+    setReplySubject("");
+    setReplyMessage("");
+  };
+
+  const sendReply = async () => {
+    if (!selectedBooking || !replySubject.trim() || !replyMessage.trim()) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    try {
+      setIsSendingReply(true);
+      
+      const response = await fetch("/api/admin/bookings/reply", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          bookingId: selectedBooking._id,
+          subject: replySubject.trim(),
+          message: replyMessage.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to send reply");
+      }
+
+      const data = await response.json();
+      
+      // Update booking in local state
+      setBookings(prev => 
+        prev.map(booking => 
+          booking._id === selectedBooking._id 
+            ? { ...booking, status: data.booking.status, updatedAt: data.booking.updatedAt }
+            : booking
+        )
+      );
+
+      toast.success("Reply sent successfully");
+      closeReplyModal();
+    } catch (error) {
+      console.error("Error sending reply:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to send reply");
+    } finally {
+      setIsSendingReply(false);
     }
   };
 
@@ -297,6 +367,47 @@ export default function AdminBookingsPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center gap-2">
+                              {/* Communication Icons */}
+                              <div className="flex items-center gap-1">
+                                {booking.phone && (
+                                  <>
+                                    <a
+                                      href={`tel:${sanitizePhone(booking.phone)}`}
+                                      className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+                                      title="Call"
+                                    >
+                                      <i data-feather="phone" className="w-4 h-4"></i>
+                                    </a>
+                                    <a
+                                      href={`https://wa.me/${sanitizePhone(booking.phone)}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+                                      title="Open WhatsApp"
+                                    >
+                                      <i data-feather="message-circle" className="w-4 h-4"></i>
+                                    </a>
+                                  </>
+                                )}
+                                <a
+                                  href={`mailto:${booking.email}?subject=Regarding Your Booking`}
+                                  className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+                                  title="Send Email"
+                                >
+                                  <i data-feather="mail" className="w-4 h-4"></i>
+                                </a>
+                              </div>
+                              
+                              {/* Divider */}
+                              <div className="w-px h-4 bg-border"></div>
+                              
+                              {/* Status Update Actions */}
+                              <button
+                                onClick={() => openReplyModal(booking)}
+                                className="px-3 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/30 transition-colors"
+                              >
+                                Reply
+                              </button>
                               {booking.status === "pending" && (
                                 <button
                                   onClick={() => updateBookingStatus(booking._id, "contacted")}
@@ -342,6 +453,100 @@ export default function AdminBookingsPage() {
           </div>
         </main>
       </div>
+
+      {/* Reply Modal */}
+      <Modal 
+        isOpen={isReplyModalOpen} 
+        onClose={closeReplyModal}
+        title="Send Reply"
+      >
+        <div className="space-y-4">
+          {selectedBooking && (
+            <>
+              {/* Recipient Info */}
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <div className="text-sm space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-muted-foreground">To:</span>
+                    <span className="text-foreground">{selectedBooking.email}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-muted-foreground">Company:</span>
+                    <span className="text-foreground">{selectedBooking.companyName}</span>
+                  </div>
+                  {selectedBooking.phone && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-muted-foreground">Phone:</span>
+                      <span className="text-foreground">{selectedBooking.phone}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Subject */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Subject
+                </label>
+                <input
+                  type="text"
+                  value={replySubject}
+                  onChange={(e) => setReplySubject(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="Enter subject"
+                />
+              </div>
+
+              {/* Message */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Message
+                </label>
+                <textarea
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                  rows={6}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                  placeholder="Type your message here..."
+                />
+                <div className="mt-1 text-xs text-muted-foreground text-right">
+                  {replyMessage.length}/2000 characters
+                </div>
+              </div>
+
+              {/* Original Message (if exists) */}
+              {selectedBooking.message && (
+                <div className="p-3 bg-muted/30 rounded-lg">
+                  <div className="text-sm">
+                    <span className="font-medium text-muted-foreground">Original Message:</span>
+                    <p className="mt-1 text-foreground whitespace-pre-wrap">
+                      {selectedBooking.message}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={sendReply}
+                  disabled={isSendingReply || !replySubject.trim() || !replyMessage.trim()}
+                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                >
+                  {isSendingReply ? "Sending..." : "Send Reply"}
+                </button>
+                <button
+                  onClick={closeReplyModal}
+                  disabled={isSendingReply}
+                  className="flex-1 px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }

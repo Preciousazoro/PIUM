@@ -13,6 +13,8 @@ export interface IContactMessage extends Document {
   message: string;
   subscribedToUpdates: boolean;
   status: ContactStatus;
+  replyMessage?: string;
+  repliedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,6 +57,13 @@ const ContactMessageSchema: Schema<IContactMessage> = new Schema({
     enum: Object.values(ContactStatus),
     default: ContactStatus.NEW,
     required: true
+  },
+  replyMessage: {
+    type: String,
+    maxlength: [2000, 'Reply message cannot be more than 2000 characters']
+  },
+  repliedAt: {
+    type: Date
   }
 }, {
   timestamps: true

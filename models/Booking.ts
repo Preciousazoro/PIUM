@@ -5,7 +5,12 @@ export interface IBooking extends Document {
   email: string;
   phone?: string;
   message?: string;
-  status: 'pending' | 'confirmed' | 'cancelled';
+  status: 'pending' | 'contacted' | 'completed';
+  replies?: {
+    message: string;
+    sentAt: Date;
+    sentBy: string; // adminId
+  }[];
   metadata?: {
     userAgent?: string;
     ip?: string;
@@ -45,6 +50,21 @@ const BookingSchema: Schema<IBooking> = new Schema({
     default: 'pending',
     required: true
   },
+  replies: [{
+    message: {
+      type: String,
+      required: true,
+      maxlength: [2000, 'Reply message cannot be more than 2000 characters']
+    },
+    sentAt: {
+      type: Date,
+      default: Date.now
+    },
+    sentBy: {
+      type: String,
+      required: true
+    }
+  }],
   metadata: {
     userAgent: String,
     ip: String
