@@ -247,8 +247,7 @@ export default function HomePage() {
               What is TaskKash?
             </h2>
             <p className="text-lg text-muted-foreground mb-6">
-              TaskKash is a Web3-powered platform where users get paid to engage online,
-              and brands gain verified growth. A win-win ecosystem.
+              TaskKash is a Web3-powered interaction platform where users earn rewards for participating in online activities, while projects and brands gain real, verified community engagement. <br>It creates a win-win ecosystem where participation drives growth and users benefit from their activity..
             </p>
 
             <ul className="space-y-4 text-muted-foreground">
