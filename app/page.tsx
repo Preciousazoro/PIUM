@@ -365,18 +365,18 @@ export default function HomePage() {
           {[
             { 
               icon: <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>,
-              title: "1. Sign Up", 
-              text: "Join with your wallet or email in seconds" 
+              title: "1. Sign Up/Connect Wallet", 
+              text: "Link your email/wallet in seconds and access available tasks." 
             },
             { 
               icon: <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>,
               title: "2. Complete Tasks", 
-              text: "Engage, share, or shop to earn TaskPoints" 
+              text: "Finish micro-tasks and campaigns to earn Task Points ($TP)." 
             },
             { 
               icon: <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>,
-              title: "3. Get Paid", 
-              text: "Redeem instantly — cash, cards, or crypto" 
+              title: "3. Convert TP to SOL", 
+              text: "Convert your points into SOL and withdraw directly." 
             },
           ].map((step, i) => (
             <div key={i}>
