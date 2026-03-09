@@ -110,10 +110,10 @@ export default function TaskKashHeader() {
       )}
 
       {/* Mobile Sidebar */}
-      <div className={`fixed top-0 left-0 z-[70] h-full w-80 bg-white dark:bg-slate-950 shadow-2xl transform transition-transform duration-300 ease-in-out md:hidden ${
+      <div className={`fixed top-0 left-0 z-[70] h-screen w-80 bg-white dark:bg-slate-950 shadow-2xl transform transition-transform duration-300 ease-in-out md:hidden ${
         mobileOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div className="flex h-full flex-col">
+        <div className="flex h-screen flex-col">
           {/* Sidebar Header */}
           <div className="flex items-center justify-between px-4 py-4 border-b border-slate-200 dark:border-slate-800">
             <Link
@@ -139,7 +139,7 @@ export default function TaskKashHeader() {
           </div>
 
           {/* Sidebar Content */}
-          <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col">
+          <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col min-h-0">
             <nav className="flex-1">
               <div className="space-y-6">
                 <a href="/#how" onClick={handleNavClick} className="block font-medium text-slate-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors text-lg">
